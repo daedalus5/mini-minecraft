@@ -20,6 +20,10 @@ MyGL::MyGL(QWidget *parent)
 
     setMouseTracking(true); // MyGL will track the mouse's movements even if a mouse button is not pressed
     setCursor(Qt::BlankCursor); // Make the cursor invisible
+
+    //testing
+    Chunk whatever(this);
+    whatever.getBlockType(10, 0, 15);
 }
 
 MyGL::~MyGL()
@@ -109,6 +113,10 @@ void MyGL::resizeGL(int w, int h)
 // We're treating MyGL as our game engine class, so we're going to use timerUpdate
 void MyGL::timerUpdate()
 {
+    // Compute dT. Use QDateTime. Store in previous time variable (int64_t)
+    // Get key presses. Make a Player class with methods that take in a MouseEvent and KeyPressEvent
+        //In Player, have booleans. is_W_Pressed. and use that in update
+    // Update character/object positions. Check collisions
     update();
 }
 

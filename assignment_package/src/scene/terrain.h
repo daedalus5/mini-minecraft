@@ -2,6 +2,8 @@
 #include <QList>
 #include <la.h>
 
+#include "drawable.h"
+
 // C++ 11 allows us to define the size of an enum. This lets us use only one byte
 // of memory to store our different block types. By default, the size of a C++ enum
 // is that of an int (so, usually four bytes). This *does* limit us to only 256 different
@@ -27,4 +29,34 @@ public:
     void setBlockAt(int x, int y, int z, BlockType t); // Given a world-space coordinate (which may have negative
                                                            // values) set the block at that point in space to the
                                                            // given type.
+    //Need to convert xyz coordinates to chunk coordinates
+    //And update a block in there?
+
+
+    //Store a collection of chunks.
+    //Store in a map. Key is world space position, just x and y coordinates. Value is chunk
+    //std::unordered_map
+
+    //For mouse clicks to add/delete cubes
+    // Take the forward vector, add max distance in that direction
+    // Take that value and use integer portions to find which cube it is
+    //To find which side of cube we hit,
+    //Do a ray-cube intersection. Find the point on cube. Then, we can add new cube next to that point's surface normal
+};
+
+class Chunk : public Drawable
+{
+public:
+    Chunk(OpenGLContext* context);
+    BlockType getBlockType(int x, int y, int z) const;
+    BlockType& getBlockType(int x, int y, int z);
+
+    void create() override;
+
+private:
+    int size;
+    glm::ivec3 dimensions;
+    BlockType block_array[65536]; // 16 x 256 x 16 (x by y by z)
+    glm::ivec3 getPosition(int i) const;
+
 };

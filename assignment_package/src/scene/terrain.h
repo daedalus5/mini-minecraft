@@ -15,7 +15,7 @@ class Terrain
 {
 public:
     Terrain();
-    BlockType m_blocks[128][256][128];                    // A 3D list of the blocks in the world.
+    BlockType m_blocks[64][256][64];                    // A 3D list of the blocks in the world.
                                                            // You'll need to replace this with a far more
                                                            // efficient system of storing terrain.
     void CreateTestScene();

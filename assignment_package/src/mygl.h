@@ -51,6 +51,8 @@ public:
 
 protected:
     void keyPressEvent(QKeyEvent *e);
+    void mousePressEvent(QMouseEvent *e);
+
     void destroyBlock();    // destroys a block within a unit distance of the player
     void createBlock();     // creates a block adjacent to the face of a block the player is pointing at
     float rayBoxIntersect(const glm::ivec3 cubeMin, const ray r) const;   // tests for intersection between a box and a ray

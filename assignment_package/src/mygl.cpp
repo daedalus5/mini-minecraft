@@ -85,7 +85,7 @@ void MyGL::initializeGL()
 //    vao.bind();
     glBindVertexArray(vao);
 
-    mp_terrain->CreateTestScene();
+    mp_terrain->CreateHighland();
 }
 
 void MyGL::resizeGL(int w, int h)
@@ -156,6 +156,8 @@ void MyGL::GLDrawScene()
                     case LAVA:
                         mp_progLambert->setGeometryColor(glm::vec4(207.f, 16.f, 32.f, 255.f) / 255.f);
                         break;
+                    case EMPTY:
+                        break;
                     }
                     mp_progLambert->setModelMatrix(glm::translate(glm::mat4(), glm::vec3(x, y, z)));
                     mp_progLambert->draw(*mp_geomCube);
@@ -210,6 +212,15 @@ void MyGL::keyPressEvent(QKeyEvent *e)
     mp_camera->RecomputeAttributes();
 }
 
+void MyGL::mousePressEvent(QMouseEvent *e){
+    if (e->buttons() == Qt::LeftButton){
+        destroyBlock();
+    } else if (e->buttons() == Qt::RightButton){
+        createBlock();
+    }
+    GLDrawScene();
+}
+
 void MyGL::destroyBlock(){
     glm::vec3 eye = mp_camera->eye;
     glm::vec3 forward = mp_camera->look;
@@ -236,9 +247,11 @@ void MyGL::destroyBlock(){
             }
         }
     }
-    glm::ivec3 closestCube = QMap.value(0);
-    // destroys closestCube by setting to empty
-    mp_terrain->setBlockAt(closestCube[0], closestCube[1], closestCube[2], EMPTY);
+    if (intersections.isEmpty() == false){
+        glm::ivec3 closestCube = intersections[0];
+        // destroys closestCube by setting to empty
+        mp_terrain->setBlockAt(closestCube[0], closestCube[1], closestCube[2], EMPTY);
+    }
 }
 
 float MyGL::rayBoxIntersect(const glm::ivec3 cubeMin, const ray r) const{
@@ -279,14 +292,14 @@ void MyGL::createBlock(){
     look.orig = eye;
     look.dir = forward;
 
-    glm::ivec3 lookCube = glm::ivec3(floor(eye[0] + 2*look[0]), floor(eye[1] + 2*look[1]), floor(eye[2] + 2*look[2]));
+    glm::ivec3 lookCube = glm::ivec3(floor(eye[0] + 2*look.dir[0]), floor(eye[1] + 2*look.dir[1]), floor(eye[2] + 2*look.dir[2]));
     BlockType b = mp_terrain->getBlockAt(lookCube[0], lookCube[1], lookCube[2]);
     if (b != EMPTY){
         float t_near = rayBoxIntersect(lookCube, look);
-        glm::vec3 pos = look.eye + t_near * look.dir;
+        glm::vec3 pos = look.orig + t_near * look.dir;
         glm::ivec3 insertPos;
 
-        glm::vec3 diff = pos - lookCube;
+        glm::vec3 diff = pos - glm::vec3(lookCube);
         if (diff[0] < 1E-6 && diff[0] > -1E-6){
             insertPos = glm::ivec3(lookCube[0] - 1, lookCube[1], lookCube[2]);
         }

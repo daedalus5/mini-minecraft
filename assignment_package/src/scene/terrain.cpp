@@ -77,8 +77,8 @@ void Terrain::CreateHighland(){
 //            }
 //        }
 //    }
-    for(int x = 0; x < 128; ++x){
-        for(int z = 0; z < 128; ++z){
+    for(int x = 0; x < 64; ++x){
+        for(int z = 0; z < 64; ++z){
             float persistance = 0.4f;
             int octaves = 4;
             float greyscale = fbm(x + 0.5f, z + 0.5f, persistance, octaves);

@@ -12,6 +12,10 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
 
+struct ray{
+    glm::vec3 orig;
+    glm::vec3 dir;
+};
 
 class MyGL : public OpenGLContext
 {
@@ -35,7 +39,6 @@ private:
                               // from within a mouse move event after reading the mouse movement so that
                               // your mouse stays within the screen bounds and is always read.
 
-
 public:
     explicit MyGL(QWidget *parent = 0);
     ~MyGL();
@@ -48,6 +51,10 @@ public:
 
 protected:
     void keyPressEvent(QKeyEvent *e);
+    void destroyBlock();    // destroys a block within a unit distance of the player
+    void createBlock();     // creates a block adjacent to the face of a block the player is pointing at
+    float rayBoxIntersect(const glm::ivec3 cubeMin, const ray r) const;   // tests for intersection between a box and a ray
+                                                                          // returns t_near, -1 if no intersection
 
 private slots:
     /// Slot that gets called ~60 times per second

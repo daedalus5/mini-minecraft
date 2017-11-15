@@ -153,6 +153,9 @@ void MyGL::GLDrawScene()
                     case STONE:
                         mp_progLambert->setGeometryColor(glm::vec4(0.5f));
                         break;
+                    case LAVA:
+                        mp_progLambert->setGeometryColor(glm::vec4(207.f, 16.f, 32.f, 255.f) / 255.f);
+                        break;
                     }
                     mp_progLambert->setModelMatrix(glm::translate(glm::mat4(), glm::vec3(x, y, z)));
                     mp_progLambert->draw(*mp_geomCube);
@@ -205,4 +208,107 @@ void MyGL::keyPressEvent(QKeyEvent *e)
         *mp_camera = Camera(this->width(), this->height());
     }
     mp_camera->RecomputeAttributes();
+}
+
+void MyGL::destroyBlock(){
+    glm::vec3 eye = mp_camera->eye;
+    glm::vec3 forward = mp_camera->look;
+    ray look;
+    look.orig = eye;
+    look.dir = forward;
+
+    glm::ivec3 eyeCube = glm::ivec3(floor(eye[0]), floor(eye[1]), floor(eye[2]));
+
+    QMap<float, glm::ivec3> intersections;
+
+    for(int i = -1; i < 2; ++i){
+        for(int j = -1; j < 2; ++j){
+            for(int k = -1; k < 2; ++k){
+                if(i == 0 && j == 0 && k == 0){
+                    continue;
+                }
+                glm::ivec3 cube = glm::ivec3(eyeCube[0] + i, eyeCube[1] + j, eyeCube[2] + k);
+                float t_near = rayBoxIntersect(cube, look);
+                BlockType b = mp_terrain->getBlockAt(cube[0], cube[1], cube[2]);
+                if (t_near != -1.0f && b != EMPTY){
+                    intersections[t_near] = cube;
+                }
+            }
+        }
+    }
+    glm::ivec3 closestCube = QMap.value(0);
+    // destroys closestCube by setting to empty
+    mp_terrain->setBlockAt(closestCube[0], closestCube[1], closestCube[2], EMPTY);
+}
+
+float MyGL::rayBoxIntersect(const glm::ivec3 cubeMin, const ray r) const{
+    float t_near = -1E6;
+    float t_far = 1E6;
+    glm::ivec3 cubeMax = glm::ivec3(cubeMin[0] + 1, cubeMin[1] + 1, cubeMin[2] + 1);
+
+    for(int i = 0; i < 3; ++i){
+        int xl = cubeMin[i];
+        int xr = cubeMax[i];
+        float xd = r.dir[i];
+        float xo = r.orig[i];
+        float t1 = (xl - xo) / xd;
+        float t2 = (xr - xo) / xd;
+
+        if (t1 > t2){       // swap
+            float t3 = t2;
+            t2 = t1;
+            t1 = t3;
+        }
+        if (t1 > t_near){
+            t_near = t1;    // want largest t_near
+        }
+        if (t2 < t_far){
+            t_far = t2;     // want smallest t_far
+        }
+        if (t_near > t_far){
+            return -1.0f;
+        }
+    }
+    return t_near;
+}
+
+void MyGL::createBlock(){
+    glm::vec3 eye = mp_camera->eye;
+    glm::vec3 forward = mp_camera->look;
+    ray look;
+    look.orig = eye;
+    look.dir = forward;
+
+    glm::ivec3 lookCube = glm::ivec3(floor(eye[0] + 2*look[0]), floor(eye[1] + 2*look[1]), floor(eye[2] + 2*look[2]));
+    BlockType b = mp_terrain->getBlockAt(lookCube[0], lookCube[1], lookCube[2]);
+    if (b != EMPTY){
+        float t_near = rayBoxIntersect(lookCube, look);
+        glm::vec3 pos = look.eye + t_near * look.dir;
+        glm::ivec3 insertPos;
+
+        glm::vec3 diff = pos - lookCube;
+        if (diff[0] < 1E-6 && diff[0] > -1E-6){
+            insertPos = glm::ivec3(lookCube[0] - 1, lookCube[1], lookCube[2]);
+        }
+        else if (diff[0] < 1.0f + 1E-6 && diff[0] > 1.0f - 1E-6){
+            insertPos = glm::ivec3(lookCube[0] + 1, lookCube[1], lookCube[2]);
+        }
+        if (diff[1] < 1E-6 && diff[1] > -1E-6){
+            insertPos = glm::ivec3(lookCube[0], lookCube[1] - 1, lookCube[2]);
+        }
+        else if (diff[1] < 1.0f + 1E-6 && diff[1] > 1.0f - 1E-6){
+            insertPos = glm::ivec3(lookCube[0], lookCube[1] + 1, lookCube[2]);
+        }
+        if (diff[2] < 1E-6 && diff[2] > -1E-6){
+            insertPos = glm::ivec3(lookCube[0], lookCube[1], lookCube[2] - 1);
+        }
+        else if (diff[2] < 1.0f + 1E-6 && diff[2] > 1.0f - 1E-6){
+            insertPos = glm::ivec3(lookCube[0], lookCube[1], lookCube[2] + 1);
+        }
+
+        BlockType b2 = mp_terrain->getBlockAt(insertPos[0], insertPos[1], insertPos[2]);
+        if (b2 == EMPTY){
+            mp_terrain->setBlockAt(insertPos[0], insertPos[1], insertPos[2], LAVA);
+        }
+    }
 }

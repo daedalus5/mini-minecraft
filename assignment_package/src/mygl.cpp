@@ -10,7 +10,7 @@ MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       mp_geomCube(new Cube(this)), mp_worldAxes(new WorldAxes(this)),
       mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),
-      mp_camera(new Camera()), mp_terrain(new Terrain())
+      mp_camera(new Camera()), mp_terrain(new Terrain()), whatever(this)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
@@ -20,10 +20,6 @@ MyGL::MyGL(QWidget *parent)
 
     setMouseTracking(true); // MyGL will track the mouse's movements even if a mouse button is not pressed
     setCursor(Qt::BlankCursor); // Make the cursor invisible
-
-    //testing
-    Chunk whatever(this);
-    whatever.getBlockType(10, 0, 15);
 }
 
 MyGL::~MyGL()
@@ -73,6 +69,19 @@ void MyGL::initializeGL()
     //Create the instance of Cube
     mp_geomCube->create();
     mp_worldAxes->create();
+
+    //testing
+    for (int i = 0; i < 16; i++) {
+        for (int j = 0; j < 256; j++) {
+            for (int k = 0; k < 16; k++) {
+                whatever.getBlockType(i, j, k) = GRASS;
+                if ( 6 < k && k < 12) {
+                    whatever.getBlockType(i, j, k) = EMPTY;
+                }
+            }
+        }
+    }
+    whatever.create();
 
     // Create and set up the diffuse shader
     mp_progLambert->create(":/glsl/lambert.vert.glsl", ":/glsl/lambert.frag.glsl");
@@ -131,7 +140,9 @@ void MyGL::paintGL()
     mp_progFlat->setViewProjMatrix(mp_camera->getViewProj());
     mp_progLambert->setViewProjMatrix(mp_camera->getViewProj());
 
-    GLDrawScene();
+    //GLDrawScene();
+    mp_progLambert->setModelMatrix(glm::mat4());
+    mp_progLambert->draw(whatever);
 
     glDisable(GL_DEPTH_TEST);
     mp_progFlat->setModelMatrix(glm::mat4());

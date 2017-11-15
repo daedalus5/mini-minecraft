@@ -34,7 +34,7 @@ public:
 
 
     //Store a collection of chunks.
-    //Store in a map. Key is world space position, just x and y coordinates. Value is chunk
+    //Store in a map. Key is world space position, just x and z coordinates. Value is chunk
     //std::unordered_map
 
     //For mouse clicks to add/delete cubes
@@ -52,11 +52,17 @@ public:
     BlockType& getBlockType(int x, int y, int z);
 
     void create() override;
+    GLenum drawMode() override;
 
 private:
     int size;
     glm::ivec3 dimensions;
     BlockType block_array[65536]; // 16 x 256 x 16 (x by y by z)
     glm::ivec3 getPosition(int i) const;
-
+    void addSquare(glm::vec4 pos, glm::vec4 normal, glm::vec4 color,
+                   glm::vec4 squareStart,
+                   std::vector<glm::vec4>& positions,
+                   std::vector<glm::vec4>& normals,
+                   std::vector<glm::vec4>& colors,
+                   std::vector<GLuint>& indices);
 };

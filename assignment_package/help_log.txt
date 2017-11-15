@@ -1,0 +1,3 @@
+How do you convert from a 1D index to 3D?
+Answer: https://stackoverflow.com/questions/7367770/how-to-flatten-or-index-3d-array-in-1d-array
+The web link shows the math behind it.

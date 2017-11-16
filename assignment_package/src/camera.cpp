@@ -101,3 +101,70 @@ void Camera::TranslateAlongUp(float amt)
     eye += translation;
     ref += translation;
 }
+
+static const int CH_IDX_COUNT = 4;
+static const int CH_VERT_COUNT = 4;
+
+//////////////////////////////////
+
+GLenum CrossHairs::drawMode()
+{
+    return GL_LINES;
+}
+
+void CrossHairs::create()
+{
+    GLuint ch_idx[CH_IDX_COUNT];
+    glm::vec4 ch_vert_pos[CH_VERT_COUNT];
+    glm::vec4 ch_vert_col[CH_VERT_COUNT];
+
+    float xOffset = 0.1f;
+    float yOffset = 0.1f;;
+
+    if (aspect < 1){
+        xOffset = yOffset * aspect;
+    }
+    else{
+        yOffset = xOffset * aspect;
+    }
+
+    glm::vec4 posA0 = glm::vec4(-xOffset, 0.0f, 0.0f, 1.0f);
+    glm::vec4 posA1 = glm::vec4(xOffset, 0.0f, 0.0f, 1.0f);
+    glm::vec4 posB0 = glm::vec4(0.0f, -yOffset, 0.0f, 1.0f);
+    glm::vec4 posB1 = glm::vec4(0.0f, yOffset, 0.0f, 1.0f);
+    ch_vert_pos[0] = posA0;
+    ch_vert_pos[1] = posA1;
+    ch_vert_pos[2] = posB0;
+    ch_vert_pos[3] = posB1;
+
+    glm::vec4 grey = glm::vec4(0.75f, 0.75f, 0.75f, 0.0f);
+    for(int i = 0; i < CH_VERT_COUNT; ++i){
+        ch_vert_col[i] = grey;
+    }
+
+    ch_idx[0] = 0;
+    ch_idx[1] = 1;
+    ch_idx[2] = 2;
+    ch_idx[3] = 3;
+
+    count = CH_IDX_COUNT;
+
+    // Create a VBO on our GPU and store its handle in bufIdx
+    generateIdx();
+    // Tell OpenGL that we want to perform subsequent operations on the VBO referred to by bufIdx
+    // and that it will be treated as an element array buffer (since it will contain triangle indices)
+    context->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufIdx);
+    // Pass the data stored in cyl_idx into the bound buffer, reading a number of bytes equal to
+    // SPH_IDX_COUNT multiplied by the size of a GLuint. This data is sent to the GPU to be read by shader programs.
+    context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, CH_IDX_COUNT * sizeof(GLuint), ch_idx, GL_STATIC_DRAW);
+
+    // The next few sets of function calls are basically the same as above, except bufPos and bufNor are
+    // array buffers rather than element array buffers, as they store vertex attributes like position.
+    generatePos();
+    context->glBindBuffer(GL_ARRAY_BUFFER, bufPos);
+    context->glBufferData(GL_ARRAY_BUFFER, CH_VERT_COUNT * sizeof(glm::vec4), ch_vert_pos, GL_STATIC_DRAW);
+
+    generateCol();
+    context->glBindBuffer(GL_ARRAY_BUFFER, bufCol);
+    context->glBufferData(GL_ARRAY_BUFFER, CH_VERT_COUNT * sizeof(glm::vec4), ch_vert_col, GL_STATIC_DRAW);
+}

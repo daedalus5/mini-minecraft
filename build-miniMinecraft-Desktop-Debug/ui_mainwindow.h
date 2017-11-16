@@ -13,6 +13,7 @@
 #include <QtWidgets/QAction>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QButtonGroup>
+#include <QtWidgets/QGridLayout>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenu>
@@ -28,6 +29,7 @@ public:
     QAction *actionQuit;
     QAction *actionCamera_Controls;
     QWidget *centralWidget;
+    QGridLayout *gridLayout;
     MyGL *mygl;
     QMenuBar *menuBar;
     QMenu *menuFile;
@@ -37,20 +39,26 @@ public:
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QStringLiteral("MainWindow"));
-        MainWindow->resize(640, 480);
+        MainWindow->resize(1095, 684);
         actionQuit = new QAction(MainWindow);
         actionQuit->setObjectName(QStringLiteral("actionQuit"));
         actionCamera_Controls = new QAction(MainWindow);
         actionCamera_Controls->setObjectName(QStringLiteral("actionCamera_Controls"));
         centralWidget = new QWidget(MainWindow);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
+        gridLayout = new QGridLayout(centralWidget);
+        gridLayout->setSpacing(6);
+        gridLayout->setContentsMargins(11, 11, 11, 11);
+        gridLayout->setObjectName(QStringLiteral("gridLayout"));
         mygl = new MyGL(centralWidget);
         mygl->setObjectName(QStringLiteral("mygl"));
-        mygl->setGeometry(QRect(11, 11, 618, 432));
+
+        gridLayout->addWidget(mygl, 0, 0, 1, 1);
+
         MainWindow->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 640, 26));
+        menuBar->setGeometry(QRect(0, 0, 1095, 19));
         menuFile = new QMenu(menuBar);
         menuFile->setObjectName(QStringLiteral("menuFile"));
         menuHelp = new QMenu(menuBar);

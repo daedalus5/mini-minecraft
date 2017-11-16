@@ -60,13 +60,13 @@ void Terrain::CreateTestScene()
 
 void Terrain::CreateHighland(){
     // 0 -> 127 is STONE
-    for(int x = 0; x < 64; ++x){
-        for(int z = 0; z < 64; ++z){
-            for(int y = 0; y < 128; ++y){
-                setBlockAt(x, y, z, STONE);
-            }
-        }
-    }
+//    for(int x = 0; x < 64; ++x){
+//        for(int z = 0; z < 64; ++z){
+//            for(int y = 0; y < 128; ++y){
+//                setBlockAt(x, y, z, STONE);
+//            }
+//        }
+//    }
     // 128 -> height - 1 is DIRT, height is GRASS
     for(int x = 0; x < 64; ++x){
         for(int z = 0; z < 64; ++z){
@@ -74,9 +74,9 @@ void Terrain::CreateHighland(){
             int octaves = 4;
             float greyscale = fbm(x + 0.5f, z + 0.5f, persistance, octaves);
             int height = mapToHeight(greyscale);
-            for(int y = 128; y < height; ++y){
-                setBlockAt(x, y, z, DIRT);
-            }
+//            for(int y = 128; y < height; ++y){
+//                setBlockAt(x, y, z, DIRT);
+//            }
             setBlockAt(x, height, z, GRASS);
         }
     }

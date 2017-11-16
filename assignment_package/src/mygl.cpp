@@ -10,7 +10,7 @@ MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       mp_geomCube(new Cube(this)), mp_worldAxes(new WorldAxes(this)),
       mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),
-      mp_camera(new Camera()), mp_terrain(new Terrain())
+      mp_camera(new Camera()), mp_terrain(new Terrain()), mp_crosshairs(new CrossHairs(this))
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
@@ -34,6 +34,7 @@ MyGL::~MyGL()
     delete mp_progFlat;
     delete mp_camera;
     delete mp_terrain;
+    delete mp_crosshairs;
 }
 
 
@@ -101,6 +102,9 @@ void MyGL::resizeGL(int w, int h)
     mp_progLambert->setViewProjMatrix(viewproj);
     mp_progFlat->setViewProjMatrix(viewproj);
 
+    mp_crosshairs->aspect = mp_camera->height / float(mp_camera->width);
+    mp_crosshairs->create();
+
     printGLErrorLog();
 }
 
@@ -128,6 +132,9 @@ void MyGL::paintGL()
     glDisable(GL_DEPTH_TEST);
     mp_progFlat->setModelMatrix(glm::mat4());
     mp_progFlat->draw(*mp_worldAxes);
+
+    mp_progFlat->setViewProjMatrix(glm::mat4());
+    mp_progFlat->draw(*mp_crosshairs);
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -159,7 +166,7 @@ void MyGL::GLDrawScene()
                     case EMPTY:
                         break;
                     }
-                    mp_progLambert->setModelMatrix(glm::translate(glm::mat4(), glm::vec3(x, y, z)));
+                    mp_progLambert->setModelMatrix(glm::translate(glm::mat4(), glm::vec3(x + 0.5f, y + 0.5, z + 0.5f)));
                     mp_progLambert->draw(*mp_geomCube);
                 }
             }
@@ -171,7 +178,7 @@ void MyGL::GLDrawScene()
 void MyGL::keyPressEvent(QKeyEvent *e)
 {
 
-    float amount = 2.0f;
+    float amount = 1.0f;
     if(e->modifiers() & Qt::ShiftModifier){
         amount = 10.0f;
     }
@@ -233,7 +240,7 @@ void MyGL::destroyBlock(){
 
     // store all cubes look ray intersects
     QMap<float, glm::ivec3> intersections;
-    // going to want to delete the cube that's nearest
+    // going to want to delete the cube that's nearest and intersects our look vector
     float t_nearest = 1E6;
 
     // consider surrounding 26 cubes
@@ -258,7 +265,7 @@ void MyGL::destroyBlock(){
 
                 float t_near = rayBoxIntersect(cube, look);
                 BlockType b = mp_terrain->getBlockAt(cube[0], cube[1], cube[2]);
-                if (t_near != -1.0f && b != EMPTY){
+                if (t_near > 0.0f && b != EMPTY){
                     intersections[t_near] = cube;
                     if(t_near < t_nearest){
                         t_nearest = t_near;
@@ -288,7 +295,7 @@ float MyGL::rayBoxIntersect(const glm::ivec3 cubeMin, const ray r) const{
         float t2 = (xr - xo) / xd;
 
         if (t1 > t2){       // swap
-            float t3 = t2;
+            const float t3 = t2;
             t2 = t1;
             t1 = t3;
         }

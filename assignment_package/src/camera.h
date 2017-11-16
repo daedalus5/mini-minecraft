@@ -1,5 +1,6 @@
 #pragma once
 
+#include "drawable.h"
 #include <la.h>
 
 //A perspective projection camera
@@ -40,3 +41,13 @@ public:
     void TranslateAlongRight(float amt);
     void TranslateAlongUp(float amt);
 };
+
+class CrossHairs : public Drawable{
+public:
+    float aspect;
+    CrossHairs(OpenGLContext* context) : Drawable(context), aspect(0.0f) {}
+    virtual ~CrossHairs(){}
+    void create() override;
+    GLenum drawMode() override;
+};
+

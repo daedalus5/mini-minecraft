@@ -6,32 +6,27 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>640</width>
-    <height>480</height>
+    <width>1095</width>
+    <height>684</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>OpenGLDemo</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="MyGL" name="mygl">
-    <property name="geometry">
-     <rect>
-      <x>11</x>
-      <y>11</y>
-      <width>618</width>
-      <height>432</height>
-     </rect>
-    </property>
-   </widget>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="MyGL" name="mygl"/>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>640</width>
-     <height>26</height>
+     <width>1095</width>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

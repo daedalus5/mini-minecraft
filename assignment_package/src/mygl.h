@@ -31,6 +31,7 @@ private:
 
     Camera* mp_camera;
     Terrain* mp_terrain;
+    CrossHairs* mp_crosshairs;
 
     /// Timer linked to timerUpdate(). Fires approx. 60 times per second
     QTimer timer;

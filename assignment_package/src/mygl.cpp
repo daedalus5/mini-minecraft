@@ -218,37 +218,57 @@ void MyGL::mousePressEvent(QMouseEvent *e){
     } else if (e->buttons() == Qt::RightButton){
         createBlock();
     }
-    GLDrawScene();
 }
 
 void MyGL::destroyBlock(){
     glm::vec3 eye = mp_camera->eye;
     glm::vec3 forward = mp_camera->look;
+
     ray look;
     look.orig = eye;
     look.dir = forward;
 
+    // cube at eye position
     glm::ivec3 eyeCube = glm::ivec3(floor(eye[0]), floor(eye[1]), floor(eye[2]));
 
+    // store all cubes look ray intersects
     QMap<float, glm::ivec3> intersections;
+    // going to want to delete the cube that's nearest
+    float t_nearest = 1E6;
 
+    // consider surrounding 26 cubes
     for(int i = -1; i < 2; ++i){
         for(int j = -1; j < 2; ++j){
             for(int k = -1; k < 2; ++k){
-                if(i == 0 && j == 0 && k == 0){
+                if(i == 0 && j == 0 && k == 0){ // don't consider cube at eye position
                     continue;
                 }
                 glm::ivec3 cube = glm::ivec3(eyeCube[0] + i, eyeCube[1] + j, eyeCube[2] + k);
+
+                // make sure cube is within the bounds of the terrain
+                if (cube[0] < 0 || cube[0] > mp_terrain->dimensions.x){
+                    return;
+                }
+                if (cube[1] < 0 || cube[1] > mp_terrain->dimensions.y){
+                    return;
+                }
+                if (cube[2] < 0 || cube[2] > mp_terrain->dimensions.z){
+                    return;
+                }
+
                 float t_near = rayBoxIntersect(cube, look);
                 BlockType b = mp_terrain->getBlockAt(cube[0], cube[1], cube[2]);
                 if (t_near != -1.0f && b != EMPTY){
                     intersections[t_near] = cube;
+                    if(t_near < t_nearest){
+                        t_nearest = t_near;
+                    }
                 }
             }
         }
     }
     if (intersections.isEmpty() == false){
-        glm::ivec3 closestCube = intersections[0];
+        glm::ivec3 closestCube = intersections.value(t_nearest);
         // destroys closestCube by setting to empty
         mp_terrain->setBlockAt(closestCube[0], closestCube[1], closestCube[2], EMPTY);
     }
@@ -288,38 +308,47 @@ float MyGL::rayBoxIntersect(const glm::ivec3 cubeMin, const ray r) const{
 void MyGL::createBlock(){
     glm::vec3 eye = mp_camera->eye;
     glm::vec3 forward = mp_camera->look;
+
     ray look;
     look.orig = eye;
     look.dir = forward;
 
+    // get cube two forward vectors away
     glm::ivec3 lookCube = glm::ivec3(floor(eye[0] + 2*look.dir[0]), floor(eye[1] + 2*look.dir[1]), floor(eye[2] + 2*look.dir[2]));
     BlockType b = mp_terrain->getBlockAt(lookCube[0], lookCube[1], lookCube[2]);
+
+    // if there is an existing cube in place, we can build off it
     if (b != EMPTY){
         float t_near = rayBoxIntersect(lookCube, look);
+        // get the point on the surface of the cube we're looking at in world coordinates
         glm::vec3 pos = look.orig + t_near * look.dir;
         glm::ivec3 insertPos;
 
+        // considering the difference between the cube's "origin"
+        // and the point we're considering will tell us which face of the cube to build off
         glm::vec3 diff = pos - glm::vec3(lookCube);
-        if (diff[0] < 1E-6 && diff[0] > -1E-6){
+
+        if (diff[0] < 1E-6 && diff[0] > -1E-6){ // -x face
             insertPos = glm::ivec3(lookCube[0] - 1, lookCube[1], lookCube[2]);
         }
-        else if (diff[0] < 1.0f + 1E-6 && diff[0] > 1.0f - 1E-6){
+        else if (diff[0] < 1.0f + 1E-6 && diff[0] > 1.0f - 1E-6){ // +x face
             insertPos = glm::ivec3(lookCube[0] + 1, lookCube[1], lookCube[2]);
         }
-        if (diff[1] < 1E-6 && diff[1] > -1E-6){
+        if (diff[1] < 1E-6 && diff[1] > -1E-6){ // -y face
             insertPos = glm::ivec3(lookCube[0], lookCube[1] - 1, lookCube[2]);
         }
-        else if (diff[1] < 1.0f + 1E-6 && diff[1] > 1.0f - 1E-6){
+        else if (diff[1] < 1.0f + 1E-6 && diff[1] > 1.0f - 1E-6){ // +y face
             insertPos = glm::ivec3(lookCube[0], lookCube[1] + 1, lookCube[2]);
         }
-        if (diff[2] < 1E-6 && diff[2] > -1E-6){
+        if (diff[2] < 1E-6 && diff[2] > -1E-6){ // -z face
             insertPos = glm::ivec3(lookCube[0], lookCube[1], lookCube[2] - 1);
         }
-        else if (diff[2] < 1.0f + 1E-6 && diff[2] > 1.0f - 1E-6){
+        else if (diff[2] < 1.0f + 1E-6 && diff[2] > 1.0f - 1E-6){ // +z face
             insertPos = glm::ivec3(lookCube[0], lookCube[1], lookCube[2] + 1);
         }
 
         BlockType b2 = mp_terrain->getBlockAt(insertPos[0], insertPos[1], insertPos[2]);
+        // only build cube if there's an open space to place it
         if (b2 == EMPTY){
             mp_terrain->setBlockAt(insertPos[0], insertPos[1], insertPos[2], LAVA);
         }

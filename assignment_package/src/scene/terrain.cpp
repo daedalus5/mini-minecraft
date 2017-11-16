@@ -2,16 +2,8 @@
 
 #include <scene/cube.h>
 
-/////
-// constructors
-/////
-
 Terrain::Terrain() : dimensions(64, 256, 64)
 {}
-
-/////
-// public functions
-/////
 
 BlockType Terrain::getBlockAt(int x, int y, int z) const
 {
@@ -25,9 +17,6 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
     m_blocks[x][y][z] = t;
 }
 
-/////
-// terrain generation functions
-/////
 void Terrain::CreateTestScene()
 {
     // Create the basic terrain floor
@@ -70,32 +59,31 @@ void Terrain::CreateTestScene()
 }
 
 void Terrain::CreateHighland(){
-//    for(int x = 0; x < 64; ++x){
-//        for(int z = 0; z < 64; ++z){
-//            for(int y = 0; y < 127; ++y){
-//                m_blocks[x][y][z] = STONE;
-//            }
-//        }
-//    }
+    // 0 -> 127 is STONE
+    for(int x = 0; x < 64; ++x){
+        for(int z = 0; z < 64; ++z){
+            for(int y = 0; y < 128; ++y){
+                setBlockAt(x, y, z, STONE);
+            }
+        }
+    }
+    // 128 -> height - 1 is DIRT, height is GRASS
     for(int x = 0; x < 64; ++x){
         for(int z = 0; z < 64; ++z){
             float persistance = 0.4f;
             int octaves = 4;
             float greyscale = fbm(x + 0.5f, z + 0.5f, persistance, octaves);
             int height = mapToHeight(greyscale);
-//            for(int y = 128; y < height; ++y){
-//                m_blocks[x][y][z] = DIRT;
-//            }
-            m_blocks[x][height][z] = GRASS;
+            for(int y = 128; y < height; ++y){
+                setBlockAt(x, y, z, DIRT);
+            }
+            setBlockAt(x, height, z, GRASS);
         }
     }
 }
 
-/////
-// private functions
-/////
-
 float Terrain::rand(const glm::vec2 n) const{
+    // return pseudorandom number between -1 and 1
     return (glm::fract(sin(glm::dot(n, glm::vec2(12.9898, 4.1414))) * 43758.5453));
 }
 
@@ -133,6 +121,8 @@ float Terrain::fbm(const float x, const float z, const float persistance, const 
 }
 
 int Terrain::mapToHeight(const float val) const{
+    // dampen noise amplitude for flatter terrain
     float dampen = 0.2;
+    // begin noisey terrain at middle map height
     return 128 + glm::floor(val * 128 * dampen);
 }

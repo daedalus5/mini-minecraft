@@ -57,7 +57,7 @@ protected:
     void createBlock();     // creates a block adjacent to the face of a block the player is pointing at
     float rayBoxIntersect(const glm::ivec3 cubeMin, const ray r) const;   // tests for intersection between a box and a ray
                                                                           // returns t_near, -1 if no intersection
-
+                                                                          // Kay and Kayjia algorithm
 private slots:
     /// Slot that gets called ~60 times per second
     void timerUpdate();

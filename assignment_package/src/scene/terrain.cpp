@@ -2,19 +2,36 @@
 
 #include <scene/cube.h>
 
-Terrain::Terrain() : dimensions(64, 256, 64)
+Terrain::Terrain() : dimensions(64, 256, 64),
+    chunk_map(std::unordered_map<glm::ivec2, Chunk*, KeyFuncs, KeyFuncs>())
 {}
 
 BlockType Terrain::getBlockAt(int x, int y, int z) const
 {
     // TODO: Make this work with your new block storage!
-    return m_blocks[x][y][z];
+    // x mod 16 = local block coord
+    // z mod 16 = local block coord
+    // x / 16 = chunk coord
+    // z / 16 = chunk coord
+    glm::ivec2 chunk_pos = glm::ivec2(x / 16, z / 16);
+    //Chunk* ch = chunk_map[chunk_pos];
+    auto index = chunk_map.find(chunk_pos);
+    if (index != chunk_map.end()) {
+        Chunk* ch = index->second;
+        return ch->getBlockType(x % 16, y, z % 16);
+    }
+    return EMPTY;
+    //return m_blocks[x][y][z];
 }
 
 void Terrain::setBlockAt(int x, int y, int z, BlockType t)
 {
     // TODO: Make this work with your new block storage!
+    glm::ivec2 chunk_pos = glm::ivec2(x / 16, z / 16);
+    Chunk* ch = chunk_map[chunk_pos];
+    ch->getBlockType(x % 16, y, z % 16) = t;
     m_blocks[x][y][z] = t;
+    // destroy and create vbo for this chunk?
 }
 
 void Terrain::CreateTestScene()
@@ -102,6 +119,9 @@ void Chunk::create() {
                     break;
                 case STONE:
                     col = stone_color;
+                    break;
+                default:
+                    col = glm::vec4(1, 1, 1, 1);
                     break;
             }
 

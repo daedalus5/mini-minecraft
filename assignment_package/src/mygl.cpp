@@ -74,7 +74,7 @@ void MyGL::initializeGL()
     for (int i = 0; i < 16; i++) {
         for (int j = 0; j < 256; j++) {
             for (int k = 0; k < 16; k++) {
-                whatever.getBlockType(i, j, k) = GRASS;
+                whatever.getBlockType(i, j, k) = DIRT;
                 if ( 6 < k && k < 12) {
                     whatever.getBlockType(i, j, k) = EMPTY;
                 }
@@ -91,7 +91,7 @@ void MyGL::initializeGL()
     // Set a color with which to draw geometry since you won't have one
     // defined until you implement the Node classes.
     // This makes your geometry render green.
-    mp_progLambert->setGeometryColor(glm::vec4(0,1,0,1));
+    //mp_progLambert->setGeometryColor(glm::vec4(0,1,0,1));
 
     // We have to have a VAO bound in OpenGL 3.2 Core. But if we're not
     // using multiple VAOs, we can just bind one once.
@@ -152,6 +152,7 @@ void MyGL::paintGL()
 
 void MyGL::GLDrawScene()
 {
+    /*
     for(int x = 0; x < mp_terrain->dimensions.x; ++x)
     {
         for(int y = 0; y < mp_terrain->dimensions.y; ++y)
@@ -179,6 +180,7 @@ void MyGL::GLDrawScene()
             }
         }
     }
+    */
 }
 
 

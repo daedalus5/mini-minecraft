@@ -85,28 +85,8 @@ void MyGL::initializeGL()
 //    vao.bind();
     glBindVertexArray(vao);
 
-    //mp_terrain->CreateTestScene();
-    for (int i = 0; i < 16; i++) {
-        for (int j = 0; j < 256; j++) {
-            for (int k = 0; k < 16; k++) {
-                mp_terrain->setBlockAt(i, j, k, STONE);
-            }
-        }
-    }
-    for (int i = 16; i < 32; i++) {
-        for (int j = 0; j < 256; j++) {
-            for (int k = 0; k < 16; k++) {
-                mp_terrain->setBlockAt(i, j, k, GRASS);
-            }
-        }
-    }
-    for (int i = -16; i < 0; i++) {
-        for (int j = 0; j < 256; j++) {
-            for (int k = 0; k < 16; k++) {
-                mp_terrain->setBlockAt(i, j, k, DIRT);
-            }
-        }
-    }
+    mp_terrain->CreateTestScene();
+
     mp_terrain->updateAllVBO();
 }
 
@@ -130,11 +110,9 @@ void MyGL::resizeGL(int w, int h)
 // MyGL's constructor links timerUpdate() to a timer that fires 60 times per second.
 // We're treating MyGL as our game engine class, so we're going to use timerUpdate
 void MyGL::timerUpdate()
-{
-    // Compute dT. Use QDateTime. Store in previous time variable (int64_t)
-    // Get key presses. Make a Player class with methods that take in a MouseEvent and KeyPressEvent
-        //In Player, have booleans. is_W_Pressed. and use that in update
-    // Update character/object positions. Check collisions
+{   
+    // Add new chunk if needed?
+
     update();
 }
 
@@ -159,49 +137,17 @@ void MyGL::paintGL()
 
 void MyGL::GLDrawScene()
 {
-    glm::vec4 currentPos = glm::vec4(8, 0, 0, 1);
-    Chunk* ch = mp_terrain->getChunk(0, 0);
+    glm::vec4 currentPos = glm::vec4(32, 0, 32, 1);
     mp_progLambert->setModelMatrix(glm::mat4());
-    mp_progLambert->draw(*(ch));
 
-    ch = mp_terrain->getChunk(16, 0);
-    //mp_progLambert->setModelMatrix(glm::translate(glm::mat4(), glm::vec3(16, 0, 0)));
-    mp_progLambert->draw(*(ch));
-
-    ch = mp_terrain->getChunk(-3, 0);
-    mp_progLambert->draw(*(ch));
-//    for (int i = 0; i < 2; i++) {
-//        mp_progLambert->draw(*(mp_terrain->getChunk(i * 16, 0)));
-//    }
-    /*
-    for(int x = 0; x < mp_terrain->dimensions.x; ++x)
-    {
-        for(int y = 0; y < mp_terrain->dimensions.y; ++y)
-        {
-            for(int z = 0; z < mp_terrain->dimensions.z; ++z)
-            {
-                BlockType t;
-                if((t = mp_terrain->m_blocks[x][y][z]) != EMPTY)
-                {
-                    switch(t)
-                    {
-                    case DIRT:
-                        mp_progLambert->setGeometryColor(glm::vec4(121.f, 85.f, 58.f, 255.f) / 255.f);
-                        break;
-                    case GRASS:
-                        mp_progLambert->setGeometryColor(glm::vec4(95.f, 159.f, 53.f, 255.f) / 255.f);
-                        break;
-                    case STONE:
-                        mp_progLambert->setGeometryColor(glm::vec4(0.5f));
-                        break;
-                    }
-                    mp_progLambert->setModelMatrix(glm::translate(glm::mat4(), glm::vec3(x, y, z)));
-                    mp_progLambert->draw(*mp_geomCube);
-                }
+    for (int i = -5; i < 5; i++) {
+        for (int k = -5; k < 5; k++) {
+            Chunk* ch = mp_terrain->getChunk(i * 16 + currentPos[0], k * 16 + currentPos[2]);
+            if (ch != nullptr) {
+                mp_progLambert->draw(*(ch));
             }
         }
     }
-    */
 }
 
 

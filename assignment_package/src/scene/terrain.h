@@ -16,6 +16,7 @@ enum BlockType : unsigned char
 
 // Copied from
 // https://stackoverflow.com/questions/9047612/glmivec2-as-key-in-unordered-map
+// Used for hashing glm::ivec2
 struct KeyFuncs
 {
     size_t operator()(const glm::ivec2& k) const
@@ -36,7 +37,7 @@ public:
     BlockType getBlockType(int x, int y, int z) const;
     BlockType& getBlockType(int x, int y, int z);
 
-    glm::ivec3 dimensions;
+    glm::ivec3 chunk_dimensions;
 
     void create() override;
     GLenum drawMode() override;
@@ -47,25 +48,16 @@ public:
                       std::vector<GLuint> &indices);
 
 private:
-    int size;
     BlockType block_array[65536]; // 16 x 256 x 16 (x by y by z)
-    glm::ivec3 getPosition(int i) const;
-//    void addSquare(glm::vec4 pos, glm::vec4 normal, glm::vec4 color,
-//                   glm::vec4 squareStart,
-//                   std::vector<glm::vec4>& positions,
-//                   std::vector<glm::vec4>& normals,
-//                   std::vector<glm::vec4>& colors,
-//                   std::vector<GLuint>& indices);
 };
 
 class Terrain
 {
 public:
     Terrain(OpenGLContext* context);
-    BlockType m_blocks[64][256][64];                    // A 3D list of the blocks in the world.
+    //BlockType m_blocks[64][256][64];                    // A 3D list of the blocks in the world.
                                                            // You'll need to replace this with a far more
                                                            // efficient system of storing terrain.
-    std::unordered_map<glm::ivec2, Chunk*, KeyFuncs, KeyFuncs> chunk_map;
 
     void CreateTestScene();
 
@@ -77,17 +69,25 @@ public:
                                                            // values) set the block at that point in space to the
                                                            // given type.
 
-    void addBlockAt(int x, int y, int z, BlockType t); // does almost same as setBlockAt, but also updates VBO
+    // Maps Chunk Position to the Chunk
+    // Chunk Position obtained through getChunkPosition
+    std::unordered_map<glm::ivec2, Chunk*, KeyFuncs, KeyFuncs> chunk_map;
+
+    Chunk* getChunk(int x, int z) const;
+
+    // Does almost same as setBlockAt, but also updates VBO
+    void addBlockAt(int x, int y, int z, BlockType t);
     void destroyBlockAt(int x, int y, int z);
+
     void updateChunkVBO(int x, int z);
     void updateAllVBO();
-    Chunk* getChunk(int x, int z);
 
 private:
 
     OpenGLContext* context; // To pass on to Chunks
+    std::map<BlockType, glm::vec4> color_map; // Map of BlockType to a color
 
-    std::map<BlockType, glm::vec4> color_map;
+    // Adds a square to the VBOs
     void addSquare(glm::vec4 pos, glm::vec4 normal, glm::vec4 color,
                    glm::vec4 squareStart,
                    std::vector<glm::vec4>& positions,
@@ -96,13 +96,9 @@ private:
                    std::vector<GLuint>& indices);
 
 
+    // Converts global x, z to which Chunk those coordinates are in
     glm::ivec2 getChunkPosition(int x, int z) const;
+    // Converts global x, y, z coordinates to a local position within Chunk
+    // Does not find which Chunk this position belongs to
     glm::ivec3 getChunkLocalPosition(int x, int y, int z) const;
-    //Need to convert xyz coordinates to chunk coordinates
-    //And update a block in there?
-
-
-    //Store a collection of chunks.
-    //Store in a map. Key is world space position, just x and z coordinates. Value is chunk
-    //std::unordered_map
 };

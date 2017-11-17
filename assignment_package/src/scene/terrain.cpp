@@ -11,6 +11,12 @@ Terrain::Terrain(OpenGLContext* in_context) : dimensions(64, 256, 64),
     color_map[STONE] = glm::vec4(0.5, 0.5, 0.5, 1);
 }
 
+Terrain::~Terrain() {
+    for ( auto it = chunk_map.begin(); it != chunk_map.end(); ++it ) {
+        delete it->second;
+    }
+}
+
 BlockType Terrain::getBlockAt(int x, int y, int z) const
 {
     // TODO: Make this work with your new block storage!

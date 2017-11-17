@@ -55,6 +55,7 @@ class Terrain
 {
 public:
     Terrain(OpenGLContext* context);
+    ~Terrain();
     //BlockType m_blocks[64][256][64];                    // A 3D list of the blocks in the world.
                                                            // You'll need to replace this with a far more
                                                            // efficient system of storing terrain.
@@ -79,7 +80,11 @@ public:
     void addBlockAt(int x, int y, int z, BlockType t);
     void destroyBlockAt(int x, int y, int z);
 
+    // Updates a single Chunk's VBO
+    // x and z are world space coordinates that belong in the Chunk
     void updateChunkVBO(int x, int z);
+    // Loops through all Chunks and updates their VBOs
+    // Used during game initialization
     void updateAllVBO();
 
 private:

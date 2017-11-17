@@ -184,7 +184,8 @@ void Terrain::updateChunkVBO(int x, int z) {
 
                 if (block != EMPTY) {
 
-                    glm::vec4 world_pos = glm::vec4(i, j, k, 1) + glm::vec4(chunk_pos[0] * ch->chunk_dimensions[0], 0, chunk_pos[1] * ch->chunk_dimensions[2], 0);
+                    glm::vec4 world_pos = glm::vec4(i, j, k, 1)
+                            + glm::vec4(chunk_pos[0] * ch->chunk_dimensions[0], 0, chunk_pos[1] * ch->chunk_dimensions[2], 0);
 
                     glm::vec4 col = color_map[block];
 

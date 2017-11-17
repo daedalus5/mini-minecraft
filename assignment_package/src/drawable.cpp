@@ -37,30 +37,38 @@ int Drawable::elemCount()
 
 void Drawable::generateIdx()
 {
-    idxBound = true;
-    // Create a VBO on our GPU and store its handle in bufIdx
-    context->glGenBuffers(1, &bufIdx);
+    if (!idxBound) {
+        idxBound = true;
+        // Create a VBO on our GPU and store its handle in bufIdx
+        context->glGenBuffers(1, &bufIdx);
+    }
 }
 
 void Drawable::generatePos()
 {
-    posBound = true;
-    // Create a VBO on our GPU and store its handle in bufPos
-    context->glGenBuffers(1, &bufPos);
+    if (!posBound) {
+        posBound = true;
+        // Create a VBO on our GPU and store its handle in bufPos
+        context->glGenBuffers(1, &bufPos);
+    }
 }
 
 void Drawable::generateNor()
 {
-    norBound = true;
-    // Create a VBO on our GPU and store its handle in bufNor
-    context->glGenBuffers(1, &bufNor);
+    if (!norBound) {
+        norBound = true;
+        // Create a VBO on our GPU and store its handle in bufNor
+        context->glGenBuffers(1, &bufNor);
+    }
 }
 
 void Drawable::generateCol()
 {
-    colBound = true;
-    // Create a VBO on our GPU and store its handle in bufCol
-    context->glGenBuffers(1, &bufCol);
+    if (!colBound) {
+        colBound = true;
+        // Create a VBO on our GPU and store its handle in bufCol
+        context->glGenBuffers(1, &bufCol);
+    }
 }
 
 bool Drawable::bindIdx()

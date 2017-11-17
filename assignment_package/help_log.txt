@@ -1,0 +1,7 @@
+How do you convert from a 1D index to 3D?
+Answer: https://stackoverflow.com/questions/7367770/how-to-flatten-or-index-3d-array-in-1d-array
+The web link shows the math behind it.
+
+How do I create a hash function for glm::ivec2?
+Answer: https://stackoverflow.com/questions/9047612/glmivec2-as-key-in-unordered-map
+Someone on Stack Overflow posted a Struct with a hash function and comparison function for ivec2, that would be passed into the map.

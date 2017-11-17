@@ -10,7 +10,7 @@ MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       mp_geomCube(new Cube(this)), mp_worldAxes(new WorldAxes(this)),
       mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),
-      mp_camera(new Camera()), mp_terrain(new Terrain()), mp_crosshairs(new CrossHairs(this))
+      mp_camera(new Camera()), mp_terrain(new Terrain(this)), mp_crosshairs(new CrossHairs(this))
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
@@ -79,14 +79,19 @@ void MyGL::initializeGL()
     // Set a color with which to draw geometry since you won't have one
     // defined until you implement the Node classes.
     // This makes your geometry render green.
-    mp_progLambert->setGeometryColor(glm::vec4(0,1,0,1));
+    //mp_progLambert->setGeometryColor(glm::vec4(0,1,0,1));
 
     // We have to have a VAO bound in OpenGL 3.2 Core. But if we're not
     // using multiple VAOs, we can just bind one once.
 //    vao.bind();
     glBindVertexArray(vao);
 
+
     mp_terrain->CreateHighland();
+
+    //mp_terrain->CreateTestScene();
+
+    mp_terrain->updateAllVBO();
 }
 
 void MyGL::resizeGL(int w, int h)
@@ -112,7 +117,9 @@ void MyGL::resizeGL(int w, int h)
 // MyGL's constructor links timerUpdate() to a timer that fires 60 times per second.
 // We're treating MyGL as our game engine class, so we're going to use timerUpdate
 void MyGL::timerUpdate()
-{
+{   
+    // Add new chunk if needed?
+
     update();
 }
 
@@ -140,6 +147,7 @@ void MyGL::paintGL()
 
 void MyGL::GLDrawScene()
 {
+            /*
     for(int x = 0; x < mp_terrain->dimensions.x; ++x)
     {
         for(int y = 0; y < mp_terrain->dimensions.y; ++y)
@@ -169,6 +177,15 @@ void MyGL::GLDrawScene()
                     mp_progLambert->setModelMatrix(glm::translate(glm::mat4(), glm::vec3(x + 0.5f, y + 0.5, z + 0.5f)));
                     mp_progLambert->draw(*mp_geomCube);
                 }
+                        */
+    glm::vec4 currentPos = glm::vec4(32, 0, 32, 1);
+    mp_progLambert->setModelMatrix(glm::mat4());
+
+    for (int i = -5; i < 5; i++) {
+        for (int k = -5; k < 5; k++) {
+            Chunk* ch = mp_terrain->getChunk(i * 16 + currentPos[0], k * 16 + currentPos[2]);
+            if (ch != nullptr) {
+                mp_progLambert->draw(*(ch));
             }
         }
     }

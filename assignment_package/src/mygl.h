@@ -35,9 +35,6 @@ private:
                               // from within a mouse move event after reading the mouse movement so that
                               // your mouse stays within the screen bounds and is always read.
 
-    //testing
-    Chunk whatever;
-
 
 public:
     explicit MyGL(QWidget *parent = 0);

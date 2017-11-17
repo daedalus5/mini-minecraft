@@ -10,7 +10,7 @@ MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       mp_geomCube(new Cube(this)), mp_worldAxes(new WorldAxes(this)),
       mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),
-      mp_camera(new Camera()), mp_terrain(new Terrain()), whatever(this)
+      mp_camera(new Camera()), mp_terrain(new Terrain(this))
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
@@ -70,19 +70,6 @@ void MyGL::initializeGL()
     mp_geomCube->create();
     mp_worldAxes->create();
 
-    //testing
-    for (int i = 0; i < 16; i++) {
-        for (int j = 0; j < 256; j++) {
-            for (int k = 0; k < 16; k++) {
-                whatever.getBlockType(i, j, k) = DIRT;
-                if ( 6 < k && k < 12) {
-                    whatever.getBlockType(i, j, k) = EMPTY;
-                }
-            }
-        }
-    }
-    whatever.create();
-
     // Create and set up the diffuse shader
     mp_progLambert->create(":/glsl/lambert.vert.glsl", ":/glsl/lambert.frag.glsl");
     // Create and set up the flat lighting shader
@@ -98,7 +85,29 @@ void MyGL::initializeGL()
 //    vao.bind();
     glBindVertexArray(vao);
 
-    mp_terrain->CreateTestScene();
+    //mp_terrain->CreateTestScene();
+    for (int i = 0; i < 16; i++) {
+        for (int j = 0; j < 256; j++) {
+            for (int k = 0; k < 16; k++) {
+                mp_terrain->setBlockAt(i, j, k, STONE);
+            }
+        }
+    }
+    for (int i = 16; i < 32; i++) {
+        for (int j = 0; j < 256; j++) {
+            for (int k = 0; k < 16; k++) {
+                mp_terrain->setBlockAt(i, j, k, GRASS);
+            }
+        }
+    }
+    for (int i = -16; i < 0; i++) {
+        for (int j = 0; j < 256; j++) {
+            for (int k = 0; k < 16; k++) {
+                mp_terrain->setBlockAt(i, j, k, DIRT);
+            }
+        }
+    }
+    mp_terrain->updateAllVBO();
 }
 
 void MyGL::resizeGL(int w, int h)
@@ -140,9 +149,7 @@ void MyGL::paintGL()
     mp_progFlat->setViewProjMatrix(mp_camera->getViewProj());
     mp_progLambert->setViewProjMatrix(mp_camera->getViewProj());
 
-    //GLDrawScene();
-    mp_progLambert->setModelMatrix(glm::mat4());
-    mp_progLambert->draw(whatever);
+    GLDrawScene();
 
     glDisable(GL_DEPTH_TEST);
     mp_progFlat->setModelMatrix(glm::mat4());
@@ -152,6 +159,20 @@ void MyGL::paintGL()
 
 void MyGL::GLDrawScene()
 {
+    glm::vec4 currentPos = glm::vec4(8, 0, 0, 1);
+    Chunk* ch = mp_terrain->getChunk(0, 0);
+    mp_progLambert->setModelMatrix(glm::mat4());
+    mp_progLambert->draw(*(ch));
+
+    ch = mp_terrain->getChunk(16, 0);
+    //mp_progLambert->setModelMatrix(glm::translate(glm::mat4(), glm::vec3(16, 0, 0)));
+    mp_progLambert->draw(*(ch));
+
+    ch = mp_terrain->getChunk(-3, 0);
+    mp_progLambert->draw(*(ch));
+//    for (int i = 0; i < 2; i++) {
+//        mp_progLambert->draw(*(mp_terrain->getChunk(i * 16, 0)));
+//    }
     /*
     for(int x = 0; x < mp_terrain->dimensions.x; ++x)
     {

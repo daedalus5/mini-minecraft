@@ -294,7 +294,7 @@ void MyGL::destroyBlock(){
     if (intersections.isEmpty() == false){
         glm::ivec3 closestCube = intersections.value(t_nearest);
         // destroys closestCube by setting to empty
-        mp_terrain->setBlockAt(closestCube[0], closestCube[1], closestCube[2], EMPTY);
+        mp_terrain->addBlockAt(closestCube[0], closestCube[1], closestCube[2], EMPTY);
     }
 }
 
@@ -374,7 +374,7 @@ void MyGL::createBlock(){
         BlockType b2 = mp_terrain->getBlockAt(insertPos[0], insertPos[1], insertPos[2]);
         // only build cube if there's an open space to place it
         if (b2 == EMPTY){
-            mp_terrain->setBlockAt(insertPos[0], insertPos[1], insertPos[2], LAVA);
+            mp_terrain->addBlockAt(insertPos[0], insertPos[1], insertPos[2], LAVA);
         }
     }
 }

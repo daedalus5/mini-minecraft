@@ -11,3 +11,11 @@ Someone on Stack Overflow posted a Struct with a hash function and comparison fu
 How do I store two 32 bit ints into a 64 bit int?
 Answer: Ishan
 Ishan told me how to shift bits to the right and left and use XOR to combine two ints.
+
+How do I split a 64 bit int into two 32 bit ints?
+Answer: https://stackoverflow.com/questions/2810280/how-to-store-a-64-bit-integer-in-two-32-bit-integers-and-convert-back-again
+Shift bits for one int. The other could simply be casted to int.
+
+How do I read from an interleaved VBO?
+Answer: https://www.khronos.org/opengl/wiki/Generic_Vertex_Attribute_-_examples
+glVertexAttribPointer has two parameters. One for how much data each vertex is. The other is the offset of the particular data you want from the start of vertex data.

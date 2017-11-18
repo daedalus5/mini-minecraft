@@ -153,10 +153,15 @@ void MyGL::GLDrawScene()
     int chunkX = mp_terrain->getChunkPosition1D(mp_camera->eye[0]);
     int chunkZ = mp_terrain->getChunkPosition1D(mp_camera->eye[2]);
 
+    // Create collection of Chunks to update/draw
+    // Because we want to update VBO after all new Chunks are created
+
+    // List of Chunks to draw
     std::vector<Chunk*> chunks2Draw = std::vector<Chunk*>();
+    // List of Chunks that need VBO updated
     std::set<uint64_t> chunks2Update = std::set<uint64_t>();
 
-    int num = 5;
+    int num = 10;
     int x, z;
 
     Chunk* ch;
@@ -172,6 +177,7 @@ void MyGL::GLDrawScene()
 
                 chunks2Update.insert(mp_terrain->convertToInt(x, z));
 
+                // Update neighboring Chunks
                 chunks2Update.insert(mp_terrain->convertToInt(x + 1, z));
                 chunks2Update.insert(mp_terrain->convertToInt(x - 1, z));
                 chunks2Update.insert(mp_terrain->convertToInt(x, z + 1));

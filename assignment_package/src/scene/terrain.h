@@ -96,10 +96,25 @@ private:
     std::unordered_map<uint64_t, Chunk*> chunk_map;
 
     // Adds a square to the VBOs
-    void addSquare(glm::vec3 *pos, glm::vec4 *normal, glm::vec4 *color,
-                   glm::vec4 *squareStart,
+    void addSquare(glm::vec3 *pos, const glm::vec4 *normal, glm::vec4 *color,
+                   const glm::vec4 *squareStart,
                    std::vector<glm::vec4>* everything,
                    std::vector<GLuint>* indices);
+
+    // Const variables that are used over and over again in VBO creation
+    const glm::vec4 x_normal;
+    const glm::vec4 x_normal_neg;
+    const glm::vec4 y_normal;
+    const glm::vec4 y_normal_neg;
+    const glm::vec4 z_normal;
+    const glm::vec4 z_normal_neg;
+
+    const glm::vec4 start_x;
+    const glm::vec4 start__x;
+    const glm::vec4 start_y;
+    const glm::vec4 start__y;
+    const glm::vec4 start_z;
+    const glm::vec4 start__z;
 
     int getChunkLocalPosition1D(int x) const;
 

@@ -2,8 +2,69 @@
 
 #include <scene/cube.h>
 
+Chunk::Chunk(OpenGLContext* context)
+    : Drawable(context), block_array({EMPTY})
+{
+}
+
+BlockType Chunk::getBlockType(int x, int y, int z) const {
+    return block_array[x + 16 * y + 4096 * z];
+}
+
+BlockType& Chunk::getBlockType(int x, int y, int z) {
+    return block_array[x + 16 * y + 4096 * z];
+}
+
+void Chunk::createVBO(std::vector<glm::vec4> &everything,
+                      std::vector<GLuint> &indices)
+{
+    count = indices.size();
+
+    // Create a VBO on our GPU and store its handle in bufIdx
+    generateIdx();
+    // Tell OpenGL that we want to perform subsequent operations on the VBO referred to by bufIdx
+    // and that it will be treated as an element array buffer (since it will contain triangle indices)
+    context->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufIdx);
+    // Pass the data stored in cyl_idx into the bound buffer, reading a number of bytes equal to
+    // SPH_IDX_COUNT multiplied by the size of a GLuint. This data is sent to the GPU to be read by shader programs.
+    context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
+
+    // The next few sets of function calls are basically the same as above, except bufPos and bufNor are
+    // array buffers rather than element array buffers, as they store vertex attributes like position.
+//    generatePos();
+//    context->glBindBuffer(GL_ARRAY_BUFFER, bufPos);
+//    context->glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(glm::vec4), positions.data(), GL_STATIC_DRAW);
+
+//    generateNor();
+//    context->glBindBuffer(GL_ARRAY_BUFFER, bufNor);
+//    context->glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec4), normals.data(), GL_STATIC_DRAW);
+
+//    generateCol();
+//    context->glBindBuffer(GL_ARRAY_BUFFER, bufCol);
+//    context->glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec4), colors.data(), GL_STATIC_DRAW);
+    generateEve();
+    context->glBindBuffer(GL_ARRAY_BUFFER, bufEve);
+    context->glBufferData(GL_ARRAY_BUFFER, everything.size() * sizeof(glm::vec4), everything.data(), GL_STATIC_DRAW);
+}
+
+void Chunk::create() {
+    // no-op
+}
+
+GLenum Chunk::drawMode()
+{
+    return GL_TRIANGLES;
+}
+
+// CHUNK END
+// **********************************************************************************************
+// **********************************************************************************************
+// **********************************************************************************************
+// TERRAIN START
+
 Terrain::Terrain(OpenGLContext* in_context) : dimensions(64, 256, 64),
-    chunk_map(std::unordered_map<glm::ivec2, Chunk*, KeyFuncs, KeyFuncs>()),
+    //chunk_map(std::unordered_map<glm::ivec2, Chunk*, KeyFuncs, KeyFuncs>()),
+    chunk_map(std::unordered_map<uint64_t, Chunk*>()),
     color_map(std::map<BlockType, glm::vec4>()), chunk_dimensions(16, 256, 16),
     context(in_context)
 {
@@ -22,29 +83,25 @@ Terrain::~Terrain() {
 
 BlockType Terrain::getBlockAt(int x, int y, int z) const
 {
-    // TODO: Make this work with your new block storage!
     if (y < 0 || y > 255) {
         return EMPTY;
     }
 
-    glm::ivec2 chunk_pos = getChunkPosition(x, z);
-    auto index = chunk_map.find(chunk_pos);
+    auto index = chunk_map.find(convertToInt(getChunkPosition1D(x), getChunkPosition1D(z)));
     if (index != chunk_map.end()) {
         Chunk* ch = index->second;
-        glm::ivec3 local_pos = getChunkLocalPosition(x, y, z);
-        return ch->getBlockType(local_pos[0], local_pos[1], local_pos[2]);
+        return ch->getBlockType(getChunkLocalPosition1D(x), y, getChunkLocalPosition1D(z));
     }
     return EMPTY;
 }
 
 void Terrain::setBlockAt(int x, int y, int z, BlockType t)
 {
-    // TODO: Make this work with your new block storage!
     if (y < 0 || y > 255) {
         return;
     }
 
-    glm::ivec2 chunk_pos = getChunkPosition(x, z);
+    uint64_t chunk_pos = convertToInt(getChunkPosition1D(x), getChunkPosition1D(z));
     Chunk* ch;
     auto index = chunk_map.find(chunk_pos);
     if (index == chunk_map.end()) {
@@ -53,8 +110,7 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
     } else {
         ch = chunk_map[chunk_pos];
     }
-    glm::ivec3 local_pos = getChunkLocalPosition(x, y, z);
-    ch->getBlockType(local_pos[0], local_pos[1], local_pos[2]) = t;
+    ch->getBlockType(getChunkLocalPosition1D(x), y, getChunkLocalPosition1D(z)) = t;
 }
 
 void Terrain::CreateTestScene()
@@ -113,21 +169,48 @@ void Terrain::CreateTestScene()
 
 void Terrain::addBlockAt(int x, int y, int z, BlockType t) {
     setBlockAt(x, y, z, t);
-    updateChunkVBO(x, z);
+    updateChunkVBO(getChunkPosition1D(x), getChunkPosition1D(z));
+
+    updateChunkVBO(getChunkPosition1D(x + 1), getChunkPosition1D(z));
+    updateChunkVBO(getChunkPosition1D(x - 1), getChunkPosition1D(z));
+    updateChunkVBO(getChunkPosition1D(x), getChunkPosition1D(z + 1));
+    updateChunkVBO(getChunkPosition1D(x), getChunkPosition1D(z - 1));
 }
 
-void Terrain::destroyBlockAt(int x, int y, int z) {
-    setBlockAt(x, y, z, EMPTY);
-    updateChunkVBO(x, z);
-}
+//void Terrain::destroyBlockAt(int x, int y, int z) {
+//    setBlockAt(x, y, z, EMPTY);
+//    updateChunkVBO(getChunkPosition1D(x), getChunkPosition1D(z));
+//}
 
+// Changed to use chunk position
 Chunk* Terrain::getChunk(int x, int z) const {
-    glm::ivec2 chunk_pos = getChunkPosition(x, z);
-    auto index = chunk_map.find(chunk_pos);
+    //glm::ivec2 chunk_pos1 = getChunkPosition(x, z);
+    //uint64_t chunk_pos = convertToInt(getChunkPosition1D(x), getChunkPosition1D(z));
+    auto index = chunk_map.find(convertToInt(x, z));
     if (index != chunk_map.end()) {
         return index->second;
     }
     return nullptr;
+}
+
+int Terrain::getChunkPosition1D(int x) const {
+    int temp = x / 16;
+    if (x < 0) {
+        if (x % 16 != 0) {
+            temp = temp - 1;
+        }
+    }
+    return temp;
+}
+
+int Terrain::getChunkLocalPosition1D(int x) const {
+    int temp = x % 16;
+    if (x < 0) {
+        if (temp != 0) {
+            temp = temp + 16;
+        }
+    }
+    return temp;
 }
 
 glm::ivec2 Terrain::getChunkPosition(int x, int z) const {
@@ -161,18 +244,21 @@ glm::ivec3 Terrain::getChunkLocalPosition(int x, int y, int z) const {
 }
 
 // x and z are the chunk's world position
+// maybe take in the chunk's numbers instead? yes
 void Terrain::updateChunkVBO(int x, int z) {
-    glm::ivec2 chunk_pos = getChunkPosition(x, z);
-    auto index = chunk_map.find(chunk_pos);
+    //glm::ivec2 chunk_pos1 = getChunkPosition(x, z);
+    //uint64_t chunk_pos = convertToInt(chunk_pos1[0], chunk_pos1[1]);
+    auto index = chunk_map.find(convertToInt(x, z));
     if (index == chunk_map.end()) {
         return;
     }
-
     Chunk* ch = index->second;
+
 
     std::vector<glm::vec4> positions = std::vector<glm::vec4>();
     std::vector<glm::vec4> normals = std::vector<glm::vec4>();
     std::vector<glm::vec4> colors = std::vector<glm::vec4>();
+    std::vector<glm::vec4> everything = std::vector<glm::vec4>();
     std::vector<GLuint> indices = std::vector<GLuint>();
 
     glm::vec4 x_normal = glm::vec4(1, 0, 0, 0);
@@ -189,18 +275,22 @@ void Terrain::updateChunkVBO(int x, int z) {
     glm::vec4 start_z = glm::vec4(0.5, 0.5, 0.5, 1);
     glm::vec4 start__z = glm::vec4(0.5, 0.5, -0.5, 1);
 
+    BlockType block;
+    glm::vec3 world_pos;
+    glm::vec4 col;
+
     for (int i = 0; i < chunk_dimensions[0]; i++) {
         for (int j = 0; j < chunk_dimensions[1]; j++) {
             for (int k = 0; k < chunk_dimensions[2]; k++) {
 
-                BlockType block = ch->getBlockType(i, j, k);
+                block = ch->getBlockType(i, j, k);
 
                 if (block != EMPTY) {
 
-                    glm::vec3 world_pos = glm::vec3(i, j, k)
-                            + glm::vec3(chunk_pos[0] * chunk_dimensions[0], 0, chunk_pos[1] * chunk_dimensions[2]);
+                    world_pos = glm::vec3(i, j, k)
+                            + glm::vec3(x * chunk_dimensions[0], 0, z * chunk_dimensions[2]);
 
-                    glm::vec4 col;
+
                     auto index = color_map.find(block);
                     if (index == color_map.end()) {
                         break;
@@ -208,53 +298,94 @@ void Terrain::updateChunkVBO(int x, int z) {
                         col = index->second;
                     }
 
+                    Chunk* neighbor;
+                    // Check neighboring Chunk in x direction
+                    if (i == 0) {
+                        neighbor = getChunk(x - 1, z);
+                        if (neighbor != nullptr) {
+                            if (neighbor->getBlockType(chunk_dimensions[0] - 1, j, k) == EMPTY) {
+                                addSquare(&world_pos, &x_normal_neg, &col, &start__x, &everything, &indices);
+                            }
+                        } else {
+                            //addSquare(&world_pos, &x_normal_neg, &col, &start__x, &positions, &normals, &colors, &indices);
+                        }
+                    } else if (ch->getBlockType(i - 1, j, k) == EMPTY) {
+                        // Check neighboring x within this chunk
+                        addSquare(&world_pos, &x_normal_neg, &col, &start__x, &everything, &indices);
+                    }
 
-                    // Check neighboring x
-                    if (getBlockAt(world_pos[0] + 1, world_pos[1], world_pos[2]) == EMPTY) {
-                        addSquare(&world_pos, &x_normal, &col, &start_x, &positions, &normals, &colors, &indices);
+                    if (i == chunk_dimensions[0] - 1) {
+                        neighbor = getChunk(x + 1, z);
+                        if (neighbor != nullptr) {
+                            if (neighbor->getBlockType(0, j, k) == EMPTY) {
+                                addSquare(&world_pos, &x_normal, &col, &start_x, &everything, &indices);
+                            }
+                        } else {
+                            //addSquare(&world_pos, &x_normal, &col, &start_x, &positions, &normals, &colors, &indices);
+                        }
                     }
-                    if (getBlockAt(world_pos[0] - 1, world_pos[1], world_pos[2]) == EMPTY) {
-                        addSquare(&world_pos, &x_normal_neg, &col, &start__x, &positions, &normals, &colors, &indices);
+                    else if (ch->getBlockType(i + 1, j, k) == EMPTY) {
+                        addSquare(&world_pos, &x_normal, &col, &start_x, &everything, &indices);
                     }
+
 
                     // Check neighboring y
-                    if (getBlockAt(world_pos[0], world_pos[1] + 1, world_pos[2]) == EMPTY) {
-                        addSquare(&world_pos, &y_normal, &col, &start_y, &positions, &normals, &colors, &indices);
+                    if (ch->getBlockType(i, j + 1, k) == EMPTY) {
+                        addSquare(&world_pos, &y_normal, &col, &start_y, &everything, &indices);
                     }
-                    if (getBlockAt(world_pos[0], world_pos[1] - 1, world_pos[2]) == EMPTY) {
-                        addSquare(&world_pos, &y_normal_neg, &col, &start__y, &positions, &normals, &colors, &indices);
+                    if (ch->getBlockType(i, j - 1, k) == EMPTY) {
+                        addSquare(&world_pos, &y_normal_neg, &col, &start__y, &everything, &indices);
                     }
 
-                    // Check neighboring z
-                    if (getBlockAt(world_pos[0], world_pos[1], world_pos[2] + 1) == EMPTY) {
-                        addSquare(&world_pos, &z_normal, &col, &start_z, &positions, &normals, &colors, &indices);
+                    // Check neighboring Chunk in z direction
+                    if (k == 0) {
+                        neighbor = getChunk(x, z - 1);
+                        if (neighbor != nullptr) {
+                            if (neighbor->getBlockType(i, j, chunk_dimensions[2] - 1) == EMPTY) {
+                                addSquare(&world_pos, &z_normal_neg, &col, &start__z, &everything, &indices);
+                            }
+                        } else {
+                            //addSquare(&world_pos, &z_normal_neg, &col, &start__z, &positions, &normals, &colors, &indices);
+                        }
+                    } else if (ch->getBlockType(i, j, k - 1) == EMPTY) {
+                        addSquare(&world_pos, &z_normal_neg, &col, &start__z, &everything, &indices);
                     }
-                    if (getBlockAt(world_pos[0], world_pos[1], world_pos[2] - 1) == EMPTY) {
-                        addSquare(&world_pos, &z_normal_neg, &col, &start__z, &positions, &normals, &colors, &indices);
+
+                    if (k == chunk_dimensions[2] - 1) {
+                        neighbor = getChunk(x, z + 1);
+                        if (neighbor != nullptr) {
+                            if (neighbor->getBlockType(i, j, 0) == EMPTY) {
+                                addSquare(&world_pos, &z_normal, &col, &start_z, &everything, &indices);
+                            }
+                        } else {
+                            //addSquare(&world_pos, &z_normal, &col, &start_z, &positions, &normals, &colors, &indices);
+                        }
+                    } else if (ch->getBlockType(i, j, k + 1) == EMPTY) {
+                        addSquare(&world_pos, &z_normal, &col, &start_z, &everything, &indices);
                     }
+
                 }
 
             }
         }
     }
-    ch->createVBO(positions, normals, colors, indices);
+    //ch->createVBO(positions, normals, colors, indices);
+    ch->createVBO(everything, indices);
 }
 
 void Terrain::updateAllVBO() {
     for ( auto it = chunk_map.begin(); it != chunk_map.end(); ++it ) {
-        updateChunkVBO(16 * it->first[0], 16 * it->first[1]);
+        //updateChunkVBO(16 * it->first[0], 16 * it->first[1]);
     }
 }
 
 void Terrain::addSquare(glm::vec3* pos, glm::vec4* normal, glm::vec4* color,
                       glm::vec4* squareStart,
-                      std::vector<glm::vec4> *positions,
-                      std::vector<glm::vec4> *normals,
-                      std::vector<glm::vec4> *colors,
+                      std::vector<glm::vec4> *everything,
                       std::vector<GLuint> *indices) {
 
     // grab size of positions
-    int index = positions->size();
+    int index = everything->size() / 3;
     glm::vec3 offset = glm::vec3(0.5, 0.5, 0.5);
     glm::vec3 normal3 = glm::vec3(*normal);
 
@@ -263,12 +394,12 @@ void Terrain::addSquare(glm::vec3* pos, glm::vec4* normal, glm::vec4* color,
         // Push them into positions vector
         // Push normals
         // Push colors
-        positions->push_back(glm::translate(glm::mat4(), *pos + offset)
+        everything->push_back(glm::translate(glm::mat4(), *pos + offset)
                             * glm::rotate(glm::mat4(), glm::radians(90.f * k), normal3)
                             * *squareStart);
 
-        normals->push_back(*normal);
-        colors->push_back(*color);
+        everything->push_back(*normal);
+        everything->push_back(*color);
     }
     // Push indices
     indices->push_back(index);
@@ -280,91 +411,62 @@ void Terrain::addSquare(glm::vec3* pos, glm::vec4* normal, glm::vec4* color,
 
 }
 
-// TERRAIN END
-//*********************************************************************************************
-// CHUNK START
-
-Chunk::Chunk(OpenGLContext* context)
-    : Drawable(context), block_array({EMPTY})
-{
+uint64_t Terrain::convertToInt(int x, int z)  const {
+    return ((uint64_t) x << 32) | ((uint64_t) z << 32 >> 32);
 }
 
-BlockType Chunk::getBlockType(int x, int y, int z) const {
-    return block_array[x + 16 * y + 16 * 256 * z];
+void Terrain::splitInt(uint64_t in, int *x, int *z) const {
+    *x = (int) (in>>32);
+    *z = (int) in;
 }
 
-BlockType& Chunk::getBlockType(int x, int y, int z) {
-    return block_array[x + 16 * y + 16 * 256 * z];
-}
+// Given which Chunk to create
+// Make the highland terrain for that Chunk
+Chunk* Terrain::CreateHighland(int chunkX, int chunkZ) {
+    //glm::ivec2 chunk_pos = getChunkPosition(worldX, worldZ);
+    //uint64_t chunk_pos = convertToInt(worldX, worldZ);
+    //Chunk* chunk = getChunk(chunkX, chunkZ);
 
-void Chunk::createVBO(std::vector<glm::vec4> &positions,
-                      std::vector<glm::vec4> &normals,
-                      std::vector<glm::vec4> &colors,
-                      std::vector<GLuint> &indices)
-{
-    count = indices.size();
+    // If Chunk already exists, no need to make it again
+    auto index = chunk_map.find(convertToInt(chunkX, chunkZ));
+    if (index != chunk_map.end()) {
+        return nullptr;
+    }
+    Chunk* chunk = new Chunk(context);
+    chunk_map[convertToInt(chunkX, chunkZ)] = chunk;
 
-    // Create a VBO on our GPU and store its handle in bufIdx
-    generateIdx();
-    // Tell OpenGL that we want to perform subsequent operations on the VBO referred to by bufIdx
-    // and that it will be treated as an element array buffer (since it will contain triangle indices)
-    context->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufIdx);
-    // Pass the data stored in cyl_idx into the bound buffer, reading a number of bytes equal to
-    // SPH_IDX_COUNT multiplied by the size of a GLuint. This data is sent to the GPU to be read by shader programs.
-    context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
-
-    // The next few sets of function calls are basically the same as above, except bufPos and bufNor are
-    // array buffers rather than element array buffers, as they store vertex attributes like position.
-    generatePos();
-    context->glBindBuffer(GL_ARRAY_BUFFER, bufPos);
-    context->glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(glm::vec4), positions.data(), GL_STATIC_DRAW);
-
-    generateNor();
-    context->glBindBuffer(GL_ARRAY_BUFFER, bufNor);
-    context->glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec4), normals.data(), GL_STATIC_DRAW);
-
-    generateCol();
-    context->glBindBuffer(GL_ARRAY_BUFFER, bufCol);
-    context->glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec4), colors.data(), GL_STATIC_DRAW);
-}
-
-void Chunk::create() {
-    // no-op
-}
-
-GLenum Chunk::drawMode()
-{
-    return GL_TRIANGLES;
-}
-
-void Terrain::CreateHighland(int worldX, int worldZ) {
-    glm::ivec2 chunk_pos = getChunkPosition(worldX, worldZ);
-    int xMin = chunk_pos[0] * chunk_dimensions[0];
-    int xMax = xMin + 16;
-    int zMin = chunk_pos[1] * chunk_dimensions[2];
-    int zMax = zMin + 16;
+    // The chunk's position in world coordinates
+    int chunkWorldX = chunkX * chunk_dimensions[0];
+    int chunkWorldZ = chunkZ * chunk_dimensions[2];
 
     // 0 -> 127 is STONE
-    for(int x = xMin; x < xMax; ++x){
-        for(int z = zMin; z < zMax; ++z){
+    for(int x = 0; x < chunk_dimensions[0]; ++x){
+        for(int z = 0; z < chunk_dimensions[2]; ++z){
             for(int y = 0; y < 128; ++y){
-                setBlockAt(x, y, z, STONE);
+                //setBlockAt(x, y, z, STONE);
+                chunk->getBlockType(x, y, z) = STONE;
             }
         }
     }
     // 128 -> height - 1 is DIRT, height is GRASS
-    for(int x = xMin; x < xMax; ++x){
-        for(int z = zMin; z < zMax; ++z){
-            float persistance = 0.4f;
-            int octaves = 4;
-            float greyscale = fbm(x + 0.5f, z + 0.5f, persistance, octaves);
-            int height = mapToHeight(greyscale);
+    float persistance = 0.4f;
+    int octaves = 4;
+    float greyscale;
+    int height;
+    for(int x = 0; x < chunk_dimensions[0]; ++x){
+        for(int z = 0; z < chunk_dimensions[2]; ++z){
+            //greyscale = fbm(x + 0.5f, z + 0.5f, persistance, octaves);
+            greyscale = fbm(x + chunkWorldX + 0.5f, z + chunkWorldZ + 0.5f, persistance, octaves);
+            height = mapToHeight(greyscale);
             for(int y = 128; y < height; ++y){
-                setBlockAt(x, y, z, DIRT);
+                //setBlockAt(x, y, z, DIRT);
+                chunk->getBlockType(x, y, z) = DIRT;
             }
-            setBlockAt(x, height, z, GRASS);
+            //setBlockAt(x, height, z, GRASS);
+            chunk->getBlockType(x, height, z) = GRASS;
         }
     }
+    return chunk;
 }
 
 float Terrain::rand(const glm::vec2 n) const{

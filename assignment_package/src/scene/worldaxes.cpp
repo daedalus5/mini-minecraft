@@ -4,9 +4,9 @@ void WorldAxes::create()
 {
 
     GLuint idx[6] = {0, 1, 2, 3, 4, 5};
-    glm::vec4 pos[6] = {glm::vec4(32,128,32,1), glm::vec4(40,128,32,1),
-                        glm::vec4(32,128,32,1), glm::vec4(32,136,32,1),
-                        glm::vec4(32,128,32,1), glm::vec4(32,128,40,1)};
+    glm::vec4 pos[6] = {glm::vec4(0,128,0,1), glm::vec4(8,128,0,1),
+                        glm::vec4(0,128,0,1), glm::vec4(0,136,0,1),
+                        glm::vec4(0,128,0,1), glm::vec4(0,128,8,1)};
     glm::vec4 col[6] = {glm::vec4(1,0,0,1), glm::vec4(1,0,0,1),
                         glm::vec4(0,1,0,1), glm::vec4(0,1,0,1),
                         glm::vec4(0,0,1,1), glm::vec4(0,0,1,1)};

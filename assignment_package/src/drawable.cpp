@@ -2,8 +2,9 @@
 #include <la.h>
 
 Drawable::Drawable(OpenGLContext* context)
-    : bufIdx(), bufPos(), bufNor(), bufCol(),
+    : bufIdx(), bufPos(), bufNor(), bufCol(), bufEve(),
       idxBound(false), posBound(false), norBound(false), colBound(false),
+      eveBound(false),
       context(context)
 {}
 
@@ -71,6 +72,13 @@ void Drawable::generateCol()
     }
 }
 
+void Drawable::generateEve() {
+    if (!eveBound) {
+        eveBound = true;
+        context->glGenBuffers(1, &bufEve);
+    }
+}
+
 bool Drawable::bindIdx()
 {
     if(idxBound) {
@@ -101,4 +109,11 @@ bool Drawable::bindCol()
         context->glBindBuffer(GL_ARRAY_BUFFER, bufCol);
     }
     return colBound;
+}
+
+bool Drawable::bindEve() {
+    if (eveBound) {
+        context->glBindBuffer(GL_ARRAY_BUFFER, bufEve);
+    }
+    return eveBound;
 }

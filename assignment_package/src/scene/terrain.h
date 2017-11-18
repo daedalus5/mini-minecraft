@@ -40,9 +40,7 @@ public:
     void create() override;
     GLenum drawMode() override;
 
-    void createVBO(std::vector<glm::vec4> &positions,
-                      std::vector<glm::vec4> &normals,
-                      std::vector<glm::vec4> &colors,
+    void createVBO(std::vector<glm::vec4> &everything,
                       std::vector<GLuint> &indices);
 
 private:
@@ -59,7 +57,8 @@ public:
                                                            // efficient system of storing terrain.
 
     void CreateTestScene();
-    void CreateHighland(int x, int z);      // a Scottish "highland"
+    // Returns whether a Chunk was made
+    Chunk* CreateHighland(int x, int z);      // a Scottish "highland"
 
     glm::ivec3 dimensions;
     glm::ivec3 chunk_dimensions;
@@ -70,15 +69,12 @@ public:
                                                            // values) set the block at that point in space to the
                                                            // given type.
 
-    // Maps Chunk Position to the Chunk
-    // Chunk Position obtained through getChunkPosition
-    std::unordered_map<glm::ivec2, Chunk*, KeyFuncs, KeyFuncs> chunk_map;
-
     Chunk* getChunk(int x, int z) const;
+    int getChunkPosition1D(int x) const;
 
     // Does almost same as setBlockAt, but also updates VBO
     void addBlockAt(int x, int y, int z, BlockType t);
-    void destroyBlockAt(int x, int y, int z);
+    //void destroyBlockAt(int x, int y, int z);
 
     // Updates a single Chunk's VBO
     // x and z are world space coordinates that belong in the Chunk
@@ -87,18 +83,25 @@ public:
     // Used during game initialization
     void updateAllVBO();
 
+    uint64_t convertToInt(int x, int z) const;
+    void splitInt(uint64_t in, int* x, int* z) const;
+
 private:
 
     OpenGLContext* context; // To pass on to Chunks
     std::map<BlockType, glm::vec4> color_map; // Map of BlockType to a color
 
+    // Maps Chunk Position to the Chunk
+    // Chunk Position obtained through getChunkPosition
+    std::unordered_map<uint64_t, Chunk*> chunk_map;
+
     // Adds a square to the VBOs
     void addSquare(glm::vec3 *pos, glm::vec4 *normal, glm::vec4 *color,
                    glm::vec4 *squareStart,
-                   std::vector<glm::vec4>* positions,
-                   std::vector<glm::vec4>* normals,
-                   std::vector<glm::vec4>* colors,
+                   std::vector<glm::vec4>* everything,
                    std::vector<GLuint>* indices);
+
+    int getChunkLocalPosition1D(int x) const;
 
 
     // Converts global x, z to which Chunk those coordinates are in

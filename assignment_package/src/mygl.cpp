@@ -5,6 +5,8 @@
 #include <QApplication>
 #include <QKeyEvent>
 
+#include <set>
+
 
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
@@ -137,8 +139,8 @@ void MyGL::paintGL()
     GLDrawScene();
 
     glDisable(GL_DEPTH_TEST);
-    //mp_progFlat->setModelMatrix(glm::mat4());
-    //mp_progFlat->draw(*mp_worldAxes);
+    mp_progFlat->setModelMatrix(glm::mat4());
+    mp_progFlat->draw(*mp_worldAxes);
 
     mp_progFlat->setViewProjMatrix(glm::mat4());
     mp_progFlat->draw(*mp_crosshairs);
@@ -147,60 +149,47 @@ void MyGL::paintGL()
 
 void MyGL::GLDrawScene()
 {
-            /*
-    for(int x = 0; x < mp_terrain->dimensions.x; ++x)
-    {
-        for(int y = 0; y < mp_terrain->dimensions.y; ++y)
-        {
-            for(int z = 0; z < mp_terrain->dimensions.z; ++z)
-            {
-                BlockType t;
-                if((t = mp_terrain->m_blocks[x][y][z]) != EMPTY)
-                {
-                    switch(t)
-                    {
-                    case DIRT:
-                        mp_progLambert->setGeometryColor(glm::vec4(121.f, 85.f, 58.f, 255.f) / 255.f);
-                        break;
-                    case GRASS:
-                        mp_progLambert->setGeometryColor(glm::vec4(95.f, 159.f, 53.f, 255.f) / 255.f);
-                        break;
-                    case STONE:
-                        mp_progLambert->setGeometryColor(glm::vec4(0.5f));
-                        break;
-                    case LAVA:
-                        mp_progLambert->setGeometryColor(glm::vec4(207.f, 16.f, 32.f, 255.f) / 255.f);
-                        break;
-                    case EMPTY:
-                        break;
-                    }
-                    mp_progLambert->setModelMatrix(glm::translate(glm::mat4(), glm::vec3(x + 0.5f, y + 0.5, z + 0.5f)));
-                    mp_progLambert->draw(*mp_geomCube);
-                }
-                        */
-    glm::vec3 currentPos = mp_camera->eye;
     mp_progLambert->setModelMatrix(glm::mat4());
+    int chunkX = mp_terrain->getChunkPosition1D(mp_camera->eye[0]);
+    int chunkZ = mp_terrain->getChunkPosition1D(mp_camera->eye[2]);
 
-    for (int i = -5; i < 5; i++) {
-        for (int k = -5; k < 5; k++) {
-            glm::ivec2 chunk_world_pos = glm::ivec2(i * 16 + currentPos[0], k * 16 + currentPos[2]);
-            Chunk* ch = mp_terrain->getChunk(chunk_world_pos[0], chunk_world_pos[1]);
+    std::vector<Chunk*> chunks2Draw = std::vector<Chunk*>();
+    std::set<uint64_t> chunks2Update = std::set<uint64_t>();
+
+    int num = 5;
+    int x, z;
+
+    Chunk* ch;
+    for (int i = -num; i < num; i++) {
+        for (int k = -num; k < num; k++) {
+            x = chunkX + i;
+            z = chunkZ + k;
+            ch = mp_terrain->getChunk(x, z);
             if (ch != nullptr) {
-                mp_progLambert->draw(*(ch));
+                chunks2Draw.push_back(ch);
             } else {
-                mp_terrain->CreateHighland(chunk_world_pos[0], chunk_world_pos[1]);
-                mp_terrain->updateChunkVBO(chunk_world_pos[0], chunk_world_pos[1]);
+                chunks2Draw.push_back(mp_terrain->CreateHighland(x, z));
 
-//                mp_terrain->updateChunkVBO(chunk_world_pos[0] + 16, chunk_world_pos[1]);
-//                mp_terrain->updateChunkVBO(chunk_world_pos[0] - 16, chunk_world_pos[1]);
-//                mp_terrain->updateChunkVBO(chunk_world_pos[0], chunk_world_pos[1] + 16);
-//                mp_terrain->updateChunkVBO(chunk_world_pos[0], chunk_world_pos[1] - 16);
+                chunks2Update.insert(mp_terrain->convertToInt(x, z));
 
-                ch = mp_terrain->getChunk(chunk_world_pos[0], chunk_world_pos[1]);
-                mp_progLambert->draw(*(ch));
+                chunks2Update.insert(mp_terrain->convertToInt(x + 1, z));
+                chunks2Update.insert(mp_terrain->convertToInt(x - 1, z));
+                chunks2Update.insert(mp_terrain->convertToInt(x, z + 1));
+                chunks2Update.insert(mp_terrain->convertToInt(x, z - 1));
             }
         }
     }
+
+    int tempX, tempZ;
+    for (uint64_t i : chunks2Update) {
+        mp_terrain->splitInt(i, &tempX, &tempZ);
+        mp_terrain->updateChunkVBO(tempX, tempZ);
+    }
+
+    for (Chunk* ch : chunks2Draw) {
+        mp_progLambert->draw(*ch);
+    }
+
 }
 
 
@@ -282,15 +271,15 @@ void MyGL::destroyBlock(){
                 glm::ivec3 cube = glm::ivec3(eyeCube[0] + i, eyeCube[1] + j, eyeCube[2] + k);
 
                 // make sure cube is within the bounds of the terrain
-                if (cube[0] < 0 || cube[0] > mp_terrain->dimensions.x){
-                    return;
-                }
-                if (cube[1] < 0 || cube[1] > mp_terrain->dimensions.y){
-                    return;
-                }
-                if (cube[2] < 0 || cube[2] > mp_terrain->dimensions.z){
-                    return;
-                }
+//                if (cube[0] < 0 || cube[0] > mp_terrain->dimensions.x){
+//                    return;
+//                }
+//                if (cube[1] < 0 || cube[1] > mp_terrain->dimensions.y){
+//                    return;
+//                }
+//                if (cube[2] < 0 || cube[2] > mp_terrain->dimensions.z){
+//                    return;
+//                }
 
                 float t_near = rayBoxIntersect(cube, look);
                 BlockType b = mp_terrain->getBlockAt(cube[0], cube[1], cube[2]);

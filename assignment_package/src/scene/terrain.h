@@ -37,8 +37,6 @@ public:
     BlockType getBlockType(int x, int y, int z) const;
     BlockType& getBlockType(int x, int y, int z);
 
-    glm::ivec3 chunk_dimensions;
-
     void create() override;
     GLenum drawMode() override;
 
@@ -61,9 +59,10 @@ public:
                                                            // efficient system of storing terrain.
 
     void CreateTestScene();
-    void CreateHighland();      // a Scottish "highland"
+    void CreateHighland(int x, int z);      // a Scottish "highland"
 
     glm::ivec3 dimensions;
+    glm::ivec3 chunk_dimensions;
 
     BlockType getBlockAt(int x, int y, int z) const;       // Given a world-space coordinate (which may have negative
                                                            // values) return the block stored at that point in space.
@@ -94,12 +93,12 @@ private:
     std::map<BlockType, glm::vec4> color_map; // Map of BlockType to a color
 
     // Adds a square to the VBOs
-    void addSquare(glm::vec4 pos, glm::vec4 normal, glm::vec4 color,
-                   glm::vec4 squareStart,
-                   std::vector<glm::vec4>& positions,
-                   std::vector<glm::vec4>& normals,
-                   std::vector<glm::vec4>& colors,
-                   std::vector<GLuint>& indices);
+    void addSquare(glm::vec3 *pos, glm::vec4 *normal, glm::vec4 *color,
+                   glm::vec4 *squareStart,
+                   std::vector<glm::vec4>* positions,
+                   std::vector<glm::vec4>* normals,
+                   std::vector<glm::vec4>* colors,
+                   std::vector<GLuint>* indices);
 
 
     // Converts global x, z to which Chunk those coordinates are in

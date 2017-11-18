@@ -87,11 +87,11 @@ void MyGL::initializeGL()
     glBindVertexArray(vao);
 
 
-    mp_terrain->CreateHighland();
+    //mp_terrain->CreateHighland(-16 * 5, 16 * 5, -16 * 5, 16 * 5);
 
     //mp_terrain->CreateTestScene();
 
-    mp_terrain->updateAllVBO();
+    //mp_terrain->updateAllVBO();
 }
 
 void MyGL::resizeGL(int w, int h)
@@ -137,8 +137,8 @@ void MyGL::paintGL()
     GLDrawScene();
 
     glDisable(GL_DEPTH_TEST);
-    mp_progFlat->setModelMatrix(glm::mat4());
-    mp_progFlat->draw(*mp_worldAxes);
+    //mp_progFlat->setModelMatrix(glm::mat4());
+    //mp_progFlat->draw(*mp_worldAxes);
 
     mp_progFlat->setViewProjMatrix(glm::mat4());
     mp_progFlat->draw(*mp_crosshairs);
@@ -178,13 +178,25 @@ void MyGL::GLDrawScene()
                     mp_progLambert->draw(*mp_geomCube);
                 }
                         */
-    glm::vec4 currentPos = glm::vec4(32, 0, 32, 1);
+    glm::vec3 currentPos = mp_camera->eye;
     mp_progLambert->setModelMatrix(glm::mat4());
 
     for (int i = -5; i < 5; i++) {
         for (int k = -5; k < 5; k++) {
-            Chunk* ch = mp_terrain->getChunk(i * 16 + currentPos[0], k * 16 + currentPos[2]);
+            glm::ivec2 chunk_world_pos = glm::ivec2(i * 16 + currentPos[0], k * 16 + currentPos[2]);
+            Chunk* ch = mp_terrain->getChunk(chunk_world_pos[0], chunk_world_pos[1]);
             if (ch != nullptr) {
+                mp_progLambert->draw(*(ch));
+            } else {
+                mp_terrain->CreateHighland(chunk_world_pos[0], chunk_world_pos[1]);
+                mp_terrain->updateChunkVBO(chunk_world_pos[0], chunk_world_pos[1]);
+
+//                mp_terrain->updateChunkVBO(chunk_world_pos[0] + 16, chunk_world_pos[1]);
+//                mp_terrain->updateChunkVBO(chunk_world_pos[0] - 16, chunk_world_pos[1]);
+//                mp_terrain->updateChunkVBO(chunk_world_pos[0], chunk_world_pos[1] + 16);
+//                mp_terrain->updateChunkVBO(chunk_world_pos[0], chunk_world_pos[1] - 16);
+
+                ch = mp_terrain->getChunk(chunk_world_pos[0], chunk_world_pos[1]);
                 mp_progLambert->draw(*(ch));
             }
         }

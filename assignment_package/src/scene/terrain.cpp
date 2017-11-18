@@ -4,7 +4,8 @@
 
 Terrain::Terrain(OpenGLContext* in_context) : dimensions(64, 256, 64),
     chunk_map(std::unordered_map<glm::ivec2, Chunk*, KeyFuncs, KeyFuncs>()),
-    color_map(std::map<BlockType, glm::vec4>()), context(in_context)
+    color_map(std::map<BlockType, glm::vec4>()), chunk_dimensions(16, 256, 16),
+    context(in_context)
 {
     color_map[GRASS] = glm::vec4(95.f, 159.f, 53.f, 255.f) / 255.f;
     color_map[DIRT] = glm::vec4(121.f, 85.f, 58.f, 255.f) / 255.f;
@@ -14,6 +15,7 @@ Terrain::Terrain(OpenGLContext* in_context) : dimensions(64, 256, 64),
 
 Terrain::~Terrain() {
     for ( auto it = chunk_map.begin(); it != chunk_map.end(); ++it ) {
+        it->second->destroy();
         delete it->second;
     }
 }
@@ -174,44 +176,61 @@ void Terrain::updateChunkVBO(int x, int z) {
     std::vector<GLuint> indices = std::vector<GLuint>();
 
     glm::vec4 x_normal = glm::vec4(1, 0, 0, 0);
+    glm::vec4 x_normal_neg = -x_normal;
     glm::vec4 y_normal = glm::vec4(0, 1, 0, 0);
+    glm::vec4 y_normal_neg = -y_normal;
     glm::vec4 z_normal = glm::vec4(0, 0, 1, 0);
+    glm::vec4 z_normal_neg = -z_normal;
 
-    for (int i = 0; i < ch->chunk_dimensions[0]; i++) {
-        for (int j = 0; j < ch->chunk_dimensions[1]; j++) {
-            for (int k = 0; k < ch->chunk_dimensions[2]; k++) {
+    glm::vec4 start_x = glm::vec4(0.5, 0.5, 0.5, 1);
+    glm::vec4 start__x = glm::vec4(-0.5, 0.5, 0.5, 1);
+    glm::vec4 start_y = glm::vec4(0.5, 0.5, 0.5, 1);
+    glm::vec4 start__y = glm::vec4(0.5, -0.5, 0.5, 1);
+    glm::vec4 start_z = glm::vec4(0.5, 0.5, 0.5, 1);
+    glm::vec4 start__z = glm::vec4(0.5, 0.5, -0.5, 1);
+
+    for (int i = 0; i < chunk_dimensions[0]; i++) {
+        for (int j = 0; j < chunk_dimensions[1]; j++) {
+            for (int k = 0; k < chunk_dimensions[2]; k++) {
 
                 BlockType block = ch->getBlockType(i, j, k);
 
                 if (block != EMPTY) {
 
-                    glm::vec4 world_pos = glm::vec4(i, j, k, 1)
-                            + glm::vec4(chunk_pos[0] * ch->chunk_dimensions[0], 0, chunk_pos[1] * ch->chunk_dimensions[2], 0);
+                    glm::vec3 world_pos = glm::vec3(i, j, k)
+                            + glm::vec3(chunk_pos[0] * chunk_dimensions[0], 0, chunk_pos[1] * chunk_dimensions[2]);
 
-                    glm::vec4 col = color_map[block];
+                    glm::vec4 col;
+                    auto index = color_map.find(block);
+                    if (index == color_map.end()) {
+                        break;
+                    } else {
+                        col = index->second;
+                    }
+
 
                     // Check neighboring x
                     if (getBlockAt(world_pos[0] + 1, world_pos[1], world_pos[2]) == EMPTY) {
-                        addSquare(world_pos, x_normal, col, glm::vec4(0.5, 0.5, 0.5, 1), positions, normals, colors, indices);
+                        addSquare(&world_pos, &x_normal, &col, &start_x, &positions, &normals, &colors, &indices);
                     }
                     if (getBlockAt(world_pos[0] - 1, world_pos[1], world_pos[2]) == EMPTY) {
-                        addSquare(world_pos, -x_normal, col, glm::vec4(-0.5, 0.5, 0.5, 1), positions, normals, colors, indices);
+                        addSquare(&world_pos, &x_normal_neg, &col, &start__x, &positions, &normals, &colors, &indices);
                     }
 
                     // Check neighboring y
                     if (getBlockAt(world_pos[0], world_pos[1] + 1, world_pos[2]) == EMPTY) {
-                        addSquare(world_pos, y_normal, col, glm::vec4(0.5, 0.5, 0.5, 1), positions, normals, colors, indices);
+                        addSquare(&world_pos, &y_normal, &col, &start_y, &positions, &normals, &colors, &indices);
                     }
                     if (getBlockAt(world_pos[0], world_pos[1] - 1, world_pos[2]) == EMPTY) {
-                        addSquare(world_pos, -y_normal, col, glm::vec4(0.5, -0.5, 0.5, 1), positions, normals, colors, indices);
+                        addSquare(&world_pos, &y_normal_neg, &col, &start__y, &positions, &normals, &colors, &indices);
                     }
 
                     // Check neighboring z
                     if (getBlockAt(world_pos[0], world_pos[1], world_pos[2] + 1) == EMPTY) {
-                        addSquare(world_pos, z_normal, col, glm::vec4(0.5, 0.5, 0.5, 1), positions, normals, colors, indices);
+                        addSquare(&world_pos, &z_normal, &col, &start_z, &positions, &normals, &colors, &indices);
                     }
                     if (getBlockAt(world_pos[0], world_pos[1], world_pos[2] - 1) == EMPTY) {
-                        addSquare(world_pos, -z_normal, col, glm::vec4(0.5, 0.5, -0.5, 1), positions, normals, colors, indices);
+                        addSquare(&world_pos, &z_normal_neg, &col, &start__z, &positions, &normals, &colors, &indices);
                     }
                 }
 
@@ -227,34 +246,37 @@ void Terrain::updateAllVBO() {
     }
 }
 
-void Terrain::addSquare(glm::vec4 pos, glm::vec4 normal, glm::vec4 color,
-                      glm::vec4 squareStart,
-                      std::vector<glm::vec4> &positions,
-                      std::vector<glm::vec4> &normals,
-                      std::vector<glm::vec4> &colors,
-                      std::vector<GLuint> &indices) {
+void Terrain::addSquare(glm::vec3* pos, glm::vec4* normal, glm::vec4* color,
+                      glm::vec4* squareStart,
+                      std::vector<glm::vec4> *positions,
+                      std::vector<glm::vec4> *normals,
+                      std::vector<glm::vec4> *colors,
+                      std::vector<GLuint> *indices) {
 
     // grab size of positions
-    int index = positions.size();
+    int index = positions->size();
+    glm::vec3 offset = glm::vec3(0.5, 0.5, 0.5);
+    glm::vec3 normal3 = glm::vec3(*normal);
 
     for (int k = 0; k < 4; k++) {
         // Rotate by 90 degrees 4 times
         // Push them into positions vector
         // Push normals
         // Push colors
-        positions.push_back(glm::translate(glm::mat4(), glm::vec3(pos) + glm::vec3(0.5, 0.5, 0.5))
-                            * glm::rotate(glm::mat4(), glm::radians(90.f * k), glm::vec3(normal))
-                            * squareStart);
-        normals.push_back(normal);
-        colors.push_back(color);
+        positions->push_back(glm::translate(glm::mat4(), *pos + offset)
+                            * glm::rotate(glm::mat4(), glm::radians(90.f * k), normal3)
+                            * *squareStart);
+
+        normals->push_back(*normal);
+        colors->push_back(*color);
     }
     // Push indices
-    indices.push_back(index);
-    indices.push_back(index + 1);
-    indices.push_back(index + 2);
-    indices.push_back(index);
-    indices.push_back(index + 2);
-    indices.push_back(index + 3);
+    indices->push_back(index);
+    indices->push_back(index + 1);
+    indices->push_back(index + 2);
+    indices->push_back(index);
+    indices->push_back(index + 2);
+    indices->push_back(index + 3);
 
 }
 
@@ -263,7 +285,7 @@ void Terrain::addSquare(glm::vec4 pos, glm::vec4 normal, glm::vec4 color,
 // CHUNK START
 
 Chunk::Chunk(OpenGLContext* context)
-    : Drawable(context), chunk_dimensions(16, 256, 16), block_array({EMPTY})
+    : Drawable(context), block_array({EMPTY})
 {
 }
 
@@ -315,18 +337,24 @@ GLenum Chunk::drawMode()
     return GL_TRIANGLES;
 }
 
-void Terrain::CreateHighland(){
+void Terrain::CreateHighland(int worldX, int worldZ) {
+    glm::ivec2 chunk_pos = getChunkPosition(worldX, worldZ);
+    int xMin = chunk_pos[0] * chunk_dimensions[0];
+    int xMax = xMin + 16;
+    int zMin = chunk_pos[1] * chunk_dimensions[2];
+    int zMax = zMin + 16;
+
     // 0 -> 127 is STONE
-    for(int x = 0; x < 64; ++x){
-        for(int z = 0; z < 64; ++z){
+    for(int x = xMin; x < xMax; ++x){
+        for(int z = zMin; z < zMax; ++z){
             for(int y = 0; y < 128; ++y){
                 setBlockAt(x, y, z, STONE);
             }
         }
     }
     // 128 -> height - 1 is DIRT, height is GRASS
-    for(int x = 0; x < 64; ++x){
-        for(int z = 0; z < 64; ++z){
+    for(int x = xMin; x < xMax; ++x){
+        for(int z = zMin; z < zMax; ++z){
             float persistance = 0.4f;
             int octaves = 4;
             float greyscale = fbm(x + 0.5f, z + 0.5f, persistance, octaves);

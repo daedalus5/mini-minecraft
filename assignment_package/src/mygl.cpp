@@ -139,8 +139,8 @@ void MyGL::paintGL()
     GLDrawScene();
 
     glDisable(GL_DEPTH_TEST);
-    mp_progFlat->setModelMatrix(glm::mat4());
-    mp_progFlat->draw(*mp_worldAxes);
+    //mp_progFlat->setModelMatrix(glm::mat4());
+    //mp_progFlat->draw(*mp_worldAxes);
 
     mp_progFlat->setViewProjMatrix(glm::mat4());
     mp_progFlat->draw(*mp_crosshairs);

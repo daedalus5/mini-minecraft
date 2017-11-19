@@ -11,6 +11,8 @@
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
+#include<player.h>
+#include<QDateTime>
 
 
 class MyGL : public OpenGLContext
@@ -26,7 +28,11 @@ private:
                 // Don't worry too much about this. Just know it is necessary in order to render geometry.
 
     Camera* mp_camera;
+    Player* mp_player; // Instance of Player
     Terrain* mp_terrain;
+    quint64 time; // this holds the milliseconds value of Time since Epoch, i.e. time since January 1, 1970
+    quint64 dt; // time elapsed since last timerUpdate()
+
 
     /// Timer linked to timerUpdate(). Fires approx. 60 times per second
     QTimer timer;
@@ -48,6 +54,10 @@ public:
 
 protected:
     void keyPressEvent(QKeyEvent *e);
+    void keyReleaseEvent(QKeyEvent *r);
+    void mouseMoveEvent(QMouseEvent *m);
+    void mousePressEvent(QMouseEvent *mp);
+    void mouseReleaseEvent(QMouseEvent *event);
 
 private slots:
     /// Slot that gets called ~60 times per second

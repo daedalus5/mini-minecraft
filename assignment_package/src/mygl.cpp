@@ -4,13 +4,14 @@
 #include <iostream>
 #include <QApplication>
 #include <QKeyEvent>
+#include<QDateTime>
 
 
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       mp_geomCube(new Cube(this)), mp_worldAxes(new WorldAxes(this)),
       mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),
-      mp_camera(new Camera()), mp_terrain(new Terrain())
+      mp_camera(new Camera()), mp_terrain(new Terrain()),mp_player(new Player(mp_camera))
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
@@ -19,7 +20,7 @@ MyGL::MyGL(QWidget *parent)
     setFocusPolicy(Qt::ClickFocus);
 
     setMouseTracking(true); // MyGL will track the mouse's movements even if a mouse button is not pressed
-    setCursor(Qt::BlankCursor); // Make the cursor invisible
+   // setCursor(Qt::BlankCursor); // Make the cursor invisible
 }
 
 MyGL::~MyGL()
@@ -92,8 +93,8 @@ void MyGL::resizeGL(int w, int h)
 {
     //This code sets the concatenated view and perspective projection matrices used for
     //our scene's camera view.
-    *mp_camera = Camera(w, h, glm::vec3(mp_terrain->dimensions.x, mp_terrain->dimensions.y * 0.75, mp_terrain->dimensions.z),
-                       glm::vec3(mp_terrain->dimensions.x / 2, mp_terrain->dimensions.y / 2, mp_terrain->dimensions.z / 2), glm::vec3(0,1,0));
+    *mp_camera = Camera(w, h, glm::vec3(mp_terrain->dimensions.x, mp_terrain->dimensions.y * 0.60, mp_terrain->dimensions.z),
+                       glm::vec3(mp_terrain->dimensions.x / 2, mp_terrain->dimensions.y*0.60, mp_terrain->dimensions.z / 2), glm::vec3(0,1,0));
     glm::mat4 viewproj = mp_camera->getViewProj();
 
     // Upload the view-projection matrix to our shaders (i.e. onto the graphics card)
@@ -109,7 +110,23 @@ void MyGL::resizeGL(int w, int h)
 // We're treating MyGL as our game engine class, so we're going to use timerUpdate
 void MyGL::timerUpdate()
 {
+
+     //obtains number of milliseconds elapsed since January 1, 1970
+    dt = QDateTime::currentMSecsSinceEpoch() - time; //calculates dt, the change in time since the last timerUpdate
+    if(mp_player->controllerState == true) // reads if the player is recieving input from the controller, then proceeds to pass it dt and cause it to change
+                                           // its attributes like position, velocity, etc.
+    {
+        mp_player->updateTime(dt);
+        mp_player->updateCameraOrientation();
+        mp_player->updateAttributes();
+        mp_player->playerGeometry();
+    }
+    time = QDateTime::currentMSecsSinceEpoch();
+
     update();
+
+
+
 }
 
 // This function is called whenever update() is called.
@@ -163,8 +180,9 @@ void MyGL::GLDrawScene()
 }
 
 
-void MyGL::keyPressEvent(QKeyEvent *e)
+void MyGL::keyPressEvent(QKeyEvent *e) // triggered when key is pressed
 {
+    mp_player->keyPressState(e);
 
     float amount = 2.0f;
     if(e->modifiers() & Qt::ShiftModifier){
@@ -175,7 +193,7 @@ void MyGL::keyPressEvent(QKeyEvent *e)
     // statement were used, but I really dislike their
     // syntax so I chose to be lazy and use a long
     // chain of if statements instead
-    if (e->key() == Qt::Key_Escape) {
+   /*if (e->key() == Qt::Key_Escape) {
         QApplication::quit();
     } else if (e->key() == Qt::Key_Right) {
         mp_camera->RotateAboutUp(-amount);
@@ -191,6 +209,7 @@ void MyGL::keyPressEvent(QKeyEvent *e)
         mp_camera->fovy -= amount;
     } else if (e->key() == Qt::Key_W) {
         mp_camera->TranslateAlongLook(amount);
+
     } else if (e->key() == Qt::Key_S) {
         mp_camera->TranslateAlongLook(-amount);
     } else if (e->key() == Qt::Key_D) {
@@ -205,4 +224,33 @@ void MyGL::keyPressEvent(QKeyEvent *e)
         *mp_camera = Camera(this->width(), this->height());
     }
     mp_camera->RecomputeAttributes();
+    */
+}
+
+void MyGL::keyReleaseEvent(QKeyEvent *r) // triggered when key is released
+{
+    mp_player->keyReleaseState(r);
+
+}
+void MyGL::mouseMoveEvent(QMouseEvent *m) // triggered at mouse movement
+{
+
+
+
+    if(m->x()>width()||m->y()<height())
+    {
+       // MoveMouseToCenter();
+    }
+     mp_player->mouseMoveState(m);
+
+}
+void MyGL::mousePressEvent(QMouseEvent *mp) //triggered when mousebutton is pressed
+{
+    mp_player->mousePressState(mp);
+
+}
+
+void MyGL::mouseReleaseEvent(QMouseEvent *mr)// triggered when mousebutton is released
+{
+    mp_player->mouseReleaseState(mr);
 }

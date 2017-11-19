@@ -191,7 +191,9 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
 }
 void Player::mouseMoveState(QMouseEvent *m)
 {
-    mouseOrientFlag = true;
+    if((m->x()!=mouseX)||(m->y()!=mouseY))
+    {
+        mouseOrientFlag = true;
 
 
 
@@ -206,6 +208,10 @@ void Player::mouseMoveState(QMouseEvent *m)
     mouseX = m->x();
     mouseY = m->y();
 
+
+}
+    else
+        mouseOrientFlag = false;
 }
 
 void Player::mousePressState(QMouseEvent *m)

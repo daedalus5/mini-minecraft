@@ -88,10 +88,7 @@ void MyGL::initializeGL()
 //    vao.bind();
     glBindVertexArray(vao);
 
-
-    //mp_terrain->CreateHighland(-16 * 5, 16 * 5, -16 * 5, 16 * 5);
-
-    //mp_terrain->CreateTestScene();
+    mp_terrain->setTerrainType(new Highland);
 
     //mp_terrain->updateAllVBO();
 }
@@ -139,7 +136,7 @@ void MyGL::paintGL()
     GLDrawScene();
 
     glDisable(GL_DEPTH_TEST);
-    //mp_progFlat->setModelMatrix(glm::mat4());
+    mp_progFlat->setModelMatrix(glm::mat4());
     //mp_progFlat->draw(*mp_worldAxes);
 
     mp_progFlat->setViewProjMatrix(glm::mat4());
@@ -173,7 +170,7 @@ void MyGL::GLDrawScene()
             if (ch != nullptr) {
                 chunks2Draw.push_back(ch);
             } else {
-                chunks2Draw.push_back(mp_terrain->CreateHighland(x, z));
+                chunks2Draw.push_back(mp_terrain->createScene(x, z));
 
                 chunks2Update.insert(mp_terrain->convertToInt(x, z));
 
@@ -275,17 +272,6 @@ void MyGL::destroyBlock(){
                     continue;
                 }
                 glm::ivec3 cube = glm::ivec3(eyeCube[0] + i, eyeCube[1] + j, eyeCube[2] + k);
-
-                // make sure cube is within the bounds of the terrain
-//                if (cube[0] < 0 || cube[0] > mp_terrain->dimensions.x){
-//                    return;
-//                }
-//                if (cube[1] < 0 || cube[1] > mp_terrain->dimensions.y){
-//                    return;
-//                }
-//                if (cube[2] < 0 || cube[2] > mp_terrain->dimensions.z){
-//                    return;
-//                }
 
                 float t_near = rayBoxIntersect(cube, look);
                 BlockType b = mp_terrain->getBlockAt(cube[0], cube[1], cube[2]);

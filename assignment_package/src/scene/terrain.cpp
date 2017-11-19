@@ -376,9 +376,6 @@ void Terrain::splitInt(uint64_t in, int *x, int *z) const {
 // Given which Chunk to create
 // Make the highland terrain for that Chunk
 Chunk* Terrain::CreateHighland(int chunkX, int chunkZ) {
-    //glm::ivec2 chunk_pos = getChunkPosition(worldX, worldZ);
-    //uint64_t chunk_pos = convertToInt(worldX, worldZ);
-    //Chunk* chunk = getChunk(chunkX, chunkZ);
 
     // If Chunk already exists, no need to make it again
     auto index = chunk_map.find(convertToInt(chunkX, chunkZ));

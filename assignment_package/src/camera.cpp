@@ -2,18 +2,22 @@
 
 #include <la.h>
 #include <iostream>
+#include<math.h>
 
 
 Camera::Camera():
     Camera(400, 400)
 {
+
     look = glm::vec3(0,0,-1);
     up = glm::vec3(0,1,0);
     right = glm::vec3(1,0,0);
+    phi = 0;
+
 }
 
 Camera::Camera(unsigned int w, unsigned int h):
-    Camera(w, h, glm::vec3(0,0,10), glm::vec3(0,0,0), glm::vec3(0,1,0))
+    Camera(w, h, glm::vec3(0,0,10), glm::vec3(0,10,0), glm::vec3(0,1,0))
 {}
 
 Camera::Camera(unsigned int w, unsigned int h, const glm::vec3 &e, const glm::vec3 &r, const glm::vec3 &worldUp):
@@ -25,6 +29,7 @@ Camera::Camera(unsigned int w, unsigned int h, const glm::vec3 &e, const glm::ve
     eye(e),
     ref(r),
     world_up(worldUp)
+
 {
     RecomputeAttributes();
 }
@@ -58,6 +63,12 @@ void Camera::RecomputeAttributes()
     aspect = width/height;
     V = up*len*tan_fovy;
     H = right*len*aspect*tan_fovy;
+    straight = glm::cross(world_up,right);
+    straight = glm::normalize(straight);
+
+
+
+
 }
 
 glm::mat4 Camera::getViewProj()
@@ -67,7 +78,8 @@ glm::mat4 Camera::getViewProj()
 
 void Camera::RotateAboutUp(float deg)
 {
-    glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(deg), up);
+    glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(deg), world_up);
+
     ref = ref - eye;
     ref = glm::vec3(rotation * glm::vec4(ref, 1));
     ref = ref + eye;
@@ -75,11 +87,22 @@ void Camera::RotateAboutUp(float deg)
 }
 void Camera::RotateAboutRight(float deg)
 {
-    glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(deg), right);
+    if((phi+deg<45)&&(phi+deg>-45))
+    {
+    phi = phi+deg;
+
+
+
+   glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(deg), right);
+
+
     ref = ref - eye;
     ref = glm::vec3(rotation * glm::vec4(ref, 1));
     ref = ref + eye;
+
     RecomputeAttributes();
+    }
+
 }
 
 void Camera::TranslateAlongLook(float amt)

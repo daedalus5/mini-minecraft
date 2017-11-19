@@ -11,6 +11,8 @@
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
+#include<player.h>
+#include<QDateTime>
 
 struct ray{
     glm::vec3 orig;
@@ -30,8 +32,15 @@ private:
                 // Don't worry too much about this. Just know it is necessary in order to render geometry.
 
     Camera* mp_camera;
+    Player* mp_player; // Instance of Player
     Terrain* mp_terrain;
+
     CrossHairs* mp_crosshairs;
+
+    quint64 time; // this holds the milliseconds value of Time since Epoch, i.e. time since January 1, 1970
+    quint64 dt; // time elapsed since last timerUpdate()
+
+
 
     /// Timer linked to timerUpdate(). Fires approx. 60 times per second
     QTimer timer;
@@ -52,7 +61,14 @@ public:
 
 protected:
     void keyPressEvent(QKeyEvent *e);
-    void mousePressEvent(QMouseEvent *e);
+
+    //void mousePressEvent(QMouseEvent *e);
+
+    void keyReleaseEvent(QKeyEvent *r);
+    void mouseMoveEvent(QMouseEvent *m);
+    void mousePressEvent(QMouseEvent *mp);
+    void mouseReleaseEvent(QMouseEvent *event);
+
 
     void destroyBlock();    // destroys a block within a unit distance of the player
     void createBlock();     // creates a block adjacent to the face of a block the player is pointing at

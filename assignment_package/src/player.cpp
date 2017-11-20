@@ -8,7 +8,7 @@ Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),
 
 
 
-    vertexpositions.push_back(glm::vec3(pos.x+0.5,pos.y+0.5,pos.z+0.5));
+    vertexpositions.push_back(glm::vec3(pos.x+0.5,pos.y+0.5,pos.z+0.5));// Constructs Bounding Box for Player
     vertexpositions.push_back(glm::vec3(pos.x+0.5,pos.y+0.5,pos.z-0.5));
     vertexpositions.push_back(glm::vec3(pos.x-0.5,pos.y+0.5,pos.z-0.5));
     vertexpositions.push_back(glm::vec3(pos.x-0.5,pos.y+0.5,pos.z+0.5));
@@ -26,7 +26,7 @@ Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),
 }
 void Player::updateTime(quint64 dtfromTimer) //player's copy of dt is updated by myGL's timerUpdate()
 {
-    dt = (float)dtfromTimer/1000.f;
+    dt = (float)dtfromTimer/1000.f; //convert dt from milliseconds to seconds
 
 }
 
@@ -102,7 +102,7 @@ void Player::updateCameraOrientation() //updates Camera Orientation according to
 
 }
 
-bool Player::boundingBoxcheck(glm::vec3 box1min, glm::vec3 box1max, glm::vec3 box2min, glm::vec3 box2max )
+bool Player::boundingBoxcheck(glm::vec3 box1min, glm::vec3 box1max, glm::vec3 box2min, glm::vec3 box2max ) // function for testing box-box intersection
 {
 
     if((box1min.x<box2max.x)&&(box2min.x<box1max.x)&&(box1min.y<box2max.y)&&(box2min.y<box1max.y)&&(box1min.z<box2max.z)&&(box2min.z<box1max.z))
@@ -123,7 +123,7 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
     for(int i=0;i<vertexpositions.size();i++)// calculate nextpositions for every player vertex
     {
         nextpositions.push_back(glm::vec3(vertexpositions[i] + velocity * 2.f * dt));
-        //std::cout<<"Getting Nextpos";
+
 
     }
     for(int i=0;i<nextpositions.size();i++)
@@ -131,7 +131,7 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
         if(ptr_to_terrain->getBlockAt(nextpositions[i].x,nextpositions[i].y,nextpositions[i].z) != EMPTY)//check if nextposition has a non-empty block
         {
             flag = 1;
-            //std::cout<<"Gets Block";
+
             return true;
            /* glm::vec3 intersectBoxMin;
             glm::vec3 intersectBoxMax;
@@ -157,9 +157,9 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
     nextpositions.clear();
 
  }
-void Player::gravityCheck()
+void Player::gravityCheck() // implements gravity
 {
-    BlockType a = ptr_to_terrain->getBlockAt(vertexpositions[8].x, vertexpositions[8].y-1, vertexpositions[8].z);
+    BlockType a = ptr_to_terrain->getBlockAt(vertexpositions[8].x, vertexpositions[8].y-1, vertexpositions[8].z); //checks below the bottom vertices of the player's bounding box for ground
     BlockType b = ptr_to_terrain->getBlockAt(vertexpositions[9].x, vertexpositions[9].y-1, vertexpositions[9].z);
     BlockType c = ptr_to_terrain->getBlockAt(vertexpositions[10].x, vertexpositions[10].y-1, vertexpositions[10].z);
     BlockType d = ptr_to_terrain->getBlockAt(vertexpositions[11].x, vertexpositions[11].y-1, vertexpositions[11].z);
@@ -169,7 +169,7 @@ void Player::gravityCheck()
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
 
-        velocity.y = velocity.y - 1.1f;
+        velocity.y = velocity.y - 1.5f; // downward velocity to simulate gravity
 
         bool cldetect = collisionDetect();
         if(cldetect==false)
@@ -308,7 +308,7 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
     }
 
 }
-void Player::mouseMoveState(QMouseEvent *m)
+void Player::mouseMoveState(QMouseEvent *m) //detects change in cursor position. Rotates Camera accordingly
 {
     if((m->x()!=mouseX)||(m->y()!=mouseY))
     {

@@ -127,10 +127,10 @@ void MyGL::timerUpdate()
                                            // its attributes like position, velocity, etc.
     {
 
-        mp_player->updateTime(dt);
+        mp_player->updateTime(dt); //updates player's valuue of dt, converts to seconds
         mp_player->updateCameraOrientation();
-        mp_player->updateAttributes();
-        mp_player->playerGeometry();
+        mp_player->updateAttributes(); // updates player/camera position, velocity, etc
+        mp_player->playerGeometry(); // updates player bounding box and limits
 
     }
     time = QDateTime::currentMSecsSinceEpoch();
@@ -223,43 +223,7 @@ void MyGL::keyPressEvent(QKeyEvent *e) // triggered when key is pressed
     if(e->modifiers() & Qt::ShiftModifier){
         amount = 10.0f;
     }
-    // http://doc.qt.io/qt-5/qt.html#Key-enum
-    // This could all be much more efficient if a switch
-    // statement were used, but I really dislike their
-    // syntax so I chose to be lazy and use a long
-    // chain of if statements instead
-   /*if (e->key() == Qt::Key_Escape) {
-        QApplication::quit();
-    } else if (e->key() == Qt::Key_Right) {
-        mp_camera->RotateAboutUp(-amount);
-    } else if (e->key() == Qt::Key_Left) {
-        mp_camera->RotateAboutUp(amount);
-    } else if (e->key() == Qt::Key_Up) {
-        mp_camera->RotateAboutRight(-amount);
-    } else if (e->key() == Qt::Key_Down) {
-        mp_camera->RotateAboutRight(amount);
-    } else if (e->key() == Qt::Key_1) {
-        mp_camera->fovy += amount;
-    } else if (e->key() == Qt::Key_2) {
-        mp_camera->fovy -= amount;
-    } else if (e->key() == Qt::Key_W) {
-        mp_camera->TranslateAlongLook(amount);
 
-    } else if (e->key() == Qt::Key_S) {
-        mp_camera->TranslateAlongLook(-amount);
-    } else if (e->key() == Qt::Key_D) {
-        mp_camera->TranslateAlongRight(amount);
-    } else if (e->key() == Qt::Key_A) {
-        mp_camera->TranslateAlongRight(-amount);
-    } else if (e->key() == Qt::Key_Q) {
-        mp_camera->TranslateAlongUp(-amount);
-    } else if (e->key() == Qt::Key_E) {
-        mp_camera->TranslateAlongUp(amount);
-    } else if (e->key() == Qt::Key_R) {
-        *mp_camera = Camera(this->width(), this->height());
-    }
-    mp_camera->RecomputeAttributes();
-    */
 }
 
 void MyGL::keyReleaseEvent(QKeyEvent *r) // triggered when key is released

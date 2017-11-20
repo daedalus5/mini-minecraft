@@ -3,6 +3,8 @@
 #include<la.h>
 #include<camera.h>
 #include <openglcontext.h>
+#include<scene/terrain.h>
+#include<vector>
 
 
 
@@ -15,6 +17,11 @@ private:
     glm::vec3 velocity;
     std::vector<glm::vec3> vertexpositions;
     Camera* ptr_to_cam;
+    Terrain* ptr_to_terrain;
+    glm::vec3 playerMin;
+    glm::vec3 playerMax;
+
+
     int mouseX;
     int dx; // tracks change in cursor's x position
     int mouseY;
@@ -34,6 +41,12 @@ private:
 
     bool aerialState; //Determines if the player is grounded or aerial. If aerial, gravity will pull him down
     Qt::MouseButton mouseButtonPressed;
+    bool collision;
+    glm::vec3 box1min;
+    glm::vec3 box1max;
+    glm::vec3 box2min;
+    glm::vec3 box2max;
+
 
 
 
@@ -42,9 +55,10 @@ private:
 
 
 public:
-    Player(Camera*);
+    Player(Camera*, Terrain*);
     glm::vec2 rotation;
     bool controllerState;// true if player is recieving input from the controller
+    bool mouseState;
 
     void updateTime(quint64);// updates player's dt
     void keyPressState(QKeyEvent *e);// Listener function for WASD and Space presses. sets key flags
@@ -55,7 +69,14 @@ public:
     void updateAttributes();// updates position and velocity. Invoked by myGL's timerUpdate().
     void updateCameraOrientation(); // adjusts camera orientation
     void playerGeometry();
+
     void mouseMoveState(QMouseEvent*);
+    bool collisionDetect();
+    bool boundingBoxcheck(glm::vec3, glm::vec3, glm::vec3, glm::vec3);
+
+
+
+
 
 
 

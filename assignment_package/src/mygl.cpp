@@ -14,7 +14,7 @@ MyGL::MyGL(QWidget *parent)
       mp_geomCube(new Cube(this)), mp_worldAxes(new WorldAxes(this)),
       mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),
       mp_camera(new Camera()), mp_terrain(new Terrain(this)), mp_crosshairs(new CrossHairs(this)),
-      mp_player(new Player(mp_camera))
+      mp_player(new Player(mp_camera, mp_terrain))
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
@@ -99,7 +99,7 @@ void MyGL::resizeGL(int w, int h)
 {
     //This code sets the concatenated view and perspective projection matrices used for
     //our scene's camera view.
-    *mp_camera = Camera(w, h, glm::vec3(mp_terrain->dimensions.x, mp_terrain->dimensions.y * 0.60, mp_terrain->dimensions.z),
+    *mp_camera = Camera(w, h, glm::vec3(mp_terrain->dimensions.x-10.f, mp_terrain->dimensions.y * 0.60, mp_terrain->dimensions.z-10.f),
                        glm::vec3(mp_terrain->dimensions.x / 2, mp_terrain->dimensions.y*0.60, mp_terrain->dimensions.z / 2), glm::vec3(0,1,0));
     glm::mat4 viewproj = mp_camera->getViewProj();
 
@@ -122,13 +122,15 @@ void MyGL::timerUpdate()
 
      //obtains number of milliseconds elapsed since January 1, 1970
     dt = QDateTime::currentMSecsSinceEpoch() - time; //calculates dt, the change in time since the last timerUpdate
-    if(mp_player->controllerState == true) // reads if the player is recieving input from the controller, then proceeds to pass it dt and cause it to change
+    if(mp_player->controllerState == true || mp_player->mouseState==true) // reads if the player is recieving input from the controller, then proceeds to pass it dt and cause it to change
                                            // its attributes like position, velocity, etc.
     {
+
         mp_player->updateTime(dt);
         mp_player->updateCameraOrientation();
         mp_player->updateAttributes();
         mp_player->playerGeometry();
+
     }
     time = QDateTime::currentMSecsSinceEpoch();
 

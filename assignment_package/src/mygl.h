@@ -28,8 +28,9 @@ private:
                 // Don't worry too much about this. Just know it is necessary in order to render geometry.
 
     Camera* mp_camera;
-    Player* mp_player; // Instance of Player
     Terrain* mp_terrain;
+    Player* mp_player; // Instance of Player
+
     quint64 time; // this holds the milliseconds value of Time since Epoch, i.e. time since January 1, 1970
     quint64 dt; // time elapsed since last timerUpdate()
 

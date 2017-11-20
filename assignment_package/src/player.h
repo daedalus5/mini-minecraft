@@ -73,6 +73,7 @@ public:
     void mouseMoveState(QMouseEvent*);
     bool collisionDetect();
     bool boundingBoxcheck(glm::vec3, glm::vec3, glm::vec3, glm::vec3);
+    void gravityCheck();
 
 
 

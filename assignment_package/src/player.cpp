@@ -8,20 +8,20 @@ Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr){
     controllerState = false;
     aerialState = true;
     mouseState = false;
-    vertexpositions.push_back(glm::vec3(pos.x,pos.y,pos.z+0.5));
-    vertexpositions.push_back(glm::vec3(pos.x,pos.y,pos.z-0.5));
-    vertexpositions.push_back(glm::vec3(pos.x-1,pos.y,pos.z-0.5));
-    vertexpositions.push_back(glm::vec3(pos.x-1,pos.y,pos.z+0.5));
+    vertexpositions.push_back(glm::vec3(pos.x+0.5,pos.y+0.5,pos.z+0.5));
+    vertexpositions.push_back(glm::vec3(pos.x+0.5,pos.y+0.5,pos.z-0.5));
+    vertexpositions.push_back(glm::vec3(pos.x-0.5,pos.y+0.5,pos.z-0.5));
+    vertexpositions.push_back(glm::vec3(pos.x-0.5,pos.y+0.5,pos.z+0.5));
 
-    vertexpositions.push_back(glm::vec3(pos.x,pos.y-1,pos.z+0.5));
-    vertexpositions.push_back(glm::vec3(pos.x,pos.y-1,pos.z-0.5));
-    vertexpositions.push_back(glm::vec3(pos.x-1,pos.y-1,pos.z-0.5));
-    vertexpositions.push_back(glm::vec3(pos.x-1,pos.y-1,pos.z+0.5));
+    vertexpositions.push_back(glm::vec3(pos.x+0.5,pos.y-0.5,pos.z+0.5));
+    vertexpositions.push_back(glm::vec3(pos.x+0.5,pos.y-0.5,pos.z-0.5));
+    vertexpositions.push_back(glm::vec3(pos.x-0.5,pos.y-0.5,pos.z-0.5));
+    vertexpositions.push_back(glm::vec3(pos.x-0.5,pos.y-0.5,pos.z+0.5));
 
-    vertexpositions.push_back(glm::vec3(pos.x,pos.y-2,pos.z+0.5));
-    vertexpositions.push_back(glm::vec3(pos.x,pos.y-2,pos.z-0.5));
-    vertexpositions.push_back(glm::vec3(pos.x-1,pos.y-2,pos.z-0.5));
-    vertexpositions.push_back(glm::vec3(pos.x-1,pos.y-2,pos.z+0.5));
+    vertexpositions.push_back(glm::vec3(pos.x+0.5,pos.y-1.5,pos.z+0.5));
+    vertexpositions.push_back(glm::vec3(pos.x+0.5,pos.y-1.5,pos.z-0.5));
+    vertexpositions.push_back(glm::vec3(pos.x-0.5,pos.y-1.5,pos.z-0.5));
+    vertexpositions.push_back(glm::vec3(pos.x-0.5,pos.y-1.5,pos.z+0.5));
 
 }
 void Player::updateTime(quint64 dtfromTimer) //player's copy of dt is updated by myGL's timerUpdate()
@@ -157,6 +157,22 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
     nextpositions.clear();
 
  }
+void Player::gravityCheck()
+{
+    BlockType a = ptr_to_terrain->getBlockAt(vertexpositions[8].x, vertexpositions[8].y-1, vertexpositions[8].z);
+    BlockType b = ptr_to_terrain->getBlockAt(vertexpositions[9].x, vertexpositions[9].y-1, vertexpositions[9].z);
+    BlockType c = ptr_to_terrain->getBlockAt(vertexpositions[10].x, vertexpositions[10].y-1, vertexpositions[10].z);
+    BlockType d = ptr_to_terrain->getBlockAt(vertexpositions[11].x, vertexpositions[11].y-1, vertexpositions[11].z);
+    if((a==EMPTY)&&(b==EMPTY)&&(c==EMPTY)&&(d==EMPTY))
+    {
+        aerialState==true;
+    }
+    else
+       {
+        aerialState = false;
+    }
+
+}
 
 
 
@@ -278,7 +294,27 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
     }
     if(aerialState==true)
     {
-       // velocity.y*=0.075;
+
+
+
+        pos = ptr_to_cam->eye;
+        glm::vec3 prevpos = pos;
+        velocity.y = velocity.y-7.;
+
+        bool cldetect = collisionDetect();
+        if(cldetect==false)
+         {
+            pos = pos + velocity*(float)dt;
+         }
+
+
+
+        glm::vec3 translation1 = pos-prevpos;
+        ptr_to_cam->eye = ptr_to_cam->eye+translation1;
+        ptr_to_cam->ref = ptr_to_cam->ref + translation1;
+
+
+
     }
 
 
@@ -345,20 +381,20 @@ void Player::mouseReleaseState(QMouseEvent *mr)
 void Player::playerGeometry() // constructs bounding box for player
 {
 
-    vertexpositions[0] = glm::vec3(pos.x,pos.y,pos.z+0.5);
-    vertexpositions[1] = glm::vec3(pos.x,pos.y,pos.z-0.5);
-    vertexpositions[2] = glm::vec3(pos.x-1,pos.y,pos.z-0.5);
-    vertexpositions[3] = glm::vec3(pos.x-1,pos.y,pos.z+0.5);
+    vertexpositions[0] = glm::vec3(pos.x+0.5,pos.y+0.5,pos.z+0.5);
+    vertexpositions[1] = glm::vec3(pos.x+0.5,pos.y+0.5,pos.z-0.5);
+    vertexpositions[2] = glm::vec3(pos.x-0.5,pos.y+0.5,pos.z-0.5);
+    vertexpositions[3] = glm::vec3(pos.x-0.5,pos.y+0.5,pos.z+0.5);
 
-    vertexpositions[4] = glm::vec3(pos.x,pos.y-1,pos.z+0.5);
-    vertexpositions[5] = glm::vec3(pos.x,pos.y-1,pos.z-0.5);
-    vertexpositions[6] = glm::vec3(pos.x-1,pos.y-1,pos.z-0.5);
-    vertexpositions[7] = glm::vec3(pos.x-1,pos.y-1,pos.z+0.5);
+    vertexpositions[4] = glm::vec3(pos.x+0.5,pos.y-0.5,pos.z+0.5);
+    vertexpositions[5] = glm::vec3(pos.x+0.5,pos.y-0.5,pos.z-0.5);
+    vertexpositions[6] = glm::vec3(pos.x-0.5,pos.y-0.5,pos.z-0.5);
+    vertexpositions[7] = glm::vec3(pos.x-0.5,pos.y-0.5,pos.z+0.5);
 
-    vertexpositions[8] = glm::vec3(pos.x,pos.y-2,pos.z+0.5);
-    vertexpositions[9] = glm::vec3(pos.x,pos.y-2,pos.z-0.5);
-    vertexpositions[10] = glm::vec3(pos.x-1,pos.y-2,pos.z-0.5);
-    vertexpositions[11] = glm::vec3(pos.x-1,pos.y-2,pos.z+0.5);
+    vertexpositions[8] = glm::vec3(pos.x+0.5,pos.y-1.5,pos.z+0.5);
+    vertexpositions[9] = glm::vec3(pos.x+0.5,pos.y-1.5,pos.z-0.5);
+    vertexpositions[10] = glm::vec3(pos.x-0.5,pos.y-1.5,pos.z-0.5);
+    vertexpositions[11] = glm::vec3(pos.x-0.5,pos.y-1.5,pos.z+0.5);
     box1min = vertexpositions[10];
     box1max = vertexpositions[4];
     box2min = vertexpositions[6];

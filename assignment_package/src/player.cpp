@@ -307,6 +307,31 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
 
     }
 
+    if(aerialState==true)
+    {
+
+
+
+        pos = ptr_to_cam->eye;
+        glm::vec3 prevpos = pos;
+        velocity.y = velocity.y-1.5;
+
+        bool cldetect = collisionDetect();
+        if(cldetect==false)
+         {
+            pos = pos + velocity*(float)dt;
+         }
+
+
+
+        glm::vec3 translation1 = pos-prevpos;
+        ptr_to_cam->eye = ptr_to_cam->eye+translation1;
+        ptr_to_cam->ref = ptr_to_cam->ref + translation1;
+
+
+
+    }
+
 }
 void Player::mouseMoveState(QMouseEvent *m) //detects change in cursor position. Rotates Camera accordingly
 {

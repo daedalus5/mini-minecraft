@@ -1,4 +1,0 @@
-11.13.2017 7:28PM: Discussed FBM sampling with Vasu.
-11.14.2017 7:00PM: Discussed terrain functions with Adam. Specifically, how to hand block information to Connie.
-11.14.2017 8:34PM: Looked up QMouseEvent in Qt documentation.
-11.15.2017 8:03PM: Looked up QMap documentation.

@@ -23,7 +23,7 @@ MyGL::MyGL(QWidget *parent)
     setFocusPolicy(Qt::ClickFocus);
 
     setMouseTracking(true); // MyGL will track the mouse's movements even if a mouse button is not pressed
-   // setCursor(Qt::BlankCursor); // Make the cursor invisible
+    setCursor(Qt::BlankCursor); // Make the cursor invisible
 }
 
 MyGL::~MyGL()
@@ -316,7 +316,7 @@ void MyGL::destroyBlock(){
 
     // consider surrounding 26 cubes
     for(int i = -1; i < 2; ++i){
-        for(int j = -1; j < 2; ++j){
+        for(int j = -2; j < 2; ++j){
             for(int k = -1; k < 2; ++k){
                 if(i == 0 && j == 0 && k == 0){ // don't consider cube at eye position
                     continue;

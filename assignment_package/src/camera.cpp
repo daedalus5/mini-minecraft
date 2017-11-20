@@ -87,7 +87,7 @@ void Camera::RotateAboutUp(float deg)
 }
 void Camera::RotateAboutRight(float deg)
 {
-    if((phi+deg<45)&&(phi+deg>-45))
+    if((phi+deg<75)&&(phi+deg>-75))
     {
     phi = phi+deg;
 

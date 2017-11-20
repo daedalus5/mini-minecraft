@@ -299,7 +299,7 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
 
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
-        velocity.y = velocity.y-7.;
+        velocity.y = velocity.y-1.5;
 
         bool cldetect = collisionDetect();
         if(cldetect==false)

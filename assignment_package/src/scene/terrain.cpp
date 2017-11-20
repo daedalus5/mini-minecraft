@@ -2,8 +2,7 @@
 
 Chunk::Chunk(OpenGLContext* context)
     : Drawable(context), block_array({EMPTY})
-{
-}
+{}
 
 BlockType Chunk::getBlockType(int x, int y, int z) const {
     return block_array[x + 16 * y + 4096 * z];
@@ -43,9 +42,12 @@ GLenum Chunk::drawMode()
 // **********************************************************************************************
 // TERRAIN START
 
-Terrain::Terrain(OpenGLContext* in_context) : dimensions(64, 256, 64),
+Terrain::Terrain(OpenGLContext* in_context) :
+    terrainType(nullptr),
+    dimensions(64, 256, 64),
+    chunk_dimensions(16, 256, 16),
     chunk_map(std::unordered_map<uint64_t, Chunk*>()),
-    color_map(std::map<BlockType, glm::vec4>()), chunk_dimensions(16, 256, 16),
+    color_map(std::map<BlockType, glm::vec4>()),
     context(in_context),
     x_normal(glm::vec4(1, 0, 0, 0)),
     x_normal_neg(-x_normal),
@@ -72,6 +74,7 @@ Terrain::~Terrain() {
         it->second->destroy();
         delete it->second;
     }
+    delete terrainType;
 }
 
 BlockType Terrain::getBlockAt(int x, int y, int z) const
@@ -104,51 +107,6 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
         ch = chunk_map[chunk_pos];
     }
     ch->getBlockType(getChunkLocalPosition1D(x), y, getChunkLocalPosition1D(z)) = t;
-}
-
-void Terrain::CreateTestScene()
-{
-    // Create the basic terrain floor
-    for(int x = 0; x < 64; ++x)
-    {
-        for(int z = 0; z < 64; ++z)
-        {
-            for(int y = 127; y < 256; ++y)
-            {
-                if(y <= 128)
-                {
-                    if((x + z) % 2 == 0)
-                    {
-                        setBlockAt(x, y, z, STONE);
-                    }
-                    else
-                    {
-                        setBlockAt(x, y, z, DIRT);
-                    }
-                }
-                else
-                {
-                    setBlockAt(x, y, z, EMPTY);
-                }
-            }
-
-            for (int y = 0; y < 127; y++) {
-                setBlockAt(x, y, z, EMPTY);
-            }
-        }
-    }
-    // Add "walls" for collision testing
-    for(int x = 0; x < 64; ++x)
-    {
-        setBlockAt(x, 129, 0, GRASS);
-        setBlockAt(x, 130, 0, GRASS);
-        setBlockAt(x, 129, 63, GRASS);
-        setBlockAt(0, 130, x, GRASS);
-    }
-    for(int y = 129; y < 140; ++y)
-    {
-        setBlockAt(32, y, 32, GRASS);
-    }
 }
 
 void Terrain::addBlockAt(int x, int y, int z, BlockType t) {
@@ -375,8 +333,7 @@ void Terrain::splitInt(uint64_t in, int *x, int *z) const {
 
 // Given which Chunk to create
 // Make the highland terrain for that Chunk
-Chunk* Terrain::CreateHighland(int chunkX, int chunkZ) {
-
+Chunk* Terrain::createScene(int chunkX, int chunkZ) {
     // If Chunk already exists, no need to make it again
     auto index = chunk_map.find(convertToInt(chunkX, chunkZ));
     if (index != chunk_map.end()) {
@@ -399,15 +356,15 @@ Chunk* Terrain::CreateHighland(int chunkX, int chunkZ) {
         }
     }
     // 128 -> height - 1 is DIRT, height is GRASS
-    float persistance = 0.4f;
-    int octaves = 4;
+    float persistance = terrainType->getPersistance();
+    int octaves = terrainType->getOctaves();
     float greyscale;
     int height;
     for(int x = 0; x < chunk_dimensions[0]; ++x){
         for(int z = 0; z < chunk_dimensions[2]; ++z){
             //greyscale = fbm(x + 0.5f, z + 0.5f, persistance, octaves);
-            greyscale = fbm(x + chunkWorldX + 0.5f, z + chunkWorldZ + 0.5f, persistance, octaves);
-            height = mapToHeight(greyscale);
+            greyscale = terrainType->fbm(x + chunkWorldX + 0.5f, z + chunkWorldZ + 0.5f, persistance, octaves);
+            height = terrainType->mapToHeight(greyscale);
             for(int y = 128; y < height; ++y){
                 //setBlockAt(x, y, z, DIRT);
                 chunk->getBlockType(x, y, z) = DIRT;
@@ -419,12 +376,29 @@ Chunk* Terrain::CreateHighland(int chunkX, int chunkZ) {
     return chunk;
 }
 
-float Terrain::rand(const glm::vec2 n) const{
+void Terrain::setTerrainType(TerrainType *t){
+    delete terrainType;
+    this->terrainType = t;
+}
+
+// TERRAIN END
+// **********************************************************************************************
+// **********************************************************************************************
+// **********************************************************************************************
+// TERRAINTYPE START
+
+TerrainType::TerrainType(int octaves, float persistance, float resolution, float dampen) :
+    octaves(octaves), persistance(persistance), resolution(resolution), dampen(dampen)
+{}
+
+TerrainType::~TerrainType(){}
+
+float TerrainType::rand(const glm::vec2 n) const{
     // return pseudorandom number between -1 and 1
     return (glm::fract(sin(glm::dot(n, glm::vec2(12.9898, 4.1414))) * 43758.5453));
 }
 
-float Terrain::interpNoise2D(const float x, const float z) const{
+float TerrainType::interpNoise2D(const float x, const float z) const{
     float intX = glm::floor(x);
     float fractX = glm::fract(x);
     float intZ = glm::floor(z);
@@ -441,15 +415,14 @@ float Terrain::interpNoise2D(const float x, const float z) const{
     return glm::mix(i1, i2, fractZ);
 }
 
-float Terrain::fbm(const float x, const float z, const float persistance, const int octaves) const{
+float TerrainType::fbm(const float x, const float z, const float persistance, const int octaves) const{
     float total = 0.0f;
-    float c = 20.0f;
 
     for(int i = 0; i < octaves; i++){
         float freq = pow(2.0f, i);
         float amp = pow(persistance, i);
 
-        total += amp * interpNoise2D(x * freq / c, z * freq / c);
+        total += amp * interpNoise2D(x * freq / resolution, z * freq / resolution);
     }
     float a = 1 - persistance;  // normalization
 
@@ -457,9 +430,42 @@ float Terrain::fbm(const float x, const float z, const float persistance, const 
 
 }
 
-int Terrain::mapToHeight(const float val) const{
+int TerrainType::mapToHeight(const float val) const{
     // dampen noise amplitude for flatter terrain
-    float dampen = 0.2;
     // begin noisey terrain at middle map height
     return 128 + glm::floor(val * 128 * dampen);
 }
+
+int TerrainType::getOctaves() const{
+    return octaves;
+}
+
+float TerrainType::getPersistance() const{
+    return persistance;
+}
+
+float TerrainType::getResolution() const{
+    return resolution;
+}
+
+float TerrainType::getDampen() const{
+    return dampen;
+}
+
+// TERRAINTYPE END
+// **********************************************************************************************
+// **********************************************************************************************
+// **********************************************************************************************
+// TERRAINTYPE SUBCLASSES START
+
+Highland::Highland() :
+    TerrainType(4, 0.4f, 20.0f, 0.2f)
+{}
+
+Highland::~Highland(){}
+
+Foothills::Foothills() :
+    TerrainType(4, 0.4f, 25.0f, 0.5f)
+{}
+
+Foothills::~Foothills(){}

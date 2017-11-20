@@ -9,25 +9,12 @@
 // of memory to store our different block types. By default, the size of a C++ enum
 // is that of an int (so, usually four bytes). This *does* limit us to only 256 different
 // block types, but in the scope of this project we'll never get anywhere near that many.
+
+class TerrainType;
+
 enum BlockType : unsigned char
 {
     EMPTY, GRASS, DIRT, STONE, LAVA
-};
-
-// Copied from
-// https://stackoverflow.com/questions/9047612/glmivec2-as-key-in-unordered-map
-// Used for hashing glm::ivec2
-struct KeyFuncs
-{
-    size_t operator()(const glm::ivec2& k) const
-    {
-        return std::hash<int>()(k.x) ^ std::hash<int>()(k.y);
-    }
-
-    bool operator()(const glm::ivec2& a, const glm::ivec2& b) const
-    {
-            return a.x == b.x && a.y == b.y;
-    }
 };
 
 class Chunk : public Drawable
@@ -52,13 +39,10 @@ class Terrain
 public:
     Terrain(OpenGLContext* context);
     ~Terrain();
-    //BlockType m_blocks[64][256][64];                    // A 3D list of the blocks in the world.
-                                                           // You'll need to replace this with a far more
-                                                           // efficient system of storing terrain.
 
-    void CreateTestScene();
-    // Returns whether a Chunk was made
-    Chunk* CreateHighland(int x, int z);      // a Scottish "highland"
+    TerrainType* terrainType;
+    void setTerrainType(TerrainType* t);
+    Chunk* createScene(int x, int z);
 
     glm::ivec3 dimensions;
     glm::ivec3 chunk_dimensions;
@@ -88,18 +72,12 @@ public:
 
 private:
 
-    OpenGLContext* context; // To pass on to Chunks
-    std::map<BlockType, glm::vec4> color_map; // Map of BlockType to a color
-
     // Maps Chunk Position to the Chunk
     // Chunk Position obtained through getChunkPosition
     std::unordered_map<uint64_t, Chunk*> chunk_map;
 
-    // Adds a square to the VBOs
-    void addSquare(glm::vec3 *pos, const glm::vec4 *normal, glm::vec4 *color,
-                   const glm::vec4 *squareStart,
-                   std::vector<glm::vec4>* everything,
-                   std::vector<GLuint>* indices);
+    std::map<BlockType, glm::vec4> color_map; // Map of BlockType to a color
+    OpenGLContext* context; // To pass on to Chunks
 
     // Const variables that are used over and over again in VBO creation
     const glm::vec4 x_normal;
@@ -118,21 +96,61 @@ private:
 
     int getChunkLocalPosition1D(int x) const;
 
+    // Adds a square to the VBOs
+    void addSquare(glm::vec3 *pos, const glm::vec4 *normal, glm::vec4 *color,
+                   const glm::vec4 *squareStart,
+                   std::vector<glm::vec4>* everything,
+                   std::vector<GLuint>* indices);
 
     // Converts global x, z to which Chunk those coordinates are in
     glm::ivec2 getChunkPosition(int x, int z) const;
+
     // Converts global x, y, z coordinates to a local position within Chunk
     // Does not find which Chunk this position belongs to
     glm::ivec3 getChunkLocalPosition(int x, int y, int z) const;
+
+};
+
+class TerrainType{
+public:
+    TerrainType(int octaves, float persistance, float resolution, float dampen);
+    virtual ~TerrainType();
+
+    int getOctaves() const;
+    float getPersistance() const;
+    float getResolution() const;
+    float getDampen() const;
+
+    virtual float fbm(const float x,
+              const float z,
+              const float persistance,
+              const int octaves) const;     // returns a pseudorandom number between 0 and 1 for FBM noise
+    virtual int mapToHeight(const float val) const; // maps [0, 1] -> [128, 255]
+
+protected:
+    int octaves;
+    float persistance;
+    float resolution;
+    float dampen;
 
     // For procedural terrain
     float rand(const glm::vec2 n) const;    // pseudorandom number generator for FBM noise
                                             // returns a pseudorandom value between -1 and 1
     float interpNoise2D(const float x,
                         const float z) const;  // 2D noise interpolation function for smooth FBM noise
-    float fbm(const float x,
-              const float z,
-              const float persistance,
-              const int octaves) const;     // returns a pseudorandom number between 0 and 1 for FBM noise
-    int mapToHeight(const float val) const; // maps [0, 1] -> [128, 255]
 };
+
+class Highland : public TerrainType{
+public:
+    Highland();
+    virtual ~Highland();
+};
+
+class Foothills : public TerrainType{
+public:
+    Foothills();
+    virtual ~Foothills();
+};
+
+
+

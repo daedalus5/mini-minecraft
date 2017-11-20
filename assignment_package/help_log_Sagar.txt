@@ -1,0 +1,11 @@
+Help log
+
+6:30 pm 11/19/2017 Adam helped me identify that the terrain pointer in the player class was null, and helped me fix it.
+
+4:00 pm 11/17/2017 Chloe helped me identify problems with my camera movement, which were occurring due to some flag variables.
+
+12:30 pm 11/18/2017 Hannah helped me figure out how to make my camera movement smoother.
+
+2:30 pm 11/16/2017 Rishabh helped me figure out some of the functions for mouse moevement.
+
+

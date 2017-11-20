@@ -217,6 +217,10 @@ void MyGL::GLDrawScene()
 
 void MyGL::keyPressEvent(QKeyEvent *e) // triggered when key is pressed
 {
+    if(e->key()==Qt::Key_Escape)
+    {
+        QApplication::quit;
+    }
     mp_player->keyPressState(e);
 
     float amount = 1.0f;

@@ -39,20 +39,13 @@ private:
 
     bool isZpressed; //remove upon implementing collision detection
 
-    bool aerialState; //Determines if the player is grounded or aerial. If aerial, gravity will pull him down
+    bool aerialState; //Determines if the player is grounded or aerial. If aerial, gravity will pull him/her down
     Qt::MouseButton mouseButtonPressed;
     bool collision;
     glm::vec3 box1min;
     glm::vec3 box1max;
     glm::vec3 box2min;
     glm::vec3 box2max;
-
-
-
-
-
-
-
 
 public:
     Player(Camera*, Terrain*);
@@ -68,20 +61,12 @@ public:
     void mouseReleaseState(QMouseEvent*);
     void updateAttributes();// updates position and velocity. Invoked by myGL's timerUpdate().
     void updateCameraOrientation(); // adjusts camera orientation
-    void playerGeometry();
+    void playerGeometry();// updates bounding box for player
 
     void mouseMoveState(QMouseEvent*);
-    bool collisionDetect();
+    bool collisionDetect(); //detects collisions
     bool boundingBoxcheck(glm::vec3, glm::vec3, glm::vec3, glm::vec3);
-    void gravityCheck();
-
-
-
-
-
-
-
-
+    void gravityCheck();//implements gravity
 
 };
 

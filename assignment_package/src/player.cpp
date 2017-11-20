@@ -298,9 +298,6 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
          {
             pos = pos + velocity*(float)dt;
          }
-
-
-
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
@@ -309,27 +306,17 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
 
     if(aerialState==true)
     {
-
-
-
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
         velocity.y = velocity.y-1.5;
-
         bool cldetect = collisionDetect();
         if(cldetect==false)
          {
             pos = pos + velocity*(float)dt;
          }
-
-
-
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
-
-
-
     }
 
 }
@@ -338,22 +325,15 @@ void Player::mouseMoveState(QMouseEvent *m) //detects change in cursor position.
     if((m->x()!=mouseX)||(m->y()!=mouseY))
     {
         mouseOrientFlag = true;
-
-
-
-    float currMouseX = m->x();
-    dx = currMouseX - mouseX;
-    rotation.x = (float)dx*0.35f;
-
-
-    float currMouseY = m->y();
-    dy = currMouseY - mouseY;
-    rotation.y = (float)dy*0.35f;
-    mouseX = m->x();
-    mouseY = m->y();
-
-
-}
+        float currMouseX = m->x();
+        dx = currMouseX - mouseX;
+        rotation.x = (float)dx*0.35f;
+        float currMouseY = m->y();
+        dy = currMouseY - mouseY;
+        rotation.y = (float)dy*0.35f;
+        mouseX = m->x();
+        mouseY = m->y();
+    }
     else
         mouseOrientFlag = false;
 }
@@ -370,10 +350,6 @@ void Player::mousePressState(QMouseEvent *m)
     {
         isRMBpressed = true;
     }
-
-
-
-
 }
 
 void Player::mouseReleaseState(QMouseEvent *mr)
@@ -408,7 +384,7 @@ void Player::playerGeometry() // constructs bounding box for player
     vertexpositions[9] = glm::vec3(pos.x+0.5,pos.y-1.5,pos.z-0.5);
     vertexpositions[10] = glm::vec3(pos.x-0.5,pos.y-1.5,pos.z-0.5);
     vertexpositions[11] = glm::vec3(pos.x-0.5,pos.y-1.5,pos.z+0.5);
-    box1min = vertexpositions[10];
+    box1min = vertexpositions[10]; //sets limits for box intersection testing
     box1max = vertexpositions[4];
     box2min = vertexpositions[6];
     box2max = vertexpositions[0];

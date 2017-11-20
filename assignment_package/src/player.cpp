@@ -2,12 +2,12 @@
 #include<QKeyEvent>
 #include<iostream>
 
-Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr){
+Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),controllerState(false),mouseState(false){
 
     pos= ptr_to_cam->eye;
-    controllerState = false;
-    aerialState = true;
-    mouseState = false;
+
+
+
     vertexpositions.push_back(glm::vec3(pos.x+0.5,pos.y+0.5,pos.z+0.5));
     vertexpositions.push_back(glm::vec3(pos.x+0.5,pos.y+0.5,pos.z-0.5));
     vertexpositions.push_back(glm::vec3(pos.x-0.5,pos.y+0.5,pos.z-0.5));
@@ -165,12 +165,26 @@ void Player::gravityCheck()
     BlockType d = ptr_to_terrain->getBlockAt(vertexpositions[11].x, vertexpositions[11].y-1, vertexpositions[11].z);
     if((a==EMPTY)&&(b==EMPTY)&&(c==EMPTY)&&(d==EMPTY))
     {
-        aerialState==true;
+
+        pos = ptr_to_cam->eye;
+        glm::vec3 prevpos = pos;
+
+        velocity.y = velocity.y - 1.1f;
+
+        bool cldetect = collisionDetect();
+        if(cldetect==false)
+         {
+            pos = pos + velocity*(float)dt;
+         }
+
+
+
+        glm::vec3 translation1 = pos-prevpos;
+        ptr_to_cam->eye = ptr_to_cam->eye+translation1;
+        ptr_to_cam->ref = ptr_to_cam->ref + translation1;
+
     }
-    else
-       {
-        aerialState = false;
-    }
+
 
 }
 
@@ -192,7 +206,7 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
         {
             pos = pos + velocity*(float)dt;
         }
-        //std::cout<<"Wpress";
+
 
 
         glm::vec3 translation1 = pos-prevpos;
@@ -292,32 +306,6 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
 
     }
-    if(aerialState==true)
-    {
-
-
-
-        pos = ptr_to_cam->eye;
-        glm::vec3 prevpos = pos;
-        velocity.y = velocity.y-7.;
-
-        bool cldetect = collisionDetect();
-        if(cldetect==false)
-         {
-            pos = pos + velocity*(float)dt;
-         }
-
-
-
-        glm::vec3 translation1 = pos-prevpos;
-        ptr_to_cam->eye = ptr_to_cam->eye+translation1;
-        ptr_to_cam->ref = ptr_to_cam->ref + translation1;
-
-
-
-    }
-
-
 
 }
 void Player::mouseMoveState(QMouseEvent *m)

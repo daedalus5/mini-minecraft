@@ -122,6 +122,7 @@ void MyGL::timerUpdate()
 
      //obtains number of milliseconds elapsed since January 1, 1970
     dt = QDateTime::currentMSecsSinceEpoch() - time; //calculates dt, the change in time since the last timerUpdate
+    mp_player->gravityCheck();
     if(mp_player->controllerState == true || mp_player->mouseState==true) // reads if the player is recieving input from the controller, then proceeds to pass it dt and cause it to change
                                            // its attributes like position, velocity, etc.
     {

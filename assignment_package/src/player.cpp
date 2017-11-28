@@ -252,6 +252,29 @@ void Player::gravityCheck() // implements gravity
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
     }
+    else if(((a==WATER)||(a==LAVA)||(a==EMPTY))&&((b==WATER)||(b==LAVA)||(b==EMPTY))&&((c==WATER)||(c==LAVA)||(d==EMPTY))&&((d==WATER)||(d==LAVA)||(d==EMPTY)))
+    {
+        pos = ptr_to_cam->eye;
+        glm::vec3 prevpos = pos;
+
+        velocity.y = velocity.y - 0.5f; // downward velocity to simulate gravity
+
+        bool cldetect = collisionDetect();
+        if(cldetect==false)
+         {
+            pos = pos + velocity*(float)dt;
+         }
+
+
+
+        glm::vec3 translation1 = pos-prevpos;
+        ptr_to_cam->eye = ptr_to_cam->eye+translation1;
+        ptr_to_cam->ref = ptr_to_cam->ref + translation1;
+
+    }
+
+
+
 
 
 }

@@ -175,17 +175,29 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
  }
 void Player::gravityCheck() // implements gravity
 {
-    BlockType a = ptr_to_terrain->getBlockAt(vertexpositions[8].x, vertexpositions[8].y-1, vertexpositions[8].z); //checks below the bottom vertices of the player's bounding box for ground
-    BlockType b = ptr_to_terrain->getBlockAt(vertexpositions[9].x, vertexpositions[9].y-1, vertexpositions[9].z);
-    BlockType c = ptr_to_terrain->getBlockAt(vertexpositions[10].x, vertexpositions[10].y-1, vertexpositions[10].z);
-    BlockType d = ptr_to_terrain->getBlockAt(vertexpositions[11].x, vertexpositions[11].y-1, vertexpositions[11].z);
+
+        std::vector<glm::vec3>bottompositions;
+    for(int i=8;i<12;i++)
+    {
+         bottompositions.push_back(glm::vec3(vertexpositions[i] + velocity * 2.f * dt));
+    }
+
+    BlockType a = ptr_to_terrain->getBlockAt(bottompositions[0].x,bottompositions[0].y,bottompositions[0].z); //checks below the bottom vertices of the player's bounding box for ground
+    BlockType b = ptr_to_terrain->getBlockAt(bottompositions[1].x,bottompositions[1].y,bottompositions[1].z);
+    BlockType c = ptr_to_terrain->getBlockAt(bottompositions[2].x,bottompositions[2].y,bottompositions[2].z);
+    BlockType d = ptr_to_terrain->getBlockAt(bottompositions[3].x,bottompositions[3].y,bottompositions[3].z);
     if((a==EMPTY)&&(b==EMPTY)&&(c==EMPTY)&&(d==EMPTY))
     {
 
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
 
-        velocity.y = velocity.y - 1.5f; // downward velocity to simulate gravity
+        if(velocity.y>((-1.0f)*50.f))
+        {
+            velocity.y = velocity.y - 1.5f;
+
+        }
+         // downward velocity to simulate gravity
 
         bool cldetect = collisionDetect();
         if(cldetect==false)
@@ -199,6 +211,46 @@ void Player::gravityCheck() // implements gravity
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
 
+    }
+    else if((a==LAVA)&&(b==LAVA)&&(c==LAVA)&&(d==LAVA))
+    {
+
+        pos = ptr_to_cam->eye;
+        glm::vec3 prevpos = pos;
+
+        velocity.y = velocity.y - 0.5f; // downward velocity to simulate gravity
+
+        bool cldetect = collisionDetect();
+        if(cldetect==false)
+         {
+            pos = pos + velocity*(float)dt;
+         }
+
+
+
+        glm::vec3 translation1 = pos-prevpos;
+        ptr_to_cam->eye = ptr_to_cam->eye+translation1;
+        ptr_to_cam->ref = ptr_to_cam->ref + translation1;
+    }
+    else if((a==WATER)&&(b==WATER)&&(c==WATER)&&(d==WATER))
+    {
+
+        pos = ptr_to_cam->eye;
+        glm::vec3 prevpos = pos;
+
+        velocity.y = velocity.y - 0.5f; // downward velocity to simulate gravity
+
+        bool cldetect = collisionDetect();
+        if(cldetect==false)
+         {
+            pos = pos + velocity*(float)dt;
+         }
+
+
+
+        glm::vec3 translation1 = pos-prevpos;
+        ptr_to_cam->eye = ptr_to_cam->eye+translation1;
+        ptr_to_cam->ref = ptr_to_cam->ref + translation1;
     }
 
 

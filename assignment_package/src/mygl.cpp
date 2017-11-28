@@ -33,6 +33,7 @@ MyGL::~MyGL()
     mp_geomCube->destroy();
 
     delete mp_geomCube;
+    delete mp_player;
     delete mp_worldAxes;
     delete mp_progLambert;
     delete mp_progFlat;
@@ -242,7 +243,7 @@ void MyGL::mouseMoveEvent(QMouseEvent *m) // triggered at mouse movement
 
     if(m->x()>width()||m->y()<height())
     {
-       // MoveMouseToCenter();
+       //MoveMouseToCenter();
     }
      mp_player->mouseMoveState(m);
 

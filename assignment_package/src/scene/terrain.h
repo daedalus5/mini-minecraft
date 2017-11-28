@@ -14,7 +14,7 @@ class TerrainType;
 
 enum BlockType : unsigned char
 {
-    EMPTY, GRASS, DIRT, STONE, LAVA
+    EMPTY, GRASS, DIRT, STONE, LAVA, WATER
 };
 
 class Chunk : public Drawable

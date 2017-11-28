@@ -1,16 +1,16 @@
 #include <scene/terrain.h>
 
 Chunk::Chunk(OpenGLContext* context)
-    : Drawable(context), block_array({EMPTY})
+    : Drawable(context)
 {
     // Array in initialization list
     // does not work on Sagar's laptop
-    /*
+
     for(int i=0;i<65536;i++)
     {
         block_array[i] = EMPTY;
     }
-    */
+
 }
 
 BlockType Chunk::getBlockType(int x, int y, int z) const {

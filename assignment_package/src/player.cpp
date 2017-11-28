@@ -117,6 +117,7 @@ bool Player::boundingBoxcheck(glm::vec3 box1min, glm::vec3 box1max, glm::vec3 bo
 bool Player::collisionDetect() // returns true if any of the player vertices faces a potential collision in the next timerUpdate()
 {
     int flag = 0;
+    int velocityFlag = 0;
 
     std::vector<glm::vec3>nextpositions;
 
@@ -128,9 +129,15 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
     }
     for(int i=0;i<nextpositions.size();i++)
     {
-        if(ptr_to_terrain->getBlockAt(nextpositions[i].x,nextpositions[i].y,nextpositions[i].z) != EMPTY)//check if nextposition has a non-empty block
+        BlockType nextblock = ptr_to_terrain->getBlockAt(nextpositions[i].x,nextpositions[i].y,nextpositions[i].z);
+        BlockType currentblock = ptr_to_terrain->getBlockAt(vertexpositions[i].x, vertexpositions[i].y, vertexpositions[i].z);
+        if((ptr_to_terrain->getBlockAt(nextpositions[i].x,nextpositions[i].y,nextpositions[i].z) != EMPTY)&&(ptr_to_terrain->getBlockAt(nextpositions[i].x,nextpositions[i].y,nextpositions[i].z) != WATER)&&(ptr_to_terrain->getBlockAt(nextpositions[i].x,nextpositions[i].y,nextpositions[i].z) != LAVA))//check if nextposition has a non-empty block
         {
+
+
+
             flag = 1;
+
 
             return true;
            /* glm::vec3 intersectBoxMin;
@@ -145,10 +152,19 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
             flag = 1;
             return c;*/
         }
+        if((currentblock==WATER)||(currentblock==LAVA))
+        {
+           velocityFlag = 1;
+
+            }
 
 
 
 
+    }
+    if(velocityFlag==1)
+    {
+        velocity = velocity*0.2323f;
     }
    if(flag==0)
     {
@@ -305,7 +321,7 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
     }
 
     if(aerialState==true)
-    {
+    {/*
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
         velocity.y = velocity.y-1.5;
@@ -317,6 +333,7 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
+        */
     }
 
 }

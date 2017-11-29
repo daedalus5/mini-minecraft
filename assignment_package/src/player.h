@@ -36,7 +36,8 @@ private:
     bool isSpressed;
     bool isDpressed;
     bool isSpacepressed;
-    bool isSandbox;
+
+
 
     bool isQpressed;
 
@@ -49,6 +50,7 @@ private:
     glm::vec3 box2max;
 
 public:
+    bool isSandbox;
     Player(Camera*, Terrain*);
     glm::vec2 rotation;
     bool controllerState;// true if player is recieving input from the controller

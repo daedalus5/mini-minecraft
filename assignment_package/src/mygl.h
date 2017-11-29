@@ -38,6 +38,7 @@ private:
 
     quint64 time; // this holds the milliseconds value of Time since Epoch, i.e. time since January 1, 1970
     quint64 dt; // time elapsed since last timerUpdate()
+    bool isSandbox;
 
 
 
@@ -58,6 +59,7 @@ public:
 
     void GLDrawScene();
 
+
 protected:
     void keyPressEvent(QKeyEvent *e);
 
@@ -77,6 +79,7 @@ protected:
 private slots:
     /// Slot that gets called ~60 times per second
     void timerUpdate();
+
 };
 
 

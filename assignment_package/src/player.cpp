@@ -2,7 +2,7 @@
 #include<QKeyEvent>
 #include<iostream>
 
-Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),controllerState(false),mouseState(false){
+Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),controllerState(false),mouseState(false),isSandbox(false){
 
     pos= ptr_to_cam->eye;
 
@@ -116,7 +116,13 @@ bool Player::boundingBoxcheck(glm::vec3 box1min, glm::vec3 box1max, glm::vec3 bo
 
 bool Player::collisionDetect() // returns true if any of the player vertices faces a potential collision in the next timerUpdate()
 {
-    int flag = 0;
+    if(isSandbox)
+    {
+        return false;
+    }
+    else
+    {
+        int flag = 0;
     int velocityFlag = 0;
 
     std::vector<glm::vec3>nextpositions;
@@ -137,6 +143,8 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
 
 
             flag = 1;
+            velocity.x = 0.f;
+            velocity.y = 0.f;
 
 
             return true;
@@ -171,6 +179,7 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
         return false;
     }
     nextpositions.clear();
+    }
 
  }
 void Player::gravityCheck() // implements gravity

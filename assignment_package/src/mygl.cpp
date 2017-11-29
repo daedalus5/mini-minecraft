@@ -14,7 +14,7 @@ MyGL::MyGL(QWidget *parent)
       mp_geomCube(new Cube(this)), mp_worldAxes(new WorldAxes(this)),
       mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),
       mp_camera(new Camera()), mp_terrain(new Terrain(this)), mp_crosshairs(new CrossHairs(this)),
-      mp_player(new Player(mp_camera, mp_terrain))
+      mp_player(new Player(mp_camera, mp_terrain)),isSandbox(false)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
@@ -120,10 +120,13 @@ void MyGL::resizeGL(int w, int h)
 // We're treating MyGL as our game engine class, so we're going to use timerUpdate
 void MyGL::timerUpdate()
 {
+    mp_player->isSandbox = isSandbox;
 
      //obtains number of milliseconds elapsed since January 1, 1970
     dt = QDateTime::currentMSecsSinceEpoch() - time; //calculates dt, the change in time since the last timerUpdate
-    mp_player->gravityCheck();
+    if(!isSandbox)
+    {mp_player->gravityCheck();
+    }
     if(mp_player->controllerState == true || mp_player->mouseState==true) // reads if the player is recieving input from the controller, then proceeds to pass it dt and cause it to change
                                            // its attributes like position, velocity, etc.
     {
@@ -221,6 +224,12 @@ void MyGL::keyPressEvent(QKeyEvent *e) // triggered when key is pressed
     if(e->key()==Qt::Key_Escape)
     {
         QApplication::quit;
+    }
+
+    if(e->key()==Qt::Key_F)
+    {
+        isSandbox = true;
+
     }
     mp_player->keyPressState(e);
 

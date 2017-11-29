@@ -36,8 +36,9 @@ private:
     bool isSpressed;
     bool isDpressed;
     bool isSpacepressed;
+    bool isSandbox;
 
-    bool isZpressed; //remove upon implementing collision detection
+    bool isQpressed;
 
     bool aerialState; //Determines if the player is grounded or aerial. If aerial, gravity will pull him/her down
     Qt::MouseButton mouseButtonPressed;

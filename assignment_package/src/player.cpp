@@ -53,9 +53,9 @@ void Player::keyPressState(QKeyEvent *e) // invoked by keyPressEvent. sets key f
     {
         isSpacepressed = true;
     }
-    if(e->key()==Qt::Key_Z)
+    if(e->key()==Qt::Key_Q)
     {
-        isZpressed = true;
+        isQpressed = true;
     }
 }
 void Player::keyReleaseState(QKeyEvent *e)// invoked by keyReleaseEvent. sets key flags.
@@ -81,9 +81,9 @@ void Player::keyReleaseState(QKeyEvent *e)// invoked by keyReleaseEvent. sets ke
     {
         isSpacepressed = false;
     }
-    if(e->key()==Qt::Key_Z)
+    if(e->key()==Qt::Key_Q)
     {
-        isZpressed = false;
+        isQpressed = false;
     }
 
 }
@@ -252,7 +252,7 @@ void Player::gravityCheck() // implements gravity
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
     }
-    else if(((a==WATER)||(a==LAVA)||(a==EMPTY))&&((b==WATER)||(b==LAVA)||(b==EMPTY))&&((c==WATER)||(c==LAVA)||(d==EMPTY))&&((d==WATER)||(d==LAVA)||(d==EMPTY)))
+    else if(((a==WATER)||(a==LAVA)||(a==EMPTY))&&((b==WATER)||(b==LAVA)||(b==EMPTY))&&((c==WATER)||(c==LAVA)||(c==EMPTY))&&((d==WATER)||(d==LAVA)||(d==EMPTY)))
     {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
@@ -379,7 +379,7 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
     }
 
-    if(isZpressed)
+    if(isQpressed)
     {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;

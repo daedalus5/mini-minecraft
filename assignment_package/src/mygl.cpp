@@ -228,7 +228,14 @@ void MyGL::keyPressEvent(QKeyEvent *e) // triggered when key is pressed
 
     if(e->key()==Qt::Key_F)
     {
-        isSandbox = true;
+        if(isSandbox==false)
+        {
+            isSandbox = true;
+        }
+        else if(isSandbox==true)
+        {
+            isSandbox = false;
+        }
 
     }
     mp_player->keyPressState(e);
@@ -396,7 +403,7 @@ void MyGL::createBlock(){
         BlockType b2 = mp_terrain->getBlockAt(insertPos[0], insertPos[1], insertPos[2]);
         // only build cube if there's an open space to place it
         if (b2 == EMPTY){
-            mp_terrain->addBlockAt(insertPos[0], insertPos[1], insertPos[2], GRASS);
+            mp_terrain->addBlockAt(insertPos[0], insertPos[1], insertPos[2], LAVA);
         }
     }
 }

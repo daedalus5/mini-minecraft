@@ -75,7 +75,7 @@ Terrain::Terrain(OpenGLContext* in_context) :
     color_map[GRASS] = glm::vec4(95.f, 159.f, 53.f, 255.f) / 255.f;
     color_map[DIRT] = glm::vec4(121.f, 85.f, 58.f, 255.f) / 255.f;
     color_map[STONE] = glm::vec4(0.5, 0.5, 0.5, 1);
-    color_map[LAVA] = glm::vec4(207.f, 16.f, 32.f, 255.f) / 255.f;
+    color_map[LAVA] = glm::vec4(207.f, 16.f, 32.f, 50.f) / 255.f;
 }
 
 Terrain::~Terrain() {
@@ -110,8 +110,14 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
     Chunk* ch;
     auto index = chunk_map.find(chunk_pos);
     if (index == chunk_map.end()) {
-        ch = new Chunk(context);
-        chunk_map[chunk_pos] = ch;
+        // If Chunk does not exist, create the terrain for this chunk
+        // Then at end, we will set the specific block type for one position
+        // We're doing it this way because this method is mostly called
+        // by river generation, which might need to create new chunks
+        // but only sets the water blocks
+
+        //ch = new Chunk(context);
+        chunk_map[chunk_pos] = createScene(getChunkPosition1D(x), getChunkPosition1D(z));
     } else {
         ch = chunk_map[chunk_pos];
     }
@@ -203,7 +209,7 @@ void Terrain::updateChunkVBO(int x, int z) {
     std::vector<glm::vec4> everything = std::vector<glm::vec4>();
     std::vector<GLuint> indices = std::vector<GLuint>();
 
-    BlockType block;
+    BlockType block, neighbor;
     glm::vec3 world_pos;
     glm::vec4 col;
 
@@ -235,54 +241,76 @@ void Terrain::updateChunkVBO(int x, int z) {
                     // Check neighboring Chunk in x direction
                     if (i == 0) {
                         if (neighbor__x != nullptr) {
-                            if (neighbor__x->getBlockType(chunk_dimensions[0] - 1, j, k) == EMPTY) {
+                            neighbor = neighbor__x->getBlockType(chunk_dimensions[0] - 1, j, k);
+                            if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
                                 addSquare(&world_pos, &x_normal_neg, &col, &start__x, &everything, &indices);
                             }
                         }
-                    } else if (ch->getBlockType(i - 1, j, k) == EMPTY) {
-                        // Check neighboring x within this chunk
-                        addSquare(&world_pos, &x_normal_neg, &col, &start__x, &everything, &indices);
+                    } else {
+                        neighbor = ch->getBlockType(i - 1, j, k);
+                        if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
+                            // Check neighboring x within this chunk
+                            addSquare(&world_pos, &x_normal_neg, &col, &start__x, &everything, &indices);
+                        }
                     }
 
                     if (i == chunk_dimensions[0] - 1) {
                         if (neighbor_x != nullptr) {
-                            if (neighbor_x->getBlockType(0, j, k) == EMPTY) {
+                            neighbor = neighbor_x->getBlockType(0, j, k);
+                            if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
                                 addSquare(&world_pos, &x_normal, &col, &start_x, &everything, &indices);
                             }
                         }
                     }
-                    else if (ch->getBlockType(i + 1, j, k) == EMPTY) {
-                        addSquare(&world_pos, &x_normal, &col, &start_x, &everything, &indices);
+                    else {
+                        neighbor = ch->getBlockType(i + 1, j, k);
+                        if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
+                            addSquare(&world_pos, &x_normal, &col, &start_x, &everything, &indices);
+                        }
                     }
 
 
                     // Check neighboring y
-                    if (j < 255 && ch->getBlockType(i, j + 1, k) == EMPTY) {
-                        addSquare(&world_pos, &y_normal, &col, &start_y, &everything, &indices);
+                    if (j < 255) {
+                        neighbor = ch->getBlockType(i, j + 1, k);
+                        if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
+                            addSquare(&world_pos, &y_normal, &col, &start_y, &everything, &indices);
+                        }
                     }
-                    if (j > 0 && ch->getBlockType(i, j - 1, k) == EMPTY) {
-                        addSquare(&world_pos, &y_normal_neg, &col, &start__y, &everything, &indices);
+                    if (j > 0) {
+                        neighbor = ch->getBlockType(i, j - 1, k);
+                        if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
+                            addSquare(&world_pos, &y_normal_neg, &col, &start__y, &everything, &indices);
+                        }
                     }
 
                     // Check neighboring Chunk in z direction
                     if (k == 0) {
                         if (neighbor__z != nullptr) {
-                            if (neighbor__z->getBlockType(i, j, chunk_dimensions[2] - 1) == EMPTY) {
+                            neighbor = neighbor__z->getBlockType(i, j, chunk_dimensions[2] - 1);
+                            if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
                                 addSquare(&world_pos, &z_normal_neg, &col, &start__z, &everything, &indices);
                             }
                         }
-                    } else if (ch->getBlockType(i, j, k - 1) == EMPTY) {
-                        addSquare(&world_pos, &z_normal_neg, &col, &start__z, &everything, &indices);
+                    } else {
+                        neighbor = ch->getBlockType(i, j, k - 1);
+                        if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
+                            addSquare(&world_pos, &z_normal_neg, &col, &start__z, &everything, &indices);
+                        }
                     }
 
                     if (k == chunk_dimensions[2] - 1) {
                         if (neighbor_z != nullptr) {
-                            if (neighbor_z->getBlockType(i, j, 0) == EMPTY) {
+                            neighbor = neighbor_z->getBlockType(i, j, 0);
+                            if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
                                 addSquare(&world_pos, &z_normal, &col, &start_z, &everything, &indices);
                             }
                         }
-                    } else if (ch->getBlockType(i, j, k + 1) == EMPTY) {
-                        addSquare(&world_pos, &z_normal, &col, &start_z, &everything, &indices);
+                    } else {
+                        neighbor = ch->getBlockType(i, j, k + 1);
+                        if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
+                            addSquare(&world_pos, &z_normal, &col, &start_z, &everything, &indices);
+                        }
                     }
 
                 }

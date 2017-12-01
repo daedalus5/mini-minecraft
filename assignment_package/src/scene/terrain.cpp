@@ -135,6 +135,48 @@ Terrain::Terrain(OpenGLContext* in_context) :
     block_uv_map[GRASS + 'A'] = block_uv_map[GRASS + 'W'];
     block_uv_map[GRASS + 'S'] = block_uv_map[GRASS + 'W'];
     block_uv_map[GRASS + 'D'] = block_uv_map[GRASS + 'W'];
+
+    uv.clear();
+    uv.push_back(glm::vec4(1.f/16.f, 15.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(1.f/16.f, 14.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(2.f/16.f, 14.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(2.f/16.f, 15.f/16.f, 0, 0));
+    block_uv_map[BEDROCK] = uv;
+
+    uv.clear();
+    uv.push_back(glm::vec4(3.f/16.f, 12.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(3.f/16.f, 11.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(4.f/16.f, 11.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(4.f/16.f, 12.f/16.f, 0, 0));
+    block_uv_map[ICE] = uv;
+
+    uv.clear();
+    uv.push_back(glm::vec4(5.f/16.f, 13.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(5.f/16.f, 12.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(6.f/16.f, 12.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(6.f/16.f, 13.f/16.f, 0, 0));
+    block_uv_map[LEAF] = uv;
+
+    uv.clear();
+    uv.push_back(glm::vec4(5.f/16.f, 15.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(5.f/16.f, 14.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(6.f/16.f, 14.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(6.f/16.f, 15.f/16.f, 0, 0));
+    block_uv_map[WOOD + 'E'] = uv;
+
+    uv.clear();
+    block_uv_map[WOOD + 'Q'] = block_uv_map[WOOD + 'E'];
+
+    uv.clear();
+    uv.push_back(glm::vec4(4.f/16.f, 15.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(4.f/16.f, 14.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(5.f/16.f, 14.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(5.f/16.f, 15.f/16.f, 0, 0));
+    block_uv_map[WOOD + 'W'] = uv;
+
+    block_uv_map[WOOD + 'A'] = block_uv_map[WOOD + 'W'];
+    block_uv_map[WOOD + 'S'] = block_uv_map[WOOD + 'W'];
+    block_uv_map[WOOD + 'D'] = block_uv_map[WOOD + 'W'];
 }
 
 Terrain::~Terrain() {
@@ -387,11 +429,17 @@ void Terrain::addSquare(glm::vec3* pos,
     glm::vec4 normal = normal_vec_map[direction];
     glm::vec3 normal3 = glm::vec3(normal);
 
+    // Get list of UVs
+    // If the BlockType is not stored in the map,
+    // add the direction to it.
+    // Used for GRASS and WOOD which have different UVs
+    // depending on the direction of face
     std::vector<glm::vec4> uv_list;
-    if (block == GRASS) {
+    auto mapped_uv = block_uv_map.find(block);
+    if (mapped_uv == block_uv_map.end()) {
         uv_list = block_uv_map[block + direction];
     } else {
-        uv_list = block_uv_map[block];
+        uv_list = mapped_uv->second;
     }
 
     for (int k = 0; k < 4; k++) {

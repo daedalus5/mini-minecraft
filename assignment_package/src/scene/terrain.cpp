@@ -75,7 +75,7 @@ Terrain::Terrain(OpenGLContext* in_context) :
     color_map[GRASS] = glm::vec4(95.f, 159.f, 53.f, 255.f) / 255.f;
     color_map[DIRT] = glm::vec4(121.f, 85.f, 58.f, 255.f) / 255.f;
     color_map[STONE] = glm::vec4(0.5, 0.5, 0.5, 1);
-    color_map[LAVA] = glm::vec4(207.f, 16.f, 32.f, 50.f) / 255.f;
+    color_map[LAVA] = glm::vec4(207.f, 16.f, 32.f, 128.f) / 255.f;
 }
 
 Terrain::~Terrain() {
@@ -333,7 +333,7 @@ void Terrain::addSquare(glm::vec3* pos, const glm::vec4* normal, glm::vec4* colo
                       std::vector<GLuint> *indices) {
 
     // grab size of positions
-    int index = everything->size() / 3;
+    int index = everything->size() / 4;
     glm::vec3 offset = glm::vec3(0.5, 0.5, 0.5);
     glm::vec3 normal3 = glm::vec3(*normal);
 
@@ -348,6 +348,16 @@ void Terrain::addSquare(glm::vec3* pos, const glm::vec4* normal, glm::vec4* colo
 
         everything->push_back(*normal);
         everything->push_back(*color);
+        if (k == 0) {
+            everything->push_back(glm::vec4(0, 0, 0, 0));
+        } else if (k == 1) {
+            everything->push_back(glm::vec4(0, 1, 0, 0));
+        } else if (k == 2) {
+            everything->push_back(glm::vec4(1, 1, 0, 0));
+        } else if (k == 3) {
+            everything->push_back(glm::vec4(1, 0, 0, 0));
+        }
+        //everything->push_back(glm::vec4(1, 0, 0, 0));
     }
     // Push indices
     indices->push_back(index);

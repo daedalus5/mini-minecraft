@@ -176,19 +176,15 @@ void ShaderProgram::draw(Drawable &d)
     if (d.bindEve()) {
         if (attrPos != -1) {
             context->glEnableVertexAttribArray(attrPos);
-            context->glVertexAttribPointer(attrPos, 4, GL_FLOAT, false, 4 * sizeof(glm::vec4), NULL);
+            context->glVertexAttribPointer(attrPos, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), NULL);
         }
         if (attrNor != -1) {
             context->glEnableVertexAttribArray(attrNor);
-            context->glVertexAttribPointer(attrNor, 4, GL_FLOAT, false, 4 * sizeof(glm::vec4), BUFFER_OFFSET(sizeof(glm::vec4)));
-        }
-        if (attrCol != -1) {
-            context->glEnableVertexAttribArray(attrCol);
-            context->glVertexAttribPointer(attrCol, 4, GL_FLOAT, false, 4 * sizeof(glm::vec4), BUFFER_OFFSET(2 * sizeof(glm::vec4)));
+            context->glVertexAttribPointer(attrNor, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), BUFFER_OFFSET(sizeof(glm::vec4)));
         }
         if (attrUV != -1) {
             context->glEnableVertexAttribArray(attrUV);
-            context->glVertexAttribPointer(attrUV, 4, GL_FLOAT, false, 4 * sizeof(glm::vec4), BUFFER_OFFSET(3 * sizeof(glm::vec4)));
+            context->glVertexAttribPointer(attrUV, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), BUFFER_OFFSET(2 * sizeof(glm::vec4)));
         }
 
     } else {

@@ -65,42 +65,33 @@ public:
     void updateChunkVBO(int x, int z);
     // Loops through all Chunks and updates their VBOs
     // Used during game initialization
-    void updateAllVBO();
+    //void updateAllVBO();
 
     uint64_t convertToInt(int x, int z) const;
     void splitInt(uint64_t in, int* x, int* z) const;
 
 private:
+    OpenGLContext* context; // To pass on to Chunks
 
     // Maps Chunk Position to the Chunk
     // Chunk Position obtained through getChunkPosition
     std::unordered_map<uint64_t, Chunk*> chunk_map;
 
-    std::map<BlockType, glm::vec4> color_map; // Map of BlockType to a color
-    OpenGLContext* context; // To pass on to Chunks
+    std::unordered_map<char, glm::vec4> color_map; // Map of char (BlockType) to a color
+    std::unordered_map<char, glm::vec4> normal_vec_map; // Map of char (direction) to its normal vector
+    std::unordered_map<char, glm::vec4> draw_start_map; // Map of char (direction) to a starting point for procedural square generation
+    std::unordered_map<char, std::vector<glm::vec4>> block_uv_map; // Map of char (BlockType) to a list of UVs
 
     // Const variables that are used over and over again in VBO creation
-    const glm::vec4 x_normal;
-    const glm::vec4 x_normal_neg;
-    const glm::vec4 y_normal;
-    const glm::vec4 y_normal_neg;
-    const glm::vec4 z_normal;
-    const glm::vec4 z_normal_neg;
-
-    const glm::vec4 start_x;
-    const glm::vec4 start__x;
-    const glm::vec4 start_y;
-    const glm::vec4 start__y;
-    const glm::vec4 start_z;
-    const glm::vec4 start__z;
+    const glm::vec3 offset;
 
     int getChunkLocalPosition1D(int x) const;
 
     // Adds a square to the VBOs
-    void addSquare(glm::vec3 *pos, const glm::vec4 *normal, glm::vec4 *color,
-                   const glm::vec4 *squareStart,
+    void addSquare(glm::vec3 *pos,
                    std::vector<glm::vec4>* everything,
-                   std::vector<GLuint>* indices);
+                   std::vector<GLuint>* indices,
+                   char direction, BlockType block);
 
     // Converts global x, z to which Chunk those coordinates are in
     glm::ivec2 getChunkPosition(int x, int z) const;

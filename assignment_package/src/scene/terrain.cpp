@@ -56,26 +56,44 @@ Terrain::Terrain(OpenGLContext* in_context) :
     dimensions(64, 256, 64),
     chunk_dimensions(16, 256, 16),
     chunk_map(std::unordered_map<uint64_t, Chunk*>()),
-    color_map(std::map<BlockType, glm::vec4>()),
+    color_map(std::unordered_map<char, glm::vec4>()),
+    normal_vec_map(std::unordered_map<char, glm::vec4>()),
+    block_uv_map(std::unordered_map<char, std::vector<glm::vec4>>()),
     context(in_context),
-    x_normal(glm::vec4(1, 0, 0, 0)),
-    x_normal_neg(-x_normal),
-    y_normal(glm::vec4(0, 1, 0, 0)),
-    y_normal_neg(-y_normal),
-    z_normal(glm::vec4(0, 0, 1, 0)),
-    z_normal_neg(-z_normal),
 
-    start_x(glm::vec4(0.5, 0.5, 0.5, 1)),
-    start__x(glm::vec4(-0.5, 0.5, 0.5, 1)),
-    start_y(glm::vec4(0.5, 0.5, 0.5, 1)),
-    start__y(glm::vec4(0.5, -0.5, 0.5, 1)),
-    start_z(glm::vec4(0.5, 0.5, 0.5, 1)),
-    start__z(glm::vec4(0.5, 0.5, -0.5, 1))
+    offset(glm::vec3(0.5, 0.5, 0.5))
 {
     color_map[GRASS] = glm::vec4(95.f, 159.f, 53.f, 255.f) / 255.f;
     color_map[DIRT] = glm::vec4(121.f, 85.f, 58.f, 255.f) / 255.f;
     color_map[STONE] = glm::vec4(0.5, 0.5, 0.5, 1);
     color_map[LAVA] = glm::vec4(207.f, 16.f, 32.f, 128.f) / 255.f;
+
+
+    // Letters correspond to movement controls
+    // ex: 'W' corresponds to forward z direction
+    normal_vec_map['D'] = glm::vec4(1, 0, 0, 0);
+    normal_vec_map['A'] = glm::vec4(-1, 0, 0, 0);
+    normal_vec_map['W'] = glm::vec4(0, 0, 1, 0);
+    normal_vec_map['S'] = glm::vec4(0, 0, -1, 0);
+    normal_vec_map['E'] = glm::vec4(0, 1, 0, 0);
+    normal_vec_map['Q'] = glm::vec4(0, -1, 0, 0);
+
+    draw_start_map['D'] = glm::vec4(0.5, 0.5, 0.5, 1);
+    draw_start_map['A'] = glm::vec4(-0.5, 0.5, 0.5, 1);
+    draw_start_map['W'] = glm::vec4(0.5, 0.5, 0.5, 1);
+    draw_start_map['S'] = glm::vec4(0.5, 0.5, -0.5, 1);
+    draw_start_map['E'] = glm::vec4(0.5, 0.5, 0.5, 1);
+    draw_start_map['Q'] = glm::vec4(0.5, -0.5, 0.5, 1);
+
+    std::vector<glm::vec4> uv = std::vector<glm::vec4>();
+    uv.push_back(glm::vec4(0, 0, 0, 0));
+    uv.push_back(glm::vec4(0, 1, 0, 0));
+    uv.push_back(glm::vec4(1, 1, 0, 0));
+    uv.push_back(glm::vec4(1, 0, 0, 0));
+    block_uv_map[GRASS] = uv;
+    block_uv_map[STONE] = uv;
+    block_uv_map[LAVA] = uv;
+    block_uv_map[DIRT] = uv;
 }
 
 Terrain::~Terrain() {
@@ -211,7 +229,6 @@ void Terrain::updateChunkVBO(int x, int z) {
 
     BlockType block, neighbor;
     glm::vec3 world_pos;
-    glm::vec4 col;
 
     // Chunk neighbors
     Chunk* neighbor_x = getChunk(x + 1, z);
@@ -230,27 +247,19 @@ void Terrain::updateChunkVBO(int x, int z) {
                     world_pos = glm::vec3(i, j, k)
                             + glm::vec3(x * chunk_dimensions[0], 0, z * chunk_dimensions[2]);
 
-
-                    auto index = color_map.find(block);
-                    if (index == color_map.end()) {
-                        break;
-                    } else {
-                        col = index->second;
-                    }
-
                     // Check neighboring Chunk in x direction
                     if (i == 0) {
                         if (neighbor__x != nullptr) {
                             neighbor = neighbor__x->getBlockType(chunk_dimensions[0] - 1, j, k);
                             if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                                addSquare(&world_pos, &x_normal_neg, &col, &start__x, &everything, &indices);
+                                addSquare(&world_pos, &everything, &indices, 'A', block);
                             }
                         }
                     } else {
                         neighbor = ch->getBlockType(i - 1, j, k);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
                             // Check neighboring x within this chunk
-                            addSquare(&world_pos, &x_normal_neg, &col, &start__x, &everything, &indices);
+                            addSquare(&world_pos, &everything, &indices, 'A', block);
                         }
                     }
 
@@ -258,14 +267,14 @@ void Terrain::updateChunkVBO(int x, int z) {
                         if (neighbor_x != nullptr) {
                             neighbor = neighbor_x->getBlockType(0, j, k);
                             if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                                addSquare(&world_pos, &x_normal, &col, &start_x, &everything, &indices);
+                                addSquare(&world_pos, &everything, &indices, 'D', block);
                             }
                         }
                     }
                     else {
                         neighbor = ch->getBlockType(i + 1, j, k);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                            addSquare(&world_pos, &x_normal, &col, &start_x, &everything, &indices);
+                            addSquare(&world_pos, &everything, &indices, 'D', block);
                         }
                     }
 
@@ -274,13 +283,13 @@ void Terrain::updateChunkVBO(int x, int z) {
                     if (j < 255) {
                         neighbor = ch->getBlockType(i, j + 1, k);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                            addSquare(&world_pos, &y_normal, &col, &start_y, &everything, &indices);
+                            addSquare(&world_pos, &everything, &indices, 'E', block);
                         }
                     }
                     if (j > 0) {
                         neighbor = ch->getBlockType(i, j - 1, k);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                            addSquare(&world_pos, &y_normal_neg, &col, &start__y, &everything, &indices);
+                            addSquare(&world_pos, &everything, &indices, 'Q', block);
                         }
                     }
 
@@ -289,13 +298,13 @@ void Terrain::updateChunkVBO(int x, int z) {
                         if (neighbor__z != nullptr) {
                             neighbor = neighbor__z->getBlockType(i, j, chunk_dimensions[2] - 1);
                             if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                                addSquare(&world_pos, &z_normal_neg, &col, &start__z, &everything, &indices);
+                                addSquare(&world_pos, &everything, &indices, 'S', block);
                             }
                         }
                     } else {
                         neighbor = ch->getBlockType(i, j, k - 1);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                            addSquare(&world_pos, &z_normal_neg, &col, &start__z, &everything, &indices);
+                            addSquare(&world_pos, &everything, &indices, 'S', block);
                         }
                     }
 
@@ -303,13 +312,13 @@ void Terrain::updateChunkVBO(int x, int z) {
                         if (neighbor_z != nullptr) {
                             neighbor = neighbor_z->getBlockType(i, j, 0);
                             if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                                addSquare(&world_pos, &z_normal, &col, &start_z, &everything, &indices);
+                                addSquare(&world_pos, &everything, &indices, 'W', block);
                             }
                         }
                     } else {
                         neighbor = ch->getBlockType(i, j, k + 1);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                            addSquare(&world_pos, &z_normal, &col, &start_z, &everything, &indices);
+                            addSquare(&world_pos, &everything, &indices, 'W', block);
                         }
                     }
 
@@ -321,44 +330,37 @@ void Terrain::updateChunkVBO(int x, int z) {
     ch->createVBO(everything, indices);
 }
 
-void Terrain::updateAllVBO() {
-    for ( auto it = chunk_map.begin(); it != chunk_map.end(); ++it ) {
-        //updateChunkVBO(16 * it->first[0], 16 * it->first[1]);
-    }
-}
+//void Terrain::updateAllVBO() {
+//    for ( auto it = chunk_map.begin(); it != chunk_map.end(); ++it ) {
+//        //updateChunkVBO(16 * it->first[0], 16 * it->first[1]);
+//    }
+//}
 
-void Terrain::addSquare(glm::vec3* pos, const glm::vec4* normal, glm::vec4* color,
-                      const glm::vec4* squareStart,
+void Terrain::addSquare(glm::vec3* pos,
                       std::vector<glm::vec4> *everything,
-                      std::vector<GLuint> *indices) {
+                      std::vector<GLuint> *indices,
+                      char direction, BlockType block) {
 
     // grab size of positions
-    int index = everything->size() / 4;
-    glm::vec3 offset = glm::vec3(0.5, 0.5, 0.5);
-    glm::vec3 normal3 = glm::vec3(*normal);
+    int index = everything->size() / 3;
+    glm::vec4 normal = normal_vec_map[direction];
+    glm::vec3 normal3 = glm::vec3(normal);
+
+    std::vector<glm::vec4> uv_list = block_uv_map[block];
 
     for (int k = 0; k < 4; k++) {
         // Rotate by 90 degrees 4 times
         // Push them into positions vector
-        // Push normals
-        // Push colors
         everything->push_back(glm::translate(glm::mat4(), *pos + offset)
                             * glm::rotate(glm::mat4(), glm::radians(90.f * k), normal3)
-                            * *squareStart);
+                            * draw_start_map[direction]);
 
-        everything->push_back(*normal);
-        everything->push_back(*color);
-        if (k == 0) {
-            everything->push_back(glm::vec4(0, 0, 0, 0));
-        } else if (k == 1) {
-            everything->push_back(glm::vec4(0, 1, 0, 0));
-        } else if (k == 2) {
-            everything->push_back(glm::vec4(1, 1, 0, 0));
-        } else if (k == 3) {
-            everything->push_back(glm::vec4(1, 0, 0, 0));
-        }
-        //everything->push_back(glm::vec4(1, 0, 0, 0));
+        // Push normals
+        everything->push_back(normal);
+        // Push UV
+        everything->push_back(uv_list[k]);
     }
+
     // Push indices
     indices->push_back(index);
     indices->push_back(index + 1);

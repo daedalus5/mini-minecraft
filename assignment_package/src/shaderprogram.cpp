@@ -83,6 +83,7 @@ void ShaderProgram::create(const char *vertfile, const char *fragfile)
         mp_texture->create(":/textures/minecraft_textures_all.png");
         mp_texture->load(0);
         mp_texture->bind(0);
+        useMe();
         context->glUniform1i(unifSampler2D, /*GL_TEXTURE*/0);
     }
     std::cout << std::endl;
@@ -167,6 +168,11 @@ void ShaderProgram::draw(Drawable &d)
         // meaning that glVertexAttribPointer associates vs_Pos
         // (referred to by attrPos) with that VBO
 
+    // Must be called every frame
+    if(mp_texture != nullptr) {
+        mp_texture->bind(0);
+    }
+
     if (d.bindEve()) {
         if (attrPos != -1) {
             context->glEnableVertexAttribArray(attrPos);
@@ -216,6 +222,7 @@ void ShaderProgram::draw(Drawable &d)
     if (attrPos != -1) context->glDisableVertexAttribArray(attrPos);
     if (attrNor != -1) context->glDisableVertexAttribArray(attrNor);
     if (attrCol != -1) context->glDisableVertexAttribArray(attrCol);
+    if (attrUV != -1) context->glDisableVertexAttribArray(attrUV);
 
     context->printGLErrorLog();
 }

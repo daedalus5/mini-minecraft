@@ -41,7 +41,7 @@ void Texture::load(int texSlot = 0)
 
     context->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                           m_textureImage->width(), m_textureImage->height(),
-                          0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, m_textureImage->bits());
+                          0, GL_BGRA, GL_UNSIGNED_BYTE, m_textureImage->bits());
     context->printGLErrorLog();
 }
 

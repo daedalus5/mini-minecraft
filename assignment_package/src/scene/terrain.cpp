@@ -1,15 +1,15 @@
 #include <scene/terrain.h>
 
 Chunk::Chunk(OpenGLContext* context)
-    : Drawable(context)
+    : Drawable(context), block_array({EMPTY})
 {
     // Array in initialization list
     // does not work on Sagar's laptop
 
-    for(int i=0;i<65536;i++)
-    {
-        block_array[i] = EMPTY;
-    }
+//    for(int i=0;i<65536;i++)
+//    {
+//        block_array[i] = EMPTY;
+//    }
 
 }
 
@@ -79,21 +79,62 @@ Terrain::Terrain(OpenGLContext* in_context) :
     normal_vec_map['Q'] = glm::vec4(0, -1, 0, 0);
 
     draw_start_map['D'] = glm::vec4(0.5, 0.5, 0.5, 1);
-    draw_start_map['A'] = glm::vec4(-0.5, 0.5, 0.5, 1);
-    draw_start_map['W'] = glm::vec4(0.5, 0.5, 0.5, 1);
+    draw_start_map['A'] = glm::vec4(-0.5, 0.5, -0.5, 1);
+    draw_start_map['W'] = glm::vec4(-0.5, 0.5, 0.5, 1);
     draw_start_map['S'] = glm::vec4(0.5, 0.5, -0.5, 1);
     draw_start_map['E'] = glm::vec4(0.5, 0.5, 0.5, 1);
     draw_start_map['Q'] = glm::vec4(0.5, -0.5, 0.5, 1);
 
     std::vector<glm::vec4> uv = std::vector<glm::vec4>();
-    uv.push_back(glm::vec4(0, 0, 0, 0));
-    uv.push_back(glm::vec4(0, 1, 0, 0));
-    uv.push_back(glm::vec4(1, 1, 0, 0));
-    uv.push_back(glm::vec4(1, 0, 0, 0));
-    block_uv_map[GRASS] = uv;
-    block_uv_map[STONE] = uv;
-    block_uv_map[LAVA] = uv;
+
+    uv.clear();
+    uv.push_back(glm::vec4(2.f/16.f, 16.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(2.f/16.f, 15.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(3.f/16.f, 15.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(3.f/16.f, 16.f/16.f, 0, 0));
     block_uv_map[DIRT] = uv;
+
+    uv.clear();
+    uv.push_back(glm::vec4(1.f/16.f, 16.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(1.f/16.f, 15.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(2.f/16.f, 15.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(2.f/16.f, 16.f/16.f, 0, 0));
+    block_uv_map[STONE] = uv;
+
+    uv.clear();
+    uv.push_back(glm::vec4(13.f/16.f, 2.f/16.f, 0, 1));
+    uv.push_back(glm::vec4(13.f/16.f, 1.f/16.f, 0, 1));
+    uv.push_back(glm::vec4(14.f/16.f, 1.f/16.f, 0, 1));
+    uv.push_back(glm::vec4(14.f/16.f, 2.f/16.f, 0, 1));
+    block_uv_map[LAVA] = uv;
+
+    uv.clear();
+    uv.push_back(glm::vec4(13.f/16.f, 4.f/16.f, 0, 1));
+    uv.push_back(glm::vec4(13.f/16.f, 3.f/16.f, 0, 1));
+    uv.push_back(glm::vec4(14.f/16.f, 3.f/16.f, 0, 1));
+    uv.push_back(glm::vec4(14.f/16.f, 4.f/16.f, 0, 1));
+    block_uv_map[WATER] = uv;
+
+    uv.clear();
+    uv.push_back(glm::vec4(8.f/16.f, 14.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(8.f/16.f, 13.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(9.f/16.f, 13.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(9.f/16.f, 14.f/16.f, 0, 0));
+    block_uv_map[GRASS + 'E'] = uv;
+
+    uv.clear();
+    block_uv_map[GRASS + 'Q'] = block_uv_map[DIRT];
+
+    uv.clear();
+    uv.push_back(glm::vec4(3.f/16.f, 16.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(3.f/16.f, 15.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(4.f/16.f, 15.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(4.f/16.f, 16.f/16.f, 0, 0));
+    block_uv_map[GRASS + 'W'] = uv;
+
+    block_uv_map[GRASS + 'A'] = block_uv_map[GRASS + 'W'];
+    block_uv_map[GRASS + 'S'] = block_uv_map[GRASS + 'W'];
+    block_uv_map[GRASS + 'D'] = block_uv_map[GRASS + 'W'];
 }
 
 Terrain::~Terrain() {
@@ -346,7 +387,12 @@ void Terrain::addSquare(glm::vec3* pos,
     glm::vec4 normal = normal_vec_map[direction];
     glm::vec3 normal3 = glm::vec3(normal);
 
-    std::vector<glm::vec4> uv_list = block_uv_map[block];
+    std::vector<glm::vec4> uv_list;
+    if (block == GRASS) {
+        uv_list = block_uv_map[block + direction];
+    } else {
+        uv_list = block_uv_map[block];
+    }
 
     for (int k = 0; k < 4; k++) {
         // Rotate by 90 degrees 4 times

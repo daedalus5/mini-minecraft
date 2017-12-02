@@ -31,7 +31,6 @@ ui_*.h
 *.jsc
 Makefile*
 *build-*
-*.pri
 
 # Qt unit tests
 target_wrapper.*

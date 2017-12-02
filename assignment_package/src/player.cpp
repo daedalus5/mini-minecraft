@@ -423,20 +423,28 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
 }
 void Player::mouseMoveState(QMouseEvent *m) //detects change in cursor position. Rotates Camera accordingly
 {
-    if((m->x()!=mouseX)||(m->y()!=mouseY))
-    {
-        mouseOrientFlag = true;
-        float currMouseX = m->x();
-        dx = currMouseX - mouseX;
-        rotation.x = (float)dx*0.35f;
-        float currMouseY = m->y();
-        dy = currMouseY - mouseY;
-        rotation.y = (float)dy*0.35f;
-        mouseX = m->x();
-        mouseY = m->y();
-    }
-    else
-        mouseOrientFlag = false;
+    mouseOrientFlag = true;
+    float currMouseX = m->x();
+    dx = currMouseX - (ptr_to_cam->width / 2.f);
+    rotation.x = rotation.x + (float)dx*0.35f;
+    float currMouseY = m->y();
+    dy = currMouseY - (ptr_to_cam->height / 2.f);
+    rotation.y = rotation.y + (float)dy*0.35f;
+
+//    if((m->x()!=mouseX)||(m->y()!=mouseY))
+//    {
+//        mouseOrientFlag = true;
+//        float currMouseX = m->x();
+//        dx = currMouseX - mouseX;
+//        rotation.x = (float)dx*0.35f;
+//        float currMouseY = m->y();
+//        dy = currMouseY - mouseY;
+//        rotation.y = (float)dy*0.35f;
+//        mouseX = m->x();
+//        mouseY = m->y();
+//    }
+//    else
+//        mouseOrientFlag = false;
 }
 
 void Player::mousePressState(QMouseEvent *m)

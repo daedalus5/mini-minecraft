@@ -160,7 +160,7 @@ void CrossHairs::create()
     ch_vert_pos[2] = posB0;
     ch_vert_pos[3] = posB1;
 
-    glm::vec4 grey = glm::vec4(0.75f, 0.75f, 0.75f, 0.0f);
+    glm::vec4 grey = glm::vec4(0.75f, 0.75f, 0.75f, 1.0f);
     for(int i = 0; i < CH_VERT_COUNT; ++i){
         ch_vert_col[i] = grey;
     }

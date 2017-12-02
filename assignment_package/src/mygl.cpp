@@ -15,7 +15,9 @@ MyGL::MyGL(QWidget *parent)
       mp_geomCube(new Cube(this)), mp_worldAxes(new WorldAxes(this)),
       mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),mp_lavavision(new ShaderProgram(this)),
       mp_camera(new Camera()), mp_terrain(new Terrain(this)), mp_crosshairs(new CrossHairs(this)),
-      mp_player(new Player(mp_camera, mp_terrain)),isSandbox(false),m_geomQuad(new Quad(this))
+       mp_player(new Player(mp_camera, mp_terrain)), start_time(QDateTime::currentMSecsSinceEpoch()),
+      isSandbox(false),m_geomQuad(new Quad(this))
+
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
@@ -64,6 +66,8 @@ void MyGL::initializeGL()
     glEnable(GL_POLYGON_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     // Set the size with which points should be rendered
     glPointSize(5);
     // Set the color with which the screen is filled at the start of each render call.
@@ -112,6 +116,7 @@ void MyGL::resizeGL(int w, int h)
 
     mp_progLambert->setViewProjMatrix(viewproj);
     mp_progFlat->setViewProjMatrix(viewproj);
+    mp_progLambert->setEyePos(glm::vec4(mp_camera->eye, 1.f));
 
     mp_crosshairs->aspect = mp_camera->height / float(mp_camera->width);
     mp_crosshairs->create();
@@ -145,7 +150,7 @@ void MyGL::timerUpdate()
 
     update();
 
-
+    MoveMouseToCenter();
 
 }
 
@@ -159,6 +164,8 @@ void MyGL::paintGL()
 
     mp_progFlat->setViewProjMatrix(mp_camera->getViewProj());
     mp_progLambert->setViewProjMatrix(mp_camera->getViewProj());
+    mp_progLambert->setEyePos(glm::vec4(mp_camera->eye, 1.f));
+    mp_progLambert->setTime((time - start_time) /1000.f); // convert time to seconds
 
     GLDrawScene();
 
@@ -227,7 +234,7 @@ void MyGL::keyPressEvent(QKeyEvent *e) // triggered when key is pressed
 {
     if(e->key()==Qt::Key_Escape)
     {
-        QApplication::quit;
+        QApplication::quit();
     }
 
     if(e->key()==Qt::Key_F)

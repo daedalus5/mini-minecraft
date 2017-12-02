@@ -13,7 +13,7 @@
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       mp_geomCube(new Cube(this)), mp_worldAxes(new WorldAxes(this)),
-      mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),
+      mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),mp_lavavision(new ShaderProgram(this)),
       mp_camera(new Camera()), mp_terrain(new Terrain(this)), mp_crosshairs(new CrossHairs(this)),
       mp_player(new Player(mp_camera, mp_terrain)),isSandbox(false),m_geomQuad(new Quad(this))
 {
@@ -38,6 +38,7 @@ MyGL::~MyGL()
     delete mp_worldAxes;
     delete mp_progLambert;
     delete mp_progFlat;
+    delete mp_lavavision;
     delete mp_camera;
     delete mp_terrain;
     delete mp_crosshairs;
@@ -81,6 +82,8 @@ void MyGL::initializeGL()
     mp_progLambert->create(":/glsl/lambert.vert.glsl", ":/glsl/lambert.frag.glsl");
     // Create and set up the flat lighting shader
     mp_progFlat->create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
+    mp_lavavision->create(":/glsl/lavavision.vert.glsl", ":/glsl/lavavision.frag.glsl");
+
 
     // Set a color with which to draw geometry since you won't have one
     // defined until you implement the Node classes.

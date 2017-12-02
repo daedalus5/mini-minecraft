@@ -41,6 +41,8 @@ private:
     Terrain* mp_terrain;
     CrossHairs* mp_crosshairs;
     Player* mp_player; // Instance of Player
+    bool underwater;
+    bool underlava;
 
     quint64 time; // this holds the milliseconds value of Time since Epoch, i.e. time since January 1, 1970
     quint64 dt; // time elapsed since last timerUpdate()

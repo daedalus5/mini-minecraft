@@ -34,3 +34,6 @@ HEADERS += \
     $$PWD/scene/worldaxes.h \
     $$PWD/player.h \
     $$PWD/scene/quad.h
+
+DISTFILES += \
+    $$PWD/lavavision.frag

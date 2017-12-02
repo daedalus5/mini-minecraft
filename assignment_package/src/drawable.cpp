@@ -4,7 +4,7 @@
 Drawable::Drawable(OpenGLContext* context)
     : bufIdx(), bufPos(), bufNor(), bufCol(), bufEve(),
       idxBound(false), posBound(false), norBound(false), colBound(false),
-      eveBound(false),
+      eveBound(false), uvBound(false), bufUV(),
       context(context)
 {}
 
@@ -18,6 +18,7 @@ void Drawable::destroy()
     context->glDeleteBuffers(1, &bufPos);
     context->glDeleteBuffers(1, &bufNor);
     context->glDeleteBuffers(1, &bufCol);
+    context->glDeleteBuffers(1, &bufUV);
 }
 
 GLenum Drawable::drawMode()
@@ -72,6 +73,15 @@ void Drawable::generateCol()
     }
 }
 
+void Drawable::generateUV()
+{
+    if (!uvBound) {
+        uvBound = true;
+        // Create a VBO on our GPU and store its handle in bufCol
+        context->glGenBuffers(1, &bufUV);
+    }
+}
+
 void Drawable::generateEve() {
     if (!eveBound) {
         eveBound = true;
@@ -116,4 +126,12 @@ bool Drawable::bindEve() {
         context->glBindBuffer(GL_ARRAY_BUFFER, bufEve);
     }
     return eveBound;
+}
+
+bool Drawable::bindUV()
+{
+    if(uvBound){
+        context->glBindBuffer(GL_ARRAY_BUFFER, bufUV);
+    }
+    return uvBound;
 }

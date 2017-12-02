@@ -4,11 +4,14 @@
 #include <QTextStream>
 #include <QDebug>
 
+#include <iostream>
+
 
 ShaderProgram::ShaderProgram(OpenGLContext *context)
     : vertShader(), fragShader(), prog(),
-      attrPos(-1), attrNor(-1), attrCol(-1),
+      attrPos(-1), attrNor(-1), attrCol(-1), attrUV(-1),
       unifModel(-1), unifModelInvTr(-1), unifViewProj(-1), unifColor(-1),
+      unifTime(-1), unifSampler2D(-1), unifEyePos(-1), mp_texture(nullptr),
       context(context)
 {}
 
@@ -63,11 +66,29 @@ void ShaderProgram::create(const char *vertfile, const char *fragfile)
     attrPos = context->glGetAttribLocation(prog, "vs_Pos");
     attrNor = context->glGetAttribLocation(prog, "vs_Nor");
     attrCol = context->glGetAttribLocation(prog, "vs_Col");
+    attrUV = context->glGetAttribLocation(prog, "vs_UV");
 
     unifModel      = context->glGetUniformLocation(prog, "u_Model");
     unifModelInvTr = context->glGetUniformLocation(prog, "u_ModelInvTr");
     unifViewProj   = context->glGetUniformLocation(prog, "u_ViewProj");
     unifColor      = context->glGetUniformLocation(prog, "u_Color");
+    unifEyePos = context->glGetUniformLocation(prog, "u_Eye");
+
+    unifSampler2D  = context->glGetUniformLocation(prog, "u_Texture");
+    unifTime = context->glGetUniformLocation(prog, "u_Time");
+
+
+    if (unifSampler2D != -1) {
+        // Code that sets up texture data on the GPU
+        mp_texture = new Texture(context);
+        mp_texture->create(":/textures/minecraft_textures_all.png");
+        mp_texture->load(0);
+        mp_texture->bind(0);
+        useMe();
+        context->glUniform1i(unifSampler2D, /*GL_TEXTURE*/0);
+    }
+    std::cout << std::endl;
+
 }
 
 void ShaderProgram::useMe()
@@ -148,15 +169,25 @@ void ShaderProgram::draw(Drawable &d)
         // meaning that glVertexAttribPointer associates vs_Pos
         // (referred to by attrPos) with that VBO
 
-    if (d.bindEve() && attrPos != -1 && attrNor != -1 && attrCol != -1) {
-        context->glEnableVertexAttribArray(attrPos);
-        context->glVertexAttribPointer(attrPos, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), NULL);
+    // Must be called every frame
+    if(mp_texture != nullptr) {
+        mp_texture->bind(0);
+    }
 
-        context->glEnableVertexAttribArray(attrNor);
-        context->glVertexAttribPointer(attrNor, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), BUFFER_OFFSET(sizeof(glm::vec4)));
+    if (d.bindEve()) {
+        if (attrPos != -1) {
+            context->glEnableVertexAttribArray(attrPos);
+            context->glVertexAttribPointer(attrPos, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), NULL);
+        }
+        if (attrNor != -1) {
+            context->glEnableVertexAttribArray(attrNor);
+            context->glVertexAttribPointer(attrNor, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), BUFFER_OFFSET(sizeof(glm::vec4)));
+        }
+        if (attrUV != -1) {
+            context->glEnableVertexAttribArray(attrUV);
+            context->glVertexAttribPointer(attrUV, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), BUFFER_OFFSET(2 * sizeof(glm::vec4)));
+        }
 
-        context->glEnableVertexAttribArray(attrCol);
-        context->glVertexAttribPointer(attrCol, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), BUFFER_OFFSET(2 * sizeof(glm::vec4)));
     } else {
 
         if (attrPos != -1 && d.bindPos()) {
@@ -173,6 +204,11 @@ void ShaderProgram::draw(Drawable &d)
             context->glEnableVertexAttribArray(attrCol);
             context->glVertexAttribPointer(attrCol, 4, GL_FLOAT, false, 0, NULL);
         }
+
+        if (attrUV != -1 && d.bindUV()) {
+            context->glEnableVertexAttribArray(attrUV);
+            context->glVertexAttribPointer(attrUV, 2, GL_FLOAT, false, 0, NULL);
+        }
     }
 
     // Bind the index buffer and then draw shapes from it.
@@ -183,6 +219,7 @@ void ShaderProgram::draw(Drawable &d)
     if (attrPos != -1) context->glDisableVertexAttribArray(attrPos);
     if (attrNor != -1) context->glDisableVertexAttribArray(attrNor);
     if (attrCol != -1) context->glDisableVertexAttribArray(attrCol);
+    if (attrUV != -1) context->glDisableVertexAttribArray(attrUV);
 
     context->printGLErrorLog();
 }
@@ -260,5 +297,22 @@ void ShaderProgram::printLinkInfoLog(int prog)
         context->glGetProgramInfoLog(prog, infoLogLen, &charsWritten, infoLog);
         qDebug() << "LinkInfoLog:" << endl << infoLog << endl;
         delete [] infoLog;
+    }
+}
+
+void ShaderProgram::setTime(float t)
+{
+    useMe();
+
+    if(unifTime != -1)
+    {
+        context->glUniform1f(unifTime, t);
+    }
+}
+
+void ShaderProgram::setEyePos(glm::vec4 p) {
+    useMe();
+    if (unifEyePos != -1) {
+        context->glUniform4fv(unifEyePos, 1, &p[0]);
     }
 }

@@ -14,7 +14,8 @@ include(src/src.pri)
 FORMS += forms/mainwindow.ui \
     forms/cameracontrolshelp.ui
 
-RESOURCES += glsl.qrc
+RESOURCES += glsl.qrc \
+    textures.qrc
 
 *-clang*|*-g++* {
     message("Enabling additional warnings")

@@ -62,6 +62,8 @@ void MyGL::initializeGL()
     glEnable(GL_POLYGON_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     // Set the size with which points should be rendered
     glPointSize(5);
     // Set the color with which the screen is filled at the start of each render call.
@@ -108,6 +110,7 @@ void MyGL::resizeGL(int w, int h)
 
     mp_progLambert->setViewProjMatrix(viewproj);
     mp_progFlat->setViewProjMatrix(viewproj);
+    mp_progLambert->setEyePos(glm::vec4(mp_camera->eye, 1.f));
 
     mp_crosshairs->aspect = mp_camera->height / float(mp_camera->width);
     mp_crosshairs->create();
@@ -155,6 +158,7 @@ void MyGL::paintGL()
 
     mp_progFlat->setViewProjMatrix(mp_camera->getViewProj());
     mp_progLambert->setViewProjMatrix(mp_camera->getViewProj());
+    mp_progLambert->setEyePos(glm::vec4(mp_camera->eye, 1.f));
 
     GLDrawScene();
 

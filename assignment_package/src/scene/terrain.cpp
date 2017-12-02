@@ -1,15 +1,15 @@
 #include <scene/terrain.h>
 
 Chunk::Chunk(OpenGLContext* context)
-    : Drawable(context)
+    : Drawable(context), block_array({EMPTY})
 {
     // Array in initialization list
     // does not work on Sagar's laptop
 
-    for(int i=0;i<65536;i++)
-    {
-        block_array[i] = EMPTY;
-    }
+//    for(int i=0;i<65536;i++)
+//    {
+//        block_array[i] = EMPTY;
+//    }
 
 }
 
@@ -56,26 +56,132 @@ Terrain::Terrain(OpenGLContext* in_context) :
     dimensions(64, 256, 64),
     chunk_dimensions(16, 256, 16),
     chunk_map(std::unordered_map<uint64_t, Chunk*>()),
-    color_map(std::map<BlockType, glm::vec4>()),
+    color_map(std::unordered_map<char, glm::vec4>()),
+    normal_vec_map(std::unordered_map<char, glm::vec4>()),
+    block_uv_map(std::unordered_map<char, std::vector<glm::vec4>>()),
     context(in_context),
-    x_normal(glm::vec4(1, 0, 0, 0)),
-    x_normal_neg(-x_normal),
-    y_normal(glm::vec4(0, 1, 0, 0)),
-    y_normal_neg(-y_normal),
-    z_normal(glm::vec4(0, 0, 1, 0)),
-    z_normal_neg(-z_normal),
 
-    start_x(glm::vec4(0.5, 0.5, 0.5, 1)),
-    start__x(glm::vec4(-0.5, 0.5, 0.5, 1)),
-    start_y(glm::vec4(0.5, 0.5, 0.5, 1)),
-    start__y(glm::vec4(0.5, -0.5, 0.5, 1)),
-    start_z(glm::vec4(0.5, 0.5, 0.5, 1)),
-    start__z(glm::vec4(0.5, 0.5, -0.5, 1))
+    offset(glm::vec3(0.5, 0.5, 0.5))
 {
     color_map[GRASS] = glm::vec4(95.f, 159.f, 53.f, 255.f) / 255.f;
     color_map[DIRT] = glm::vec4(121.f, 85.f, 58.f, 255.f) / 255.f;
     color_map[STONE] = glm::vec4(0.5, 0.5, 0.5, 1);
-    color_map[LAVA] = glm::vec4(207.f, 16.f, 32.f, 255.f) / 255.f;
+    color_map[LAVA] = glm::vec4(207.f, 16.f, 32.f, 128.f) / 255.f;
+
+
+    // Letters correspond to movement controls
+    // ex: 'W' corresponds to forward z direction
+    normal_vec_map['D'] = glm::vec4(1, 0, 0, 0);
+    normal_vec_map['A'] = glm::vec4(-1, 0, 0, 0);
+    normal_vec_map['W'] = glm::vec4(0, 0, 1, 0);
+    normal_vec_map['S'] = glm::vec4(0, 0, -1, 0);
+    normal_vec_map['E'] = glm::vec4(0, 1, 0, 0);
+    normal_vec_map['Q'] = glm::vec4(0, -1, 0, 0);
+
+    draw_start_map['D'] = glm::vec4(0.5, 0.5, 0.5, 1);
+    draw_start_map['A'] = glm::vec4(-0.5, 0.5, -0.5, 1);
+    draw_start_map['W'] = glm::vec4(-0.5, 0.5, 0.5, 1);
+    draw_start_map['S'] = glm::vec4(0.5, 0.5, -0.5, 1);
+    draw_start_map['E'] = glm::vec4(0.5, 0.5, 0.5, 1);
+    draw_start_map['Q'] = glm::vec4(0.5, -0.5, 0.5, 1);
+
+    // Create UV values for each type of block
+    // Stored in a vec4
+    // index 0, 1 are the UVs
+    // index 2 is the specular cosine power
+    // index 3 is flag for whether this block is animated
+    std::vector<glm::vec4> uv = std::vector<glm::vec4>();
+
+    uv.clear();
+    uv.push_back(glm::vec4(2.f/16.f, 16.f/16.f, 1.f, 0));
+    uv.push_back(glm::vec4(2.f/16.f, 15.f/16.f, 1.f, 0));
+    uv.push_back(glm::vec4(3.f/16.f, 15.f/16.f, 1.f, 0));
+    uv.push_back(glm::vec4(3.f/16.f, 16.f/16.f, 1.f, 0));
+    block_uv_map[DIRT] = uv;
+
+    uv.clear();
+    uv.push_back(glm::vec4(1.f/16.f, 16.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(1.f/16.f, 15.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(2.f/16.f, 15.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(2.f/16.f, 16.f/16.f, 2.f, 0));
+    block_uv_map[STONE] = uv;
+
+    uv.clear();
+    uv.push_back(glm::vec4(13.f/16.f, 2.f/16.f, 8.f, 1));
+    uv.push_back(glm::vec4(13.f/16.f, 1.f/16.f, 8.f, 1));
+    uv.push_back(glm::vec4(14.f/16.f, 1.f/16.f, 8.f, 1));
+    uv.push_back(glm::vec4(14.f/16.f, 2.f/16.f, 8.f, 1));
+    block_uv_map[LAVA] = uv;
+
+    uv.clear();
+    uv.push_back(glm::vec4(13.f/16.f, 4.f/16.f, 100.f, 1));
+    uv.push_back(glm::vec4(13.f/16.f, 3.f/16.f, 100.f, 1));
+    uv.push_back(glm::vec4(14.f/16.f, 3.f/16.f, 100.f, 1));
+    uv.push_back(glm::vec4(14.f/16.f, 4.f/16.f, 100.f, 1));
+    block_uv_map[WATER] = uv;
+
+    uv.clear();
+    uv.push_back(glm::vec4(8.f/16.f, 14.f/16.f, 3.f, 0));
+    uv.push_back(glm::vec4(8.f/16.f, 13.f/16.f, 3.f, 0));
+    uv.push_back(glm::vec4(9.f/16.f, 13.f/16.f, 3.f, 0));
+    uv.push_back(glm::vec4(9.f/16.f, 14.f/16.f, 3.f, 0));
+    block_uv_map[GRASS + 'E'] = uv;
+
+    uv.clear();
+    block_uv_map[GRASS + 'Q'] = block_uv_map[DIRT];
+
+    uv.clear();
+    uv.push_back(glm::vec4(3.f/16.f, 16.f/16.f, 1.f, 0));
+    uv.push_back(glm::vec4(3.f/16.f, 15.f/16.f, 1.f, 0));
+    uv.push_back(glm::vec4(4.f/16.f, 15.f/16.f, 1.f, 0));
+    uv.push_back(glm::vec4(4.f/16.f, 16.f/16.f, 1.f, 0));
+    block_uv_map[GRASS + 'W'] = uv;
+
+    block_uv_map[GRASS + 'A'] = block_uv_map[GRASS + 'W'];
+    block_uv_map[GRASS + 'S'] = block_uv_map[GRASS + 'W'];
+    block_uv_map[GRASS + 'D'] = block_uv_map[GRASS + 'W'];
+
+    uv.clear();
+    uv.push_back(glm::vec4(1.f/16.f, 15.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(1.f/16.f, 14.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(2.f/16.f, 14.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(2.f/16.f, 15.f/16.f, 2.f, 0));
+    block_uv_map[BEDROCK] = uv;
+
+    uv.clear();
+    uv.push_back(glm::vec4(3.f/16.f, 12.f/16.f, 64.f, 0));
+    uv.push_back(glm::vec4(3.f/16.f, 11.f/16.f, 64.f, 0));
+    uv.push_back(glm::vec4(4.f/16.f, 11.f/16.f, 64.f, 0));
+    uv.push_back(glm::vec4(4.f/16.f, 12.f/16.f, 64.f, 0));
+    block_uv_map[ICE] = uv;
+
+    uv.clear();
+    uv.push_back(glm::vec4(5.f/16.f, 13.f/16.f, 4.f, 0));
+    uv.push_back(glm::vec4(5.f/16.f, 12.f/16.f, 4.f, 0));
+    uv.push_back(glm::vec4(6.f/16.f, 12.f/16.f, 4.f, 0));
+    uv.push_back(glm::vec4(6.f/16.f, 13.f/16.f, 4.f, 0));
+    block_uv_map[LEAF] = uv;
+
+    uv.clear();
+    uv.push_back(glm::vec4(5.f/16.f, 15.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(5.f/16.f, 14.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(6.f/16.f, 14.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(6.f/16.f, 15.f/16.f, 2.f, 0));
+    block_uv_map[WOOD + 'E'] = uv;
+
+    uv.clear();
+    block_uv_map[WOOD + 'Q'] = block_uv_map[WOOD + 'E'];
+
+    uv.clear();
+    uv.push_back(glm::vec4(4.f/16.f, 15.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(4.f/16.f, 14.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(5.f/16.f, 14.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(5.f/16.f, 15.f/16.f, 2.f, 0));
+    block_uv_map[WOOD + 'W'] = uv;
+
+    block_uv_map[WOOD + 'A'] = block_uv_map[WOOD + 'W'];
+    block_uv_map[WOOD + 'S'] = block_uv_map[WOOD + 'W'];
+    block_uv_map[WOOD + 'D'] = block_uv_map[WOOD + 'W'];
 }
 
 Terrain::~Terrain() {
@@ -110,8 +216,14 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
     Chunk* ch;
     auto index = chunk_map.find(chunk_pos);
     if (index == chunk_map.end()) {
-        ch = new Chunk(context);
-        chunk_map[chunk_pos] = ch;
+        // If Chunk does not exist, create the terrain for this chunk
+        // Then at end, we will set the specific block type for one position
+        // We're doing it this way because this method is mostly called
+        // by river generation, which might need to create new chunks
+        // but only sets the water blocks
+
+        //ch = new Chunk(context);
+        chunk_map[chunk_pos] = createScene(getChunkPosition1D(x), getChunkPosition1D(z));
     } else {
         ch = chunk_map[chunk_pos];
     }
@@ -203,9 +315,8 @@ void Terrain::updateChunkVBO(int x, int z) {
     std::vector<glm::vec4> everything = std::vector<glm::vec4>();
     std::vector<GLuint> indices = std::vector<GLuint>();
 
-    BlockType block;
+    BlockType block, neighbor;
     glm::vec3 world_pos;
-    glm::vec4 col;
 
     // Chunk neighbors
     Chunk* neighbor_x = getChunk(x + 1, z);
@@ -224,65 +335,79 @@ void Terrain::updateChunkVBO(int x, int z) {
                     world_pos = glm::vec3(i, j, k)
                             + glm::vec3(x * chunk_dimensions[0], 0, z * chunk_dimensions[2]);
 
-
-                    auto index = color_map.find(block);
-                    if (index == color_map.end()) {
-                        break;
-                    } else {
-                        col = index->second;
-                    }
-
                     // Check neighboring Chunk in x direction
                     if (i == 0) {
                         if (neighbor__x != nullptr) {
-                            if (neighbor__x->getBlockType(chunk_dimensions[0] - 1, j, k) == EMPTY) {
-                                addSquare(&world_pos, &x_normal_neg, &col, &start__x, &everything, &indices);
+                            neighbor = neighbor__x->getBlockType(chunk_dimensions[0] - 1, j, k);
+                            if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
+                                addSquare(&world_pos, &everything, &indices, 'A', block);
                             }
                         }
-                    } else if (ch->getBlockType(i - 1, j, k) == EMPTY) {
-                        // Check neighboring x within this chunk
-                        addSquare(&world_pos, &x_normal_neg, &col, &start__x, &everything, &indices);
+                    } else {
+                        neighbor = ch->getBlockType(i - 1, j, k);
+                        if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
+                            // Check neighboring x within this chunk
+                            addSquare(&world_pos, &everything, &indices, 'A', block);
+                        }
                     }
 
                     if (i == chunk_dimensions[0] - 1) {
                         if (neighbor_x != nullptr) {
-                            if (neighbor_x->getBlockType(0, j, k) == EMPTY) {
-                                addSquare(&world_pos, &x_normal, &col, &start_x, &everything, &indices);
+                            neighbor = neighbor_x->getBlockType(0, j, k);
+                            if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
+                                addSquare(&world_pos, &everything, &indices, 'D', block);
                             }
                         }
                     }
-                    else if (ch->getBlockType(i + 1, j, k) == EMPTY) {
-                        addSquare(&world_pos, &x_normal, &col, &start_x, &everything, &indices);
+                    else {
+                        neighbor = ch->getBlockType(i + 1, j, k);
+                        if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
+                            addSquare(&world_pos, &everything, &indices, 'D', block);
+                        }
                     }
 
 
                     // Check neighboring y
-                    if (j < 255 && ch->getBlockType(i, j + 1, k) == EMPTY) {
-                        addSquare(&world_pos, &y_normal, &col, &start_y, &everything, &indices);
+                    if (j < 255) {
+                        neighbor = ch->getBlockType(i, j + 1, k);
+                        if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
+                            addSquare(&world_pos, &everything, &indices, 'E', block);
+                        }
                     }
-                    if (j > 0 && ch->getBlockType(i, j - 1, k) == EMPTY) {
-                        addSquare(&world_pos, &y_normal_neg, &col, &start__y, &everything, &indices);
+                    if (j > 0) {
+                        neighbor = ch->getBlockType(i, j - 1, k);
+                        if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
+                            addSquare(&world_pos, &everything, &indices, 'Q', block);
+                        }
                     }
 
                     // Check neighboring Chunk in z direction
                     if (k == 0) {
                         if (neighbor__z != nullptr) {
-                            if (neighbor__z->getBlockType(i, j, chunk_dimensions[2] - 1) == EMPTY) {
-                                addSquare(&world_pos, &z_normal_neg, &col, &start__z, &everything, &indices);
+                            neighbor = neighbor__z->getBlockType(i, j, chunk_dimensions[2] - 1);
+                            if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
+                                addSquare(&world_pos, &everything, &indices, 'S', block);
                             }
                         }
-                    } else if (ch->getBlockType(i, j, k - 1) == EMPTY) {
-                        addSquare(&world_pos, &z_normal_neg, &col, &start__z, &everything, &indices);
+                    } else {
+                        neighbor = ch->getBlockType(i, j, k - 1);
+                        if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
+                            addSquare(&world_pos, &everything, &indices, 'S', block);
+                        }
                     }
 
                     if (k == chunk_dimensions[2] - 1) {
                         if (neighbor_z != nullptr) {
-                            if (neighbor_z->getBlockType(i, j, 0) == EMPTY) {
-                                addSquare(&world_pos, &z_normal, &col, &start_z, &everything, &indices);
+                            neighbor = neighbor_z->getBlockType(i, j, 0);
+                            if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
+                                addSquare(&world_pos, &everything, &indices, 'W', block);
                             }
                         }
-                    } else if (ch->getBlockType(i, j, k + 1) == EMPTY) {
-                        addSquare(&world_pos, &z_normal, &col, &start_z, &everything, &indices);
+                    } else {
+                        neighbor = ch->getBlockType(i, j, k + 1);
+                        if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
+                            addSquare(&world_pos, &everything, &indices, 'W', block);
+                        }
                     }
 
                 }
@@ -293,34 +418,48 @@ void Terrain::updateChunkVBO(int x, int z) {
     ch->createVBO(everything, indices);
 }
 
-void Terrain::updateAllVBO() {
-    for ( auto it = chunk_map.begin(); it != chunk_map.end(); ++it ) {
-        //updateChunkVBO(16 * it->first[0], 16 * it->first[1]);
-    }
-}
+//void Terrain::updateAllVBO() {
+//    for ( auto it = chunk_map.begin(); it != chunk_map.end(); ++it ) {
+//        //updateChunkVBO(16 * it->first[0], 16 * it->first[1]);
+//    }
+//}
 
-void Terrain::addSquare(glm::vec3* pos, const glm::vec4* normal, glm::vec4* color,
-                      const glm::vec4* squareStart,
+void Terrain::addSquare(glm::vec3* pos,
                       std::vector<glm::vec4> *everything,
-                      std::vector<GLuint> *indices) {
+                      std::vector<GLuint> *indices,
+                      char direction, BlockType block) {
 
     // grab size of positions
     int index = everything->size() / 3;
-    glm::vec3 offset = glm::vec3(0.5, 0.5, 0.5);
-    glm::vec3 normal3 = glm::vec3(*normal);
+    glm::vec4 normal = normal_vec_map[direction];
+    glm::vec3 normal3 = glm::vec3(normal);
+
+    // Get list of UVs
+    // If the BlockType is not stored in the map,
+    // add the direction to it.
+    // Used for GRASS and WOOD which have different UVs
+    // depending on the direction of face
+    std::vector<glm::vec4> uv_list;
+    auto mapped_uv = block_uv_map.find(block);
+    if (mapped_uv == block_uv_map.end()) {
+        uv_list = block_uv_map[block + direction];
+    } else {
+        uv_list = mapped_uv->second;
+    }
 
     for (int k = 0; k < 4; k++) {
         // Rotate by 90 degrees 4 times
         // Push them into positions vector
-        // Push normals
-        // Push colors
         everything->push_back(glm::translate(glm::mat4(), *pos + offset)
                             * glm::rotate(glm::mat4(), glm::radians(90.f * k), normal3)
-                            * *squareStart);
+                            * draw_start_map[direction]);
 
-        everything->push_back(*normal);
-        everything->push_back(*color);
+        // Push normals
+        everything->push_back(normal);
+        // Push UV
+        everything->push_back(uv_list[k]);
     }
+
     // Push indices
     indices->push_back(index);
     indices->push_back(index + 1);

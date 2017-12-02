@@ -31,6 +31,8 @@ public:
     void createVBO(std::vector<glm::vec4> &everything,
                       std::vector<GLuint> &indices);
 
+    bool isCreated;
+
 private:
     BlockType block_array[65536]; // 16 x 256 x 16 (x by y by z)
 };

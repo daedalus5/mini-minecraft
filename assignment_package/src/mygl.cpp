@@ -198,6 +198,9 @@ void MyGL::GLDrawScene()
             ch = mp_terrain->getChunk(x, z);
             if (ch != nullptr) {
                 chunks2Draw.push_back(ch);
+                if (!ch->isCreated) {
+                    chunks2Update.insert(mp_terrain->convertToInt(x, z));
+                }
             } else {
                 chunks2Draw.push_back(mp_terrain->createScene(x, z));
 
@@ -218,10 +221,9 @@ void MyGL::GLDrawScene()
         mp_terrain->updateChunkVBO(tempX, tempZ);
     }
 
-    for (Chunk* ch : chunks2Draw) {
-        mp_progLambert->draw(*ch);
+    for (Chunk* chu : chunks2Draw) {
+        mp_progLambert->draw(*chu);
     }
-
 }
 
 

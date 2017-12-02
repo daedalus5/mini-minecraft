@@ -94,7 +94,7 @@ void MyGL::initializeGL()
     glBindVertexArray(vao);
 
     mp_terrain->setTerrainType(new Highland);
-
+    mp_terrain->createRivers();
     //mp_terrain->updateAllVBO();
 }
 
@@ -227,7 +227,7 @@ void MyGL::keyPressEvent(QKeyEvent *e) // triggered when key is pressed
 {
     if(e->key()==Qt::Key_Escape)
     {
-        QApplication::quit;
+        QApplication::quit();
     }
 
     if(e->key()==Qt::Key_F)
@@ -244,9 +244,9 @@ void MyGL::keyPressEvent(QKeyEvent *e) // triggered when key is pressed
     }
     mp_player->keyPressState(e);
 
-    float amount = 1.0f;
+    //float amount = 1.0f;
     if(e->modifiers() & Qt::ShiftModifier){
-        amount = 10.0f;
+        //amount = 10.0f;
     }
 
 }

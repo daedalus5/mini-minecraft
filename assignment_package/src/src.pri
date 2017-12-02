@@ -16,7 +16,8 @@ SOURCES += \
     $$PWD/scene/terrain.cpp \
     $$PWD/scene/worldaxes.cpp \
     $$PWD/player.cpp \
-    $$PWD/texture.cpp
+    $$PWD/texture.cpp \
+    $$PWD/scene/lsystem.cpp
 
 HEADERS += \
     $$PWD/la.h \
@@ -33,4 +34,5 @@ HEADERS += \
     $$PWD/scene/terrain.h \
     $$PWD/scene/worldaxes.h \
     $$PWD/player.h \
-    $$PWD/texture.h
+    $$PWD/texture.h \
+    $$PWD/scene/lsystem.h

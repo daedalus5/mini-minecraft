@@ -535,7 +535,7 @@ void Terrain::createRivers()
 {
     // pass river desired start position and general heading (x, z)
     setLSystem(new RiverDelta(glm::vec2(0,0), glm::vec2(0.0,1.0f)));
-    lsys->generatePath(MAX_DEPTH, "FFFX");
+    lsys->generatePath(MAX_DEPTH_DELTA, "FFFX");
     lsys->populateOps();
 
     glm::vec2 start;
@@ -591,19 +591,19 @@ void Terrain::createRivers()
                     }
                     int numShelves = 5;
                     // left bank of river
-//                    for(int p = 0; p < numShelves; ++p){
-//                        for(int q = zeroHeight + 1; q + p < 256; ++q){
-//                            setBlockAt(l - offset - 1 - 2*p, q + p, k, EMPTY);
-//                            setBlockAt(l - offset - 1 - 2*p - 1, q + p, k, EMPTY);
-//                        }
-//                    }
+                    for(int p = 0; p < numShelves; ++p){
+                        for(int q = zeroHeight + 1; q + p < 256; ++q){
+                            setBlockAt(l - offset - 1 - 2*p, q + p, k, EMPTY);
+                            setBlockAt(l - offset - 1 - 2*p - 1, q + p, k, EMPTY);
+                        }
+                    }
                     // right bank of river
-//                    for(int p = 0; p < numShelves; ++p){
-//                        for(int q = zeroHeight + 1; q + p < 256; ++q){
-//                            setBlockAt(l + offset + 1 + 2*p, q + p, k, EMPTY);
-//                            setBlockAt(l + offset + 1 + 2*p + 1, q + p, k, EMPTY);
-//                        }
-//                    }
+                    for(int p = 0; p < numShelves; ++p){
+                        for(int q = zeroHeight + 1; q + p < 256; ++q){
+                            setBlockAt(l + offset + 1 + 2*p, q + p, k, EMPTY);
+                            setBlockAt(l + offset + 1 + 2*p + 1, q + p, k, EMPTY);
+                        }
+                    }
                 }
             }
 //            if (zMin == zMax){  // line is horizontal in z direction

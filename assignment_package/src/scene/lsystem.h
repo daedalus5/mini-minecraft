@@ -12,7 +12,8 @@ const float PI_4 = 0.78539816;
 const float PI_6 = 0.52359877;
 const float PI_8 = 0.39269908;
 const float MAX_DISTANCE = 4.0f;
-const int MAX_DEPTH = 10;
+const int MAX_DEPTH_DELTA = 10;
+const int MAX_DEPTH_RIVER = 10;
 
 class LSystem;
 

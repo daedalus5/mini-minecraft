@@ -37,7 +37,9 @@ private:
     bool isDpressed;
     bool isSpacepressed;
 
-    bool isZpressed; //remove upon implementing collision detection
+
+
+    bool isQpressed;
 
     bool aerialState; //Determines if the player is grounded or aerial. If aerial, gravity will pull him/her down
     Qt::MouseButton mouseButtonPressed;
@@ -48,6 +50,7 @@ private:
     glm::vec3 box2max;
 
 public:
+    bool isSandbox;
     Player(Camera*, Terrain*);
     glm::vec2 rotation;
     bool controllerState;// true if player is recieving input from the controller

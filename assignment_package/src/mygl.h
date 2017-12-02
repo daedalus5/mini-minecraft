@@ -27,6 +27,7 @@ private:
     WorldAxes* mp_worldAxes; // A wireframe representation of the world axes. It is hard-coded to sit centered at (32, 128, 32).
     ShaderProgram* mp_progLambert;// A shader program that uses lambertian reflection
     ShaderProgram* mp_progFlat;// A shader program that uses "flat" reflection (no shadowing at all)
+    ShaderProgram* mp_lavavision; // Red overlay for under Lava
 
     GLuint vao; // A handle for our vertex array object. This will store the VBOs created in our geometry classes.
                 // Don't worry too much about this. Just know it is necessary in order to render geometry.
@@ -38,6 +39,7 @@ private:
 
     quint64 time; // this holds the milliseconds value of Time since Epoch, i.e. time since January 1, 1970
     quint64 dt; // time elapsed since last timerUpdate()
+    bool isSandbox;
 
 
 
@@ -58,6 +60,7 @@ public:
 
     void GLDrawScene();
 
+
 protected:
     void keyPressEvent(QKeyEvent *e);
 
@@ -77,6 +80,7 @@ protected:
 private slots:
     /// Slot that gets called ~60 times per second
     void timerUpdate();
+
 };
 
 

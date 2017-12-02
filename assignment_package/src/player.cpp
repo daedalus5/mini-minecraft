@@ -2,7 +2,7 @@
 #include<QKeyEvent>
 #include<iostream>
 
-Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),controllerState(false),mouseState(false){
+Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),controllerState(false),mouseState(false),isSandbox(false){
 
     pos= ptr_to_cam->eye;
 
@@ -53,9 +53,9 @@ void Player::keyPressState(QKeyEvent *e) // invoked by keyPressEvent. sets key f
     {
         isSpacepressed = true;
     }
-    if(e->key()==Qt::Key_Z)
+    if(e->key()==Qt::Key_Q)
     {
-        isZpressed = true;
+        isQpressed = true;
     }
 }
 void Player::keyReleaseState(QKeyEvent *e)// invoked by keyReleaseEvent. sets key flags.
@@ -81,9 +81,9 @@ void Player::keyReleaseState(QKeyEvent *e)// invoked by keyReleaseEvent. sets ke
     {
         isSpacepressed = false;
     }
-    if(e->key()==Qt::Key_Z)
+    if(e->key()==Qt::Key_Q)
     {
-        isZpressed = false;
+        isQpressed = false;
     }
 
 }
@@ -116,7 +116,13 @@ bool Player::boundingBoxcheck(glm::vec3 box1min, glm::vec3 box1max, glm::vec3 bo
 
 bool Player::collisionDetect() // returns true if any of the player vertices faces a potential collision in the next timerUpdate()
 {
-    int flag = 0;
+    if(isSandbox)
+    {
+        return false;
+    }
+    else
+    {
+        int flag = 0;
     int velocityFlag = 0;
 
     std::vector<glm::vec3>nextpositions;
@@ -137,6 +143,8 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
 
 
             flag = 1;
+            velocity.x = 0.f;
+            velocity.y = 0.f;
 
 
             return true;
@@ -171,6 +179,7 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
         return false;
     }
     nextpositions.clear();
+    }
 
  }
 void Player::gravityCheck() // implements gravity
@@ -252,7 +261,7 @@ void Player::gravityCheck() // implements gravity
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
     }
-    else if(((a==WATER)||(a==LAVA)||(a==EMPTY))&&((b==WATER)||(b==LAVA)||(b==EMPTY))&&((c==WATER)||(c==LAVA)||(d==EMPTY))&&((d==WATER)||(d==LAVA)||(d==EMPTY)))
+    else if(((a==WATER)||(a==LAVA)||(a==EMPTY))&&((b==WATER)||(b==LAVA)||(b==EMPTY))&&((c==WATER)||(c==LAVA)||(c==EMPTY))&&((d==WATER)||(d==LAVA)||(d==EMPTY)))
     {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
@@ -379,7 +388,7 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
     }
 
-    if(isZpressed)
+    if(isQpressed)
     {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;

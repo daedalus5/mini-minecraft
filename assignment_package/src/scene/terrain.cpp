@@ -1,7 +1,7 @@
 #include <scene/terrain.h>
 
 Chunk::Chunk(OpenGLContext* context)
-    : Drawable(context)
+    : Drawable(context), isCreated(false)
 {
     // Array in initialization list
     // does not work on Sagar's laptop
@@ -33,6 +33,8 @@ void Chunk::createVBO(std::vector<glm::vec4> &everything,
     generateEve();
     context->glBindBuffer(GL_ARRAY_BUFFER, bufEve);
     context->glBufferData(GL_ARRAY_BUFFER, everything.size() * sizeof(glm::vec4), everything.data(), GL_STATIC_DRAW);
+
+    isCreated = true;
 }
 
 void Chunk::create() {
@@ -224,7 +226,7 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
 
         //ch = new Chunk(context);
         ch = createScene(getChunkPosition1D(x), getChunkPosition1D(z));
-        chunk_map[chunk_pos] = ch;
+        //chunk_map[chunk_pos] = ch;
     } else {
         ch = chunk_map[chunk_pos];
     }
@@ -472,6 +474,7 @@ void Terrain::addSquare(glm::vec3* pos,
 }
 
 uint64_t Terrain::convertToInt(int x, int z)  const {
+    uint64_t blah = ((uint64_t) x << 32) | ((uint64_t) z << 32 >> 32);
     return ((uint64_t) x << 32) | ((uint64_t) z << 32 >> 32);
 }
 
@@ -489,7 +492,9 @@ Chunk* Terrain::createScene(int chunkX, int chunkZ) {
         return nullptr;
     }
     Chunk* chunk = new Chunk(context);
-    chunk_map[convertToInt(chunkX, chunkZ)] = chunk;
+    uint64_t chunk_pos = convertToInt(chunkX, chunkZ);
+    chunk_map[chunk_pos] = chunk;
+    Chunk* test = chunk_map[chunk_pos];
 
     // The chunk's position in world coordinates
     int chunkWorldX = chunkX * chunk_dimensions[0];

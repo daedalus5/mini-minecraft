@@ -15,8 +15,8 @@ MyGL::MyGL(QWidget *parent)
       mp_geomCube(new Cube(this)), mp_worldAxes(new WorldAxes(this)),
       mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),mp_lavavision(new ShaderProgram(this)),
       mp_camera(new Camera()), mp_terrain(new Terrain(this)), mp_crosshairs(new CrossHairs(this)),
-       mp_player(new Player(mp_camera, mp_terrain)), start_time(QDateTime::currentMSecsSinceEpoch()),
-      isSandbox(false),m_geomQuad(new Quad(this))
+       mp_player(new Player(mp_camera, mp_terrain)),underwater(false),underlava(false),start_time(QDateTime::currentMSecsSinceEpoch()),
+      isSandbox(false),m_geomQuad(new Quad(this)),skyColor(glm::vec4(0.37f, 0.74f, 1.0f, 1))
 
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
@@ -71,7 +71,9 @@ void MyGL::initializeGL()
     // Set the size with which points should be rendered
     glPointSize(5);
     // Set the color with which the screen is filled at the start of each render call.
-    glClearColor(0.37f, 0.74f, 1.0f, 1);
+    glClearColor(skyColor.r,skyColor.g,skyColor.b,skyColor.a);
+
+
 
     printGLErrorLog();
 
@@ -136,6 +138,7 @@ void MyGL::timerUpdate()
     if(!isSandbox)
     {mp_player->gravityCheck();
     }
+
     if(mp_player->controllerState == true || mp_player->mouseState==true) // reads if the player is recieving input from the controller, then proceeds to pass it dt and cause it to change
                                            // its attributes like position, velocity, etc.
     {
@@ -146,11 +149,29 @@ void MyGL::timerUpdate()
         mp_player->playerGeometry(); // updates player bounding box and limits
 
     }
+    BlockType b1 = mp_player->checkSubmerged();
+    if(b1==LAVA)
+    {
+        underwater = false;
+        underlava = true;
+    }
+    else if(b1==WATER)
+    {
+        underlava = false;
+        underwater = true;
+
+    }
+    else
+    {
+        underlava= false;
+        underwater = false;
+    }
+
     time = QDateTime::currentMSecsSinceEpoch();
 
     update();
 
-    MoveMouseToCenter();
+   // MoveMouseToCenter();
 
 }
 
@@ -176,6 +197,33 @@ void MyGL::paintGL()
     mp_progFlat->setViewProjMatrix(glm::mat4());
     mp_progFlat->draw(*mp_crosshairs);
     glEnable(GL_DEPTH_TEST);
+    if(underlava==true)
+    {
+    glm::vec4 lavaColor= glm::vec4(1.0,0.0,0.0,0.3);
+    skyColor = glm::mix(lavaColor,skyColor,0.3);
+    glClearColor(skyColor.r,skyColor.g,skyColor.b,skyColor.a);
+    glm::vec2 r = glm::vec2(0.0,1.0);
+    mp_progLambert->setSubmerged(r);
+    }
+
+    if(underwater==true)
+    {
+        glm::vec4 waterColor = glm::vec4(0.0,0.0,1.0,0.3);
+        skyColor = glm::mix(waterColor,skyColor,0.3);
+        glClearColor(skyColor.r,skyColor.g,skyColor.b,skyColor.a);
+        glm::vec2 r = glm::vec2(1.0,0.0);
+        mp_progLambert->setSubmerged(r);
+    }
+    if((underlava==false)&&(underwater==false))
+    {
+        skyColor = glm::vec4(0.37f, 0.74f, 1.0f, 1);
+
+        glClearColor(skyColor.r,skyColor.g,skyColor.b,skyColor.a);
+        glm::vec2 r = glm::vec2(0.0,0.0);
+        mp_progLambert->setSubmerged(r);
+
+
+    }
 }
 
 void MyGL::GLDrawScene()
@@ -442,7 +490,7 @@ void MyGL::createBlock(){
         BlockType b2 = mp_terrain->getBlockAt(insertPos[0], insertPos[1], insertPos[2]);
         // only build cube if there's an open space to place it
         if (b2 == EMPTY){
-            mp_terrain->addBlockAt(insertPos[0], insertPos[1], insertPos[2], LAVA);
+            mp_terrain->addBlockAt(insertPos[0], insertPos[1], insertPos[2], WATER);
         }
     }
 }

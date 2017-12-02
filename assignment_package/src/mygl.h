@@ -50,6 +50,7 @@ private:
 
     bool isSandbox;
     Quad* m_geomQuad;
+    glm::vec4 skyColor;
 
 
 

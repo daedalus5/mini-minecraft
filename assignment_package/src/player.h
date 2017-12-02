@@ -65,6 +65,7 @@ public:
     void updateAttributes();// updates position and velocity. Invoked by myGL's timerUpdate().
     void updateCameraOrientation(); // adjusts camera orientation
     void playerGeometry();// updates bounding box for player
+    BlockType checkSubmerged();
 
     void mouseMoveState(QMouseEvent*);
     bool collisionDetect(); //detects collisions

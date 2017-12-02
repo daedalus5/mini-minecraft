@@ -2,7 +2,7 @@
 #include<QKeyEvent>
 #include<iostream>
 
-Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),controllerState(false),mouseState(false),isSandbox(false){
+Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),isWpressed(false),isApressed(false),isDpressed(false),isSpacepressed(false),isQpressed(false),isLMBpressed(false),isRMBpressed(false),controllerState(false),mouseState(false),isSandbox(false){
 
     pos= ptr_to_cam->eye;
 
@@ -422,29 +422,29 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
 
 }
 void Player::mouseMoveState(QMouseEvent *m) //detects change in cursor position. Rotates Camera accordingly
-{
+{/*
     mouseOrientFlag = true;
     float currMouseX = m->x();
     dx = currMouseX - (ptr_to_cam->width / 2.f);
     rotation.x = rotation.x + (float)dx*0.35f;
     float currMouseY = m->y();
     dy = currMouseY - (ptr_to_cam->height / 2.f);
-    rotation.y = rotation.y + (float)dy*0.35f;
+    rotation.y = rotation.y + (float)dy*0.35f;*/
 
-//    if((m->x()!=mouseX)||(m->y()!=mouseY))
-//    {
-//        mouseOrientFlag = true;
-//        float currMouseX = m->x();
-//        dx = currMouseX - mouseX;
-//        rotation.x = (float)dx*0.35f;
-//        float currMouseY = m->y();
-//        dy = currMouseY - mouseY;
-//        rotation.y = (float)dy*0.35f;
-//        mouseX = m->x();
-//        mouseY = m->y();
-//    }
-//    else
-//        mouseOrientFlag = false;
+   if((m->x()!=mouseX)||(m->y()!=mouseY))
+    {
+        mouseOrientFlag = true;
+        float currMouseX = m->x();
+        dx = currMouseX - mouseX;
+        rotation.x = (float)dx*0.35f;
+        float currMouseY = m->y();
+        dy = currMouseY - mouseY;
+        rotation.y = (float)dy*0.35f;
+        mouseX = m->x();
+        mouseY = m->y();
+    }
+    else
+        mouseOrientFlag = false;
 }
 
 void Player::mousePressState(QMouseEvent *m)
@@ -499,6 +499,21 @@ void Player::playerGeometry() // constructs bounding box for player
     box2max = vertexpositions[0];
     playerMin = box1min;
     playerMax = box2max;
+}
+
+BlockType Player::checkSubmerged()
+{
+    if(ptr_to_terrain->getBlockAt(pos.x, pos.y, pos.z) == LAVA)
+    {
+        return LAVA;
+
+    }
+    else if(ptr_to_terrain->getBlockAt(pos.x, pos.y, pos.z) == WATER)
+    {
+        return WATER;
+    }
+    else
+        return EMPTY;
 }
 
 

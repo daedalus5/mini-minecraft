@@ -2,7 +2,11 @@
 #include<QKeyEvent>
 #include<iostream>
 
-Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),controllerState(false),mouseState(false),isSandbox(false){
+Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),
+    controllerState(false),mouseState(false),isSandbox(false),
+    isWpressed(false), isApressed(false), isSpressed(false), isDpressed(false), isSpacepressed(false),
+    isQpressed(false), aerialState(true)
+{
 
     pos= ptr_to_cam->eye;
 
@@ -33,6 +37,18 @@ void Player::updateTime(quint64 dtfromTimer) //player's copy of dt is updated by
 void Player::keyPressState(QKeyEvent *e) // invoked by keyPressEvent. sets key flags
 {
     controllerState = true;
+    if(e->key()==Qt::Key_F)
+    {
+        if(isSandbox==false)
+        {
+            isSandbox = true;
+        }
+        else if(isSandbox==true)
+        {
+            isSandbox = false;
+        }
+
+    }
     if(e->key()==Qt::Key_W)
     {
         isWpressed = true;

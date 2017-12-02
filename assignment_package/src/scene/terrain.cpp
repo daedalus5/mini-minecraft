@@ -534,14 +534,14 @@ void Terrain::setLSystem(LSystem *l){
 void Terrain::createRivers()
 {
     // pass river desired start position and general heading (x, z)
-    setLSystem(new RiverDelta(glm::vec2(0,0), glm::vec2(0,1)));
+    setLSystem(new RiverDelta(glm::vec2(0,0), glm::vec2(0.0,1.0f)));
     lsys->generatePath(MAX_DEPTH, "FFFX");
     lsys->populateOps();
 
     glm::vec2 start;
     glm::vec2 end;
-    int zMin;
-    int zMax;
+    float zMin;
+    float zMax;
     int xMin;
     int xMax;
     float intersect;
@@ -559,8 +559,8 @@ void Terrain::createRivers()
         if (lsys->path[i] == 'F'){
             end = lsys->activeTurtle.position;
             LineSegment2D line = LineSegment2D(start, end);
-            zMin = floor((start[1])) <= floor((end[1])) ? floor(start[1]) : floor(end[1]);
-            zMax = floor((end[1])) >= floor((start[1])) ? floor(end[1]) : floor(start[1]);
+            zMin = start[1] <= end[1] ? start[1] : end[1];
+            zMax = end[1] >= start[1] ? end[1] : start[1];
 
             // for drawing rivers with width
             depth = lsys->activeTurtle.depth;
@@ -577,14 +577,14 @@ void Terrain::createRivers()
                 offset = 2;
             }
 
-            for(int k = zMin; k <= zMax; ++k){
+            for(int k = floor(zMin); k <= floor(zMax); ++k){
                 // river by rasterization
                 bool check = line.intersectAt(k, &intersect);
                 if (check){
                     int l = floor(intersect);
                     for(int p = -offset; p <= offset; p++){
                         setBlockAt(l + p, zeroHeight, k, WATER);
-                        setBlockAt(l + p, zeroHeight - 1, k, BEDROCK);
+                        //setBlockAt(l + p, zeroHeight - 1, k, BEDROCK);
                         for(int q = zeroHeight + 1; q < 256; ++q){
                             setBlockAt(l + p, q, k, EMPTY);
                         }
@@ -606,18 +606,18 @@ void Terrain::createRivers()
 //                    }
                 }
             }
-            if (zMin == zMax){  // line is horizontal in z direction
-                xMin = start[0] <= end[0] ? start[0] : end[0];
-                xMax = end[0] >= start[0] ? end[0] : start[0];
-                for(int j = xMin; j <= xMax; ++j){
-                    for(int p = -offset; p <= offset; ++p){
-                        setBlockAt(j, zeroHeight, zMin + p, WATER);
-                        for(int q = zeroHeight + 1; q < 256; ++q){
-                            setBlockAt(j, q, zMin + p, EMPTY);
-                        }
-                    }
-                }
-            }
+//            if (zMin == zMax){  // line is horizontal in z direction
+//                xMin = start[0] <= end[0] ? start[0] : end[0];
+//                xMax = end[0] >= start[0] ? end[0] : start[0];
+//                for(int j = xMin; j <= xMax; ++j){
+//                    for(int p = -offset; p <= offset; ++p){
+//                        setBlockAt(j, zeroHeight, zMin + p, WATER);
+//                        for(int q = zeroHeight + 1; q < 256; ++q){
+//                            setBlockAt(j, q, zMin + p, EMPTY);
+//                        }
+//                    }
+//                }
+//            }
         }
     }
 }

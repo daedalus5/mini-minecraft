@@ -545,7 +545,10 @@ void Terrain::createRivers()
     int xMin;
     int xMax;
     float intersect;
+
     const int zeroHeight = 135;
+    int depth;
+    int offset;
 
     // loop over LSystem string path
     for(int i = 0; i < lsys->path.length(); ++i){
@@ -556,26 +559,29 @@ void Terrain::createRivers()
         if (lsys->path[i] == 'F'){
             end = lsys->activeTurtle.position;
             LineSegment2D line = LineSegment2D(start, end);
-            zMin = start[1] <= end[1] ? start[1] : end[1];
-            zMax = end[1] >= start[1] ? end[1] : start[1];
+            zMin = floor((start[1])) <= floor((end[1])) ? floor(start[1]) : floor(end[1]);
+            zMax = floor((end[1])) >= floor((start[1])) ? floor(end[1]) : floor(start[1]);
+
+            // for drawing rivers with width
+            depth = lsys->activeTurtle.depth;
+            if (depth == 1){
+                offset = 5;
+            }
+            if (depth == 2){
+                offset = 4;
+            }
+            if (depth == 3){
+                offset = 3;
+            }
+            if (depth > 3){
+                offset = 2;
+            }
+
             for(int k = zMin; k <= zMax; ++k){
+                // river by rasterization
                 bool check = line.intersectAt(k, &intersect);
                 if (check){
                     int l = floor(intersect);
-                    int depth = lsys->activeTurtle.depth;
-                    int offset;
-                    if (depth == 1){
-                        offset = 5;
-                    }
-                    if (depth == 2){
-                        offset = 4;
-                    }
-                    if (depth == 3){
-                        offset = 3;
-                    }
-                    if (depth > 3){
-                        offset = 2;
-                    }
                     for(int p = -offset; p <= offset; p++){
                         setBlockAt(l + p, zeroHeight, k, WATER);
                         setBlockAt(l + p, zeroHeight - 1, k, BEDROCK);
@@ -600,13 +606,15 @@ void Terrain::createRivers()
 //                    }
                 }
             }
-            if (zMin == zMax){  // line is horizontal
+            if (zMin == zMax){  // line is horizontal in z direction
                 xMin = start[0] <= end[0] ? start[0] : end[0];
                 xMax = end[0] >= start[0] ? end[0] : start[0];
                 for(int j = xMin; j <= xMax; ++j){
-                    setBlockAt(j, 128, zMin, WATER);
-                    for(int q = 129; q < 256; ++q){
-                        setBlockAt(j, q, zMin, EMPTY);
+                    for(int p = -offset; p <= offset; ++p){
+                        setBlockAt(j, zeroHeight, zMin + p, WATER);
+                        for(int q = zeroHeight + 1; q < 256; ++q){
+                            setBlockAt(j, q, zMin + p, EMPTY);
+                        }
                     }
                 }
             }

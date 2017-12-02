@@ -6,6 +6,7 @@
 #include <QKeyEvent>
 #include<QDateTime>
 
+
 #include <set>
 
 
@@ -14,7 +15,7 @@ MyGL::MyGL(QWidget *parent)
       mp_geomCube(new Cube(this)), mp_worldAxes(new WorldAxes(this)),
       mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),
       mp_camera(new Camera()), mp_terrain(new Terrain(this)), mp_crosshairs(new CrossHairs(this)),
-      mp_player(new Player(mp_camera, mp_terrain)),isSandbox(false)
+      mp_player(new Player(mp_camera, mp_terrain)),isSandbox(false),m_geomQuad(new Quad(this))
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
@@ -254,14 +255,42 @@ void MyGL::keyReleaseEvent(QKeyEvent *r) // triggered when key is released
 }
 void MyGL::mouseMoveEvent(QMouseEvent *m) // triggered at mouse movement
 {
+    QRect s = geometry();
+    int x = m->globalX();
+    int y = m->globalY();
 
+    bool reset = false;
 
-
-    if(m->x()>width()||m->y()<height())
+    if(m->x()<0)
     {
-       //MoveMouseToCenter();
+        x -=  m->x();
+        reset = true;
     }
-     mp_player->mouseMoveState(m);
+
+    else if(m->x() >=s.width())
+    {
+        x += s.width() - m->x() - 1;
+        reset = true;
+    }
+
+    if(m->y()<0)
+    {
+        y -= m->y();
+        reset = true;
+    }
+
+    if(m->y() >=s.height())
+    {
+        y += s.height() - m->y() - 1;
+        reset = true;
+    }
+
+    if (reset)
+    {
+        QCursor::setPos(x,y);
+    }
+
+    mp_player->mouseMoveState(m);
 
 }
 //void MyGL::mousePressEvent(QMouseEvent *mp) //triggered when mousebutton is pressed

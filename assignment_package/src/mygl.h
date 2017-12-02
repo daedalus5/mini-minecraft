@@ -13,6 +13,11 @@
 #include <QOpenGLShaderProgram>
 #include<player.h>
 #include<QDateTime>
+#include<QThreadPool>
+#include<QRunnable>
+#include<QMUtex>
+#include<scene/quad.h>
+
 
 struct ray{
     glm::vec3 orig;
@@ -40,6 +45,8 @@ private:
     quint64 time; // this holds the milliseconds value of Time since Epoch, i.e. time since January 1, 1970
     quint64 dt; // time elapsed since last timerUpdate()
     bool isSandbox;
+    Quad* m_geomQuad;
+
 
 
 

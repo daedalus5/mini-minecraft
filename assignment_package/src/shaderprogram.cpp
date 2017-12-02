@@ -10,8 +10,8 @@
 ShaderProgram::ShaderProgram(OpenGLContext *context)
     : vertShader(), fragShader(), prog(),
       attrPos(-1), attrNor(-1), attrCol(-1), attrUV(-1),
-      unifModel(-1), unifModelInvTr(-1), unifViewProj(-1), unifColor(-1),
-      unifTime(-1), unifSampler2D(-1), unifEyePos(-1), mp_texture(nullptr),
+      unifModel(-1), unifModelInvTr(-1), unifViewProj(-1), unifColor(-1), unifEyePos(-1),
+     unifSampler2D(-1), unifTime(-1),  mp_texture(nullptr),
       context(context)
 {}
 

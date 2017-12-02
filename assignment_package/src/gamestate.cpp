@@ -31,7 +31,7 @@ void GameState::mousePress(QMouseEvent *e) {
 
 PlayState::PlayState(OpenGLContext* in_context)
     : GameState(in_context),
-      mp_geomCube(new Cube(in_context)), mp_worldAxes(new WorldAxes(in_context)),
+      mp_worldAxes(new WorldAxes(in_context)),
       mp_progLambert(new ShaderProgram(in_context)), mp_progFlat(new ShaderProgram(in_context)),
       mp_camera(new Camera()), mp_terrain(new Terrain(in_context)), mp_crosshairs(new CrossHairs(in_context)),
       mp_player(new Player(mp_camera, mp_terrain)), start_time(QDateTime::currentMSecsSinceEpoch())
@@ -43,6 +43,7 @@ PlayState::PlayState(OpenGLContext* in_context)
 
     // Create and set up the diffuse shader
     mp_progLambert->create(":/glsl/lambert.vert.glsl", ":/glsl/lambert.frag.glsl");
+    mp_progLambert->setTexture(":/textures/minecraft_textures_all.png");
     // Create and set up the flat lighting shader
     mp_progFlat->create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
 
@@ -52,9 +53,9 @@ PlayState::PlayState(OpenGLContext* in_context)
 }
 
 PlayState::~PlayState() {
-    mp_geomCube->destroy();
+    mp_worldAxes->destroy();
+    mp_crosshairs->destroy();
 
-    delete mp_geomCube;
     delete mp_player;
     delete mp_worldAxes;
     delete mp_progLambert;

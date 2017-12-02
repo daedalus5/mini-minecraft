@@ -222,7 +222,8 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
         // but only sets the water blocks
 
         //ch = new Chunk(context);
-        chunk_map[chunk_pos] = createScene(getChunkPosition1D(x), getChunkPosition1D(z));
+        ch = createScene(getChunkPosition1D(x), getChunkPosition1D(z));
+        chunk_map[chunk_pos] = ch;
     } else {
         ch = chunk_map[chunk_pos];
     }

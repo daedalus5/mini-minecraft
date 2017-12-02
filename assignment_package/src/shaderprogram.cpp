@@ -75,17 +75,6 @@ void ShaderProgram::create(const char *vertfile, const char *fragfile)
     unifSampler2D  = context->glGetUniformLocation(prog, "u_Texture");
     unifTime = context->glGetUniformLocation(prog, "u_Time");
 
-
-    if (unifSampler2D != -1) {
-        // Code that sets up texture data on the GPU
-        mp_texture = new Texture(context);
-        mp_texture->create(":/textures/minecraft_textures_all.png");
-        mp_texture->load(0);
-        mp_texture->bind(0);
-        useMe();
-        context->glUniform1i(unifSampler2D, /*GL_TEXTURE*/0);
-    }
-
 }
 
 void ShaderProgram::useMe()
@@ -311,5 +300,17 @@ void ShaderProgram::setEyePos(glm::vec4 p) {
     useMe();
     if (unifEyePos != -1) {
         context->glUniform4fv(unifEyePos, 1, &p[0]);
+    }
+}
+
+void ShaderProgram::setTexture(const char * filepath) {
+    if (unifSampler2D != -1) {
+        // Code that sets up texture data on the GPU
+        mp_texture = new Texture(context);
+        mp_texture->create(filepath);
+        mp_texture->load(0);
+        mp_texture->bind(0);
+        useMe();
+        context->glUniform1i(unifSampler2D, /*GL_TEXTURE*/0);
     }
 }

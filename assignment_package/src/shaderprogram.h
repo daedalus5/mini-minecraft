@@ -58,6 +58,7 @@ public:
 
     void setTime(float t);
     void setEyePos(glm::vec4 p);
+    void setTexture(const char * filepath);
 
 private:
     OpenGLContext* context;   // Since Qt's OpenGL support is done through classes like QOpenGLFunctions_3_2_Core,

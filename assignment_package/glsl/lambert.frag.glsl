@@ -21,7 +21,7 @@ uniform float u_Time; // Elapsed time since start of game
 in vec4 fs_Nor;
 in vec4 fs_LightVec;
 in vec4 fs_Col;
-in vec4 fs_UV;
+in vec4 fs_UV; // [u, v, blinn-phong exponent, flag for animation]
 in vec4 fs_Pos;
 
 out vec4 out_Col; // This is the final output color that you will see on your
@@ -29,8 +29,10 @@ out vec4 out_Col; // This is the final output color that you will see on your
 
 void main()
 {
+    vec4 pos2eye = u_Eye - fs_Pos;
+
     // Blinn-Phong
-    vec3 H = normalize((vec3(u_Eye - fs_Pos) + vec3(fs_LightVec)) / 2);
+    vec3 H = normalize((vec3(pos2eye) + vec3(fs_LightVec)) / 2);
     vec3 N = normalize(vec3(fs_Nor));
     float exp = fs_UV[2];
     float specularIntensity = max(pow(dot(H, N), exp), 0);
@@ -54,6 +56,12 @@ void main()
                                                         //to simulate ambient lighting. This ensures that faces that are not
                                                         //lit by our point light are not completely black.
 
+    vec4 color = vec4(diffuseColor.rgb * (0.8 * lightIntensity + 0.3 * specularIntensity), diffuseColor.a);
+
+    // Compute fog
+    float fog = 1.0 - exp(-(length(pos2eye) - 110) * 0.05);
+    fog = clamp(fog, 0, 1);
+
     // Compute final shaded color
-    out_Col = vec4(diffuseColor.rgb * (0.8 * lightIntensity + 0.3 * specularIntensity), diffuseColor.a);
+    out_Col = mix(color, vec4(0.8, 0.8, 0.8, 1), fog);
 }

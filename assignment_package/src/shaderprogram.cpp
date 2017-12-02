@@ -4,8 +4,6 @@
 #include <QTextStream>
 #include <QDebug>
 
-#include <iostream>
-
 
 ShaderProgram::ShaderProgram(OpenGLContext *context)
     : vertShader(), fragShader(), prog(),
@@ -87,7 +85,6 @@ void ShaderProgram::create(const char *vertfile, const char *fragfile)
         useMe();
         context->glUniform1i(unifSampler2D, /*GL_TEXTURE*/0);
     }
-    std::cout << std::endl;
 
 }
 
@@ -164,10 +161,10 @@ void ShaderProgram::draw(Drawable &d)
     //   * This Drawable has a vertex buffer for this attribute.
     // If so, it binds the appropriate buffers to each attribute.
 
-        // Remember, by calling bindPos(), we call
-        // glBindBuffer on the Drawable's VBO for vertex position,
-        // meaning that glVertexAttribPointer associates vs_Pos
-        // (referred to by attrPos) with that VBO
+    // Remember, by calling bindPos(), we call
+    // glBindBuffer on the Drawable's VBO for vertex position,
+    // meaning that glVertexAttribPointer associates vs_Pos
+    // (referred to by attrPos) with that VBO
 
     // Must be called every frame
     if(mp_texture != nullptr) {

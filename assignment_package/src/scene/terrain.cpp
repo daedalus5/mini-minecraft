@@ -106,17 +106,17 @@ Terrain::Terrain(OpenGLContext* in_context) :
     block_uv_map[STONE] = uv;
 
     uv.clear();
+    uv.push_back(glm::vec4(14.f/16.f, 2.f/16.f, 8.f, 1));
     uv.push_back(glm::vec4(13.f/16.f, 2.f/16.f, 8.f, 1));
     uv.push_back(glm::vec4(13.f/16.f, 1.f/16.f, 8.f, 1));
     uv.push_back(glm::vec4(14.f/16.f, 1.f/16.f, 8.f, 1));
-    uv.push_back(glm::vec4(14.f/16.f, 2.f/16.f, 8.f, 1));
     block_uv_map[LAVA] = uv;
 
     uv.clear();
+    uv.push_back(glm::vec4(14.f/16.f, 4.f/16.f, 100.f, 1));
     uv.push_back(glm::vec4(13.f/16.f, 4.f/16.f, 100.f, 1));
     uv.push_back(glm::vec4(13.f/16.f, 3.f/16.f, 100.f, 1));
     uv.push_back(glm::vec4(14.f/16.f, 3.f/16.f, 100.f, 1));
-    uv.push_back(glm::vec4(14.f/16.f, 4.f/16.f, 100.f, 1));
     block_uv_map[WATER] = uv;
 
     uv.clear();

@@ -13,7 +13,8 @@
 
 uniform vec4 u_Color; // The color with which to render this instance of geometry.
 uniform sampler2D u_Texture; // The texture to be read from by this shader
-uniform vec4 u_Eye;
+uniform vec4 u_Eye; // Camera position. Used for Blinn-Phong
+uniform float u_Time; // Elapsed time since start of game
 
 // These are the interpolated values out of the rasterizer, so you can't know
 // their specific values without knowing the vertices that contributed to them
@@ -28,26 +29,31 @@ out vec4 out_Col; // This is the final output color that you will see on your
 
 void main()
 {
+    // Blinn-Phong
     vec3 H = normalize((vec3(u_Eye - fs_Pos) + vec3(fs_LightVec)) / 2);
     vec3 N = normalize(vec3(fs_Nor));
     float exp = fs_UV[2];
     float specularIntensity = max(pow(dot(H, N), exp), 0);
     specularIntensity = clamp(specularIntensity, 0, 1);
 
+    // Compute UVs for animated blocks
+    vec2 uv = fs_UV.xy;
+    if (fs_UV[3] == 1) {
+        uv[0] = fs_UV[0] + mod(((u_Time / 10.f) * (1.f / 16.f)), (1.f/16.f));
+    }
+
+    // Lambert
     // Material base color (before shading)
-        vec4 diffuseColor = texture(u_Texture, fs_UV.xy);
+    vec4 diffuseColor = texture(u_Texture, uv);
+    // Calculate the diffuse term for Lambert shading
+    float diffuseTerm = dot(normalize(fs_Nor), normalize(fs_LightVec));
+    // Avoid negative lighting values
+    diffuseTerm = clamp(diffuseTerm, 0, 1);
+    float ambientTerm = 0.2;
+    float lightIntensity = diffuseTerm + ambientTerm;   //Add a small float value to the color multiplier
+                                                        //to simulate ambient lighting. This ensures that faces that are not
+                                                        //lit by our point light are not completely black.
 
-        // Calculate the diffuse term for Lambert shading
-        float diffuseTerm = dot(normalize(fs_Nor), normalize(fs_LightVec));
-        // Avoid negative lighting values
-        diffuseTerm = clamp(diffuseTerm, 0, 1);
-
-        float ambientTerm = 0.2;
-
-        float lightIntensity = diffuseTerm + ambientTerm;   //Add a small float value to the color multiplier
-                                                            //to simulate ambient lighting. This ensures that faces that are not
-                                                            //lit by our point light are not completely black.
-
-        // Compute final shaded color
-        out_Col = vec4(diffuseColor.rgb * (0.8 * lightIntensity + 0.3 * specularIntensity), diffuseColor.a);
+    // Compute final shaded color
+    out_Col = vec4(diffuseColor.rgb * (0.8 * lightIntensity + 0.3 * specularIntensity), diffuseColor.a);
 }

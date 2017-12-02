@@ -85,51 +85,56 @@ Terrain::Terrain(OpenGLContext* in_context) :
     draw_start_map['E'] = glm::vec4(0.5, 0.5, 0.5, 1);
     draw_start_map['Q'] = glm::vec4(0.5, -0.5, 0.5, 1);
 
+    // Create UV values for each type of block
+    // Stored in a vec4
+    // index 0, 1 are the UVs
+    // index 2 is the specular cosine power
+    // index 3 is flag for whether this block is animated
     std::vector<glm::vec4> uv = std::vector<glm::vec4>();
 
     uv.clear();
-    uv.push_back(glm::vec4(2.f/16.f, 16.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(2.f/16.f, 15.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(3.f/16.f, 15.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(3.f/16.f, 16.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(2.f/16.f, 16.f/16.f, 1.f, 0));
+    uv.push_back(glm::vec4(2.f/16.f, 15.f/16.f, 1.f, 0));
+    uv.push_back(glm::vec4(3.f/16.f, 15.f/16.f, 1.f, 0));
+    uv.push_back(glm::vec4(3.f/16.f, 16.f/16.f, 1.f, 0));
     block_uv_map[DIRT] = uv;
 
     uv.clear();
-    uv.push_back(glm::vec4(1.f/16.f, 16.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(1.f/16.f, 15.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(2.f/16.f, 15.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(2.f/16.f, 16.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(1.f/16.f, 16.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(1.f/16.f, 15.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(2.f/16.f, 15.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(2.f/16.f, 16.f/16.f, 2.f, 0));
     block_uv_map[STONE] = uv;
 
     uv.clear();
-    uv.push_back(glm::vec4(13.f/16.f, 2.f/16.f, 0, 1));
-    uv.push_back(glm::vec4(13.f/16.f, 1.f/16.f, 0, 1));
-    uv.push_back(glm::vec4(14.f/16.f, 1.f/16.f, 0, 1));
-    uv.push_back(glm::vec4(14.f/16.f, 2.f/16.f, 0, 1));
+    uv.push_back(glm::vec4(13.f/16.f, 2.f/16.f, 8.f, 1));
+    uv.push_back(glm::vec4(13.f/16.f, 1.f/16.f, 8.f, 1));
+    uv.push_back(glm::vec4(14.f/16.f, 1.f/16.f, 8.f, 1));
+    uv.push_back(glm::vec4(14.f/16.f, 2.f/16.f, 8.f, 1));
     block_uv_map[LAVA] = uv;
 
     uv.clear();
-    uv.push_back(glm::vec4(13.f/16.f, 4.f/16.f, 0, 1));
-    uv.push_back(glm::vec4(13.f/16.f, 3.f/16.f, 0, 1));
-    uv.push_back(glm::vec4(14.f/16.f, 3.f/16.f, 0, 1));
-    uv.push_back(glm::vec4(14.f/16.f, 4.f/16.f, 0, 1));
+    uv.push_back(glm::vec4(13.f/16.f, 4.f/16.f, 100.f, 1));
+    uv.push_back(glm::vec4(13.f/16.f, 3.f/16.f, 100.f, 1));
+    uv.push_back(glm::vec4(14.f/16.f, 3.f/16.f, 100.f, 1));
+    uv.push_back(glm::vec4(14.f/16.f, 4.f/16.f, 100.f, 1));
     block_uv_map[WATER] = uv;
 
     uv.clear();
-    uv.push_back(glm::vec4(8.f/16.f, 14.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(8.f/16.f, 13.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(9.f/16.f, 13.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(9.f/16.f, 14.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(8.f/16.f, 14.f/16.f, 3.f, 0));
+    uv.push_back(glm::vec4(8.f/16.f, 13.f/16.f, 3.f, 0));
+    uv.push_back(glm::vec4(9.f/16.f, 13.f/16.f, 3.f, 0));
+    uv.push_back(glm::vec4(9.f/16.f, 14.f/16.f, 3.f, 0));
     block_uv_map[GRASS + 'E'] = uv;
 
     uv.clear();
     block_uv_map[GRASS + 'Q'] = block_uv_map[DIRT];
 
     uv.clear();
-    uv.push_back(glm::vec4(3.f/16.f, 16.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(3.f/16.f, 15.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(4.f/16.f, 15.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(4.f/16.f, 16.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(3.f/16.f, 16.f/16.f, 1.f, 0));
+    uv.push_back(glm::vec4(3.f/16.f, 15.f/16.f, 1.f, 0));
+    uv.push_back(glm::vec4(4.f/16.f, 15.f/16.f, 1.f, 0));
+    uv.push_back(glm::vec4(4.f/16.f, 16.f/16.f, 1.f, 0));
     block_uv_map[GRASS + 'W'] = uv;
 
     block_uv_map[GRASS + 'A'] = block_uv_map[GRASS + 'W'];
@@ -137,41 +142,41 @@ Terrain::Terrain(OpenGLContext* in_context) :
     block_uv_map[GRASS + 'D'] = block_uv_map[GRASS + 'W'];
 
     uv.clear();
-    uv.push_back(glm::vec4(1.f/16.f, 15.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(1.f/16.f, 14.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(2.f/16.f, 14.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(2.f/16.f, 15.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(1.f/16.f, 15.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(1.f/16.f, 14.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(2.f/16.f, 14.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(2.f/16.f, 15.f/16.f, 2.f, 0));
     block_uv_map[BEDROCK] = uv;
 
     uv.clear();
-    uv.push_back(glm::vec4(3.f/16.f, 12.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(3.f/16.f, 11.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(4.f/16.f, 11.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(4.f/16.f, 12.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(3.f/16.f, 12.f/16.f, 64.f, 0));
+    uv.push_back(glm::vec4(3.f/16.f, 11.f/16.f, 64.f, 0));
+    uv.push_back(glm::vec4(4.f/16.f, 11.f/16.f, 64.f, 0));
+    uv.push_back(glm::vec4(4.f/16.f, 12.f/16.f, 64.f, 0));
     block_uv_map[ICE] = uv;
 
     uv.clear();
-    uv.push_back(glm::vec4(5.f/16.f, 13.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(5.f/16.f, 12.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(6.f/16.f, 12.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(6.f/16.f, 13.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(5.f/16.f, 13.f/16.f, 4.f, 0));
+    uv.push_back(glm::vec4(5.f/16.f, 12.f/16.f, 4.f, 0));
+    uv.push_back(glm::vec4(6.f/16.f, 12.f/16.f, 4.f, 0));
+    uv.push_back(glm::vec4(6.f/16.f, 13.f/16.f, 4.f, 0));
     block_uv_map[LEAF] = uv;
 
     uv.clear();
-    uv.push_back(glm::vec4(5.f/16.f, 15.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(5.f/16.f, 14.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(6.f/16.f, 14.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(6.f/16.f, 15.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(5.f/16.f, 15.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(5.f/16.f, 14.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(6.f/16.f, 14.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(6.f/16.f, 15.f/16.f, 2.f, 0));
     block_uv_map[WOOD + 'E'] = uv;
 
     uv.clear();
     block_uv_map[WOOD + 'Q'] = block_uv_map[WOOD + 'E'];
 
     uv.clear();
-    uv.push_back(glm::vec4(4.f/16.f, 15.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(4.f/16.f, 14.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(5.f/16.f, 14.f/16.f, 0, 0));
-    uv.push_back(glm::vec4(5.f/16.f, 15.f/16.f, 0, 0));
+    uv.push_back(glm::vec4(4.f/16.f, 15.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(4.f/16.f, 14.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(5.f/16.f, 14.f/16.f, 2.f, 0));
+    uv.push_back(glm::vec4(5.f/16.f, 15.f/16.f, 2.f, 0));
     block_uv_map[WOOD + 'W'] = uv;
 
     block_uv_map[WOOD + 'A'] = block_uv_map[WOOD + 'W'];

@@ -110,6 +110,7 @@ void MyGL::resizeGL(int w, int h)
 
     mp_progLambert->setViewProjMatrix(viewproj);
     mp_progFlat->setViewProjMatrix(viewproj);
+    mp_progLambert->setEyePos(glm::vec4(mp_camera->eye, 1.f));
 
     mp_crosshairs->aspect = mp_camera->height / float(mp_camera->width);
     mp_crosshairs->create();
@@ -154,6 +155,7 @@ void MyGL::paintGL()
 
     mp_progFlat->setViewProjMatrix(mp_camera->getViewProj());
     mp_progLambert->setViewProjMatrix(mp_camera->getViewProj());
+    mp_progLambert->setEyePos(glm::vec4(mp_camera->eye, 1.f));
 
     GLDrawScene();
 

@@ -14,7 +14,7 @@ MyGL::MyGL(QWidget *parent)
       mp_geomCube(new Cube(this)), mp_worldAxes(new WorldAxes(this)),
       mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),
       mp_camera(new Camera()), mp_terrain(new Terrain(this)), mp_crosshairs(new CrossHairs(this)),
-      mp_player(new Player(mp_camera, mp_terrain))
+      mp_player(new Player(mp_camera, mp_terrain)), start_time(QDateTime::currentMSecsSinceEpoch())
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
@@ -156,6 +156,7 @@ void MyGL::paintGL()
     mp_progFlat->setViewProjMatrix(mp_camera->getViewProj());
     mp_progLambert->setViewProjMatrix(mp_camera->getViewProj());
     mp_progLambert->setEyePos(glm::vec4(mp_camera->eye, 1.f));
+    mp_progLambert->setTime((time - start_time) /1000.f); // convert time to seconds
 
     GLDrawScene();
 

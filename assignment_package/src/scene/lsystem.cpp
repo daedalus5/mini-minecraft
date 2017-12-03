@@ -9,7 +9,7 @@
 // LSYSTEM START
 
 LSystem::LSystem(glm::vec2 pos, glm::vec2 heading) :
-    path(""), activeTurtle(Turtle(pos, heading)), turtleStack(), ruleSet(), charToDrawingOperation() {}
+    path(""), activeTurtle(Turtle(pos, heading)), turtleStack(), ruleSet(), charToDrawingOperation(), branchProb(1.0f) {}
 
 LSystem::~LSystem(){}
 
@@ -88,7 +88,9 @@ float LSystem::rand01(){
 // RIVERDELTA START
 
 RiverDelta::RiverDelta(glm::vec2 pos, glm::vec2 heading) :
-    LSystem(pos, heading){}
+    LSystem(pos, heading){
+    this->branchProb = 0.05f;
+}
 
 RiverDelta::~RiverDelta(){}
 
@@ -115,7 +117,7 @@ void RiverDelta::generatePath(int n, QString seed){
             int multiplierB = 0;
             for (unsigned int k = 0; k < indices.size(); ++k){
                 r = rand01();
-                if (r < branchProb && i < MAX_DEPTH_DELTA / 2){
+                if (r < this->branchProb){
                     s.replace(indices[k] + multiplierA*(deltaA - 1) + multiplierB*(deltaB - 1), 1, j.value());
                     multiplierA++;
                 }
@@ -130,6 +132,20 @@ void RiverDelta::generatePath(int n, QString seed){
     path = s;
 }
 
+
+void RiverDelta::minusSign(){
+    activeTurtle.turnLeft();
+    if (activeTurtle.orientation[1] < 0) {
+        activeTurtle.orientation = glm::vec2(-1.0f,0);
+    }
+}
+void RiverDelta::plusSign(){
+    activeTurtle.turnRight();
+    if (activeTurtle.orientation[1] < 0) {
+        activeTurtle.orientation = glm::vec2(1.0f,0);
+    }
+}
+
 // RIVERDELTA END
 // **********************************************************************************************
 // **********************************************************************************************
@@ -137,23 +153,67 @@ void RiverDelta::generatePath(int n, QString seed){
 // RIVER START
 
 River::River(glm::vec2 pos, glm::vec2 heading) :
-    LSystem(pos, heading){}
+    LSystem(pos, heading){
+    this->branchProb = 0.01f;
+}
 
 River::~River(){}
 
 void River::generatePath(int n, QString seed){
     // add generative rules
-    addRule('X', "[-FX]+FX");
+    addRule('X', "[+FX]+--+FY");
+    addRule('Y', "[-FY]+--+FX");
     // string generation
     QString s = seed;
+    float r;
     for(int i = 0; i < n; i++){
         QHashIterator<QChar, QString> j(ruleSet);
         while (j.hasNext()) {
             j.next();
-            s.replace(QRegularExpression(QString(j.key())), j.value());
+
+            std::vector<int> indices;
+            for (int k = 0; k < s.length(); ++k){
+                if (s[k] == j.key()){
+                    indices.push_back(k);
+                }
+            }
+            int deltaA = j.value().length();
+            int deltaB = 6;
+            int multiplierA = 0;
+            int multiplierB = 0;
+            for (unsigned int k = 0; k < indices.size(); ++k){
+                r = rand01();
+                if (r < this->branchProb){
+                    s.replace(indices[k] + multiplierA*(deltaA - 1) + multiplierB*(deltaB - 1), 1, j.value());
+                    multiplierA++;
+                }
+                else{
+                    s.replace(indices[k] + multiplierA*(deltaA - 1) + multiplierB*(deltaB - 1), 1, "+--+FX");
+                    multiplierB++;
+                }
+            }
         }
     }
+
     path = s;
+}
+
+void River::leftBracket(){
+    Turtle turtleCopy = Turtle(activeTurtle);
+    turtleStack.push(turtleCopy);
+    activeTurtle.increaseDepth();
+}
+void River::minusSign(){
+    activeTurtle.turnLeft();
+    if (activeTurtle.orientation[1] > 0) {
+        activeTurtle.orientation = glm::vec2(1.0f,0);
+    }
+}
+void River::plusSign(){
+    activeTurtle.turnRight();
+    if (activeTurtle.orientation[1] > 0) {
+        activeTurtle.orientation = glm::vec2(-1.0f,0);
+    }
 }
 
 // RIVER END
@@ -176,19 +236,19 @@ Turtle::Turtle(const Turtle& t) :
 Turtle::~Turtle(){}
 
 void Turtle::turnLeft(){
-    float angle = (PI_4 - randAngle()) / depth;
+    float angle = PI_4 - randAngle();
     orientation = glm::vec2(orientation[0] * cosf(angle) - orientation[1] * sinf(angle),
                             orientation[0] * sinf(angle) + orientation[1] * cosf(angle));
 }
 
 void Turtle::turnRight(){
-    float angle = (-PI_4 + randAngle()) / depth;
+    float angle = -PI_4 + randAngle();
     orientation = glm::vec2(orientation[0] * cosf(angle) - orientation[1] * sinf(angle),
                             orientation[0] * sinf(angle) + orientation[1] * cosf(angle));
 }
 
 void Turtle::moveForward(){
-    glm::vec2 change = orientation * MAX_DISTANCE;
+    glm::vec2 change = orientation * F_DISTANCE;
     position += change;
 }
 

@@ -7,13 +7,14 @@
 #include <QHash>
 #include <QStack>
 #include <QRegularExpression>
+#include <time.h>
 
 const float PI_4 = 0.78539816;
 const float PI_6 = 0.52359877;
 const float PI_8 = 0.39269908;
-const float MAX_DISTANCE = 4.0f;
-const int MAX_DEPTH_DELTA = 10;
-const int MAX_DEPTH_RIVER = 10;
+const float F_DISTANCE = 4.0f;
+const int MAX_DEPTH_DELTA = 60;
+const int MAX_DEPTH_RIVER = 60;
 
 class LSystem;
 
@@ -51,6 +52,7 @@ public:
     QStack<Turtle> turtleStack;
     QHash<QChar, QString> ruleSet;              // char -> string map replacement rules for generating turtle path instructions
     QHash<QChar, Rule> charToDrawingOperation;  // maps characters to LSystem functions controlling this turtle
+    float branchProb;
 
     LSystem(glm::vec2 pos, glm::vec2 heading);
     virtual ~LSystem();
@@ -74,18 +76,21 @@ class River : public LSystem{
 public:
     River(glm::vec2 pos, glm::vec2 heading);
     virtual ~River();
-    const float branchProb = 0.1f;
 
     void generatePath(int n, QString seed) override;
+    void leftBracket() override;
+    void minusSign() override;
+    void plusSign() override;
 };
 
 class RiverDelta : public LSystem{
 public:
     RiverDelta(glm::vec2 pos, glm::vec2 heading);
     virtual ~RiverDelta();
-    const float branchProb = 0.05f;
 
     void generatePath(int n, QString seed) override;
+    void minusSign() override;
+    void plusSign() override;
 };
 
 class LineSegment2D{

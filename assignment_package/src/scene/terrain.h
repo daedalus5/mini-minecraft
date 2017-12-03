@@ -5,6 +5,7 @@
 #include "drawable.h"
 #include <unordered_map>
 #include "lsystem.h"
+#include <time.h>
 
 // C++ 11 allows us to define the size of an enum. This lets us use only one byte
 // of memory to store our different block types. By default, the size of a C++ enum
@@ -15,7 +16,7 @@ class TerrainType;
 
 enum BlockType : unsigned char
 {
-    EMPTY, GRASS, DIRT, STONE, LAVA, WATER, WOOD, LEAF, BEDROCK, ICE
+    EMPTY, GRASS, DIRT, STONE, LAVA, WATER, WOOD, LEAF, BEDROCK, ICE, SAND
 };
 
 class Chunk : public Drawable
@@ -48,6 +49,7 @@ public:
     void setTerrainType(TerrainType* t);
     void setLSystem(LSystem* l);
     Chunk* createScene(int x, int z);
+    void traceRiverPath(const std::vector<int>& depths);
     void createRivers();
 
     glm::ivec3 dimensions;

@@ -494,6 +494,7 @@ void Player::mouseReleaseState(QMouseEvent *mr)
 
 void Player::playerGeometry() // constructs bounding box for player
 {
+    pos = ptr_to_cam->eye;
 
     vertexpositions[0] = glm::vec3(pos.x+0.5,pos.y+0.5,pos.z+0.5);
     vertexpositions[1] = glm::vec3(pos.x+0.5,pos.y+0.5,pos.z-0.5);

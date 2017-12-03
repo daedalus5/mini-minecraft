@@ -5,6 +5,8 @@
 #include <utils.h>
 #include <gamestate.h>
 
+// Forward declaration
+class GameState;
 
 class MyGL : public OpenGLContext
 {
@@ -30,7 +32,7 @@ public:
     void resizeGL(int w, int h);
     void paintGL();
 
-    void GLDrawScene();
+    void set2PlayState();
 
 
 protected:

@@ -2,21 +2,26 @@
 #define GAMESTATE_H
 
 #include "openglcontext.h"
-#include <utils.h>
-#include <shaderprogram.h>
-#include <scene/cube.h>
-#include <scene/worldaxes.h>
+#include "utils.h"
+#include "shaderprogram.h"
+#include "scene/worldaxes.h"
 #include "camera.h"
-#include <scene/terrain.h>
+#include "scene/terrain.h"
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
-#include <player.h>
+#include "player.h"
+#include "scene/quad.h"
+#include "mygl.h"
+
+// Forward declaration
+class MyGL;
 
 class GameState
 {
 public:
     GameState(OpenGLContext* in_context);
+    virtual ~GameState();
 
     virtual void update() = 0;
     virtual void resizeWindow(int w, int h) = 0;
@@ -70,6 +75,22 @@ private:
                                                                           // returns t_near, -1 if no intersection
                                                                           // Kay and Kayjia algorithm
     void GLDrawScene();
+};
+
+class MenuState : public GameState {
+public:
+    MenuState(MyGL* in_mygl);
+    ~MenuState();
+    void update() override;
+    void resizeWindow(int w, int h) override;
+    void paint() override;
+    void keyPress(QKeyEvent *e) override;
+    void keyRelease(QKeyEvent *r) override;
+
+private:
+    MyGL* mygl;
+    ShaderProgram* mp_progMenu;
+    Quad* mp_quad;
 };
 
 #endif // GAMESTATE_H

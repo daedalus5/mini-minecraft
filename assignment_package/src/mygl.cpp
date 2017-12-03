@@ -71,7 +71,7 @@ void MyGL::initializeGL()
     glBindVertexArray(vao);
 
 
-    mp_gamestate = new PlayState(this);
+    mp_gamestate = new MenuState(this);
 }
 
 void MyGL::resizeGL(int w, int h)
@@ -141,4 +141,9 @@ void MyGL::mouseReleaseEvent(QMouseEvent *mr)// triggered when mousebutton is re
 void MyGL::mousePressEvent(QMouseEvent *e)
 {
     mp_gamestate->mousePress(e);
+}
+
+void MyGL::set2PlayState() {
+    delete mp_gamestate;
+    mp_gamestate = new PlayState(this);
 }

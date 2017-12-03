@@ -9,6 +9,10 @@ GameState::GameState(OpenGLContext* in_context)
 
 }
 
+GameState::~GameState() {
+
+}
+
 void GameState::keyPress(QKeyEvent *e) {
     // default no-op
 }
@@ -51,6 +55,11 @@ PlayState::PlayState(OpenGLContext* in_context)
     mp_terrain->createRivers();
 
     //mp_terrain->updateAllVBO();
+
+    mp_camera->eye = glm::vec3(mp_terrain->dimensions.x-10.f, mp_terrain->dimensions.y * 0.60, mp_terrain->dimensions.z-10.f);
+    resizeWindow(context->width(), context->height());
+    time = QDateTime::currentMSecsSinceEpoch();
+    //mp_player = new Player(mp_camera, mp_terrain);
 }
 
 PlayState::~PlayState() {
@@ -114,9 +123,12 @@ void PlayState::update() {
 void PlayState::resizeWindow(int w, int h) {
     //This code sets the concatenated view and perspective projection matrices used for
     //our scene's camera view.
-    *mp_camera = Camera(w, h, glm::vec3(mp_terrain->dimensions.x-10.f, mp_terrain->dimensions.y * 0.60, mp_terrain->dimensions.z-10.f),
+    glm::vec3 prev_eye = mp_camera->eye;
+    *mp_camera = Camera(w, h, prev_eye,
                        glm::vec3(mp_terrain->dimensions.x / 2, mp_terrain->dimensions.y*0.60, mp_terrain->dimensions.z / 2), glm::vec3(0,1,0));
     glm::mat4 viewproj = mp_camera->getViewProj();
+    //mp_player = new Player(mp_camera, mp_terrain);
+    mp_player->playerGeometry();
 
     // Upload the view-projection matrix to our shaders (i.e. onto the graphics card)
 
@@ -170,6 +182,9 @@ void PlayState::GLDrawScene()
             ch = mp_terrain->getChunk(x, z);
             if (ch != nullptr) {
                 chunks2Draw.push_back(ch);
+                if (!ch->isCreated) {
+                    chunks2Update.insert(mp_terrain->convertToInt(x, z));
+                }
             } else {
                 chunks2Draw.push_back(mp_terrain->createScene(x, z));
 
@@ -318,5 +333,40 @@ void PlayState::createBlock(){
             mp_terrain->addBlockAt(insertPos[0], insertPos[1], insertPos[2], LAVA);
         }
     }
+}
+
+
+MenuState::MenuState(MyGL* in_mygl)
+    : GameState(in_mygl), mygl(in_mygl),
+      mp_quad(new Quad(in_mygl)),
+      mp_progMenu(new ShaderProgram(in_mygl))
+{
+    mp_progMenu->create(":/glsl/menu.vert.glsl", ":/glsl/menu.frag.glsl");
+    mp_progMenu->setTexture(":/textures/title.png");
+    mp_quad->create();
+}
+
+MenuState::~MenuState() {
+   delete mp_quad;
+}
+
+void MenuState::update() {
+
+}
+
+void MenuState::resizeWindow(int w, int h) {
+
+}
+
+void MenuState::paint() {
+    mp_progMenu->draw(*mp_quad);
+}
+
+void MenuState::keyPress(QKeyEvent *e) {
+    mygl->set2PlayState();
+}
+
+void MenuState::keyRelease(QKeyEvent *r) {
+
 }
 

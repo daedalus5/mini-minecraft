@@ -7,6 +7,7 @@
 #include<QDateTime>
 
 
+
 #include <set>
 
 
@@ -14,9 +15,9 @@ MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       mp_geomCube(new Cube(this)), mp_worldAxes(new WorldAxes(this)),
       mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),mp_lavavision(new ShaderProgram(this)),
-      mp_camera(new Camera()), mp_terrain(new Terrain(this)), mp_crosshairs(new CrossHairs(this)),
+      mp_camera(new Camera()), mp_terrain(new Terrain(this,&mutex)), mp_crosshairs(new CrossHairs(this)),
        mp_player(new Player(mp_camera, mp_terrain)),underwater(false),underlava(false),start_time(QDateTime::currentMSecsSinceEpoch()),
-      isSandbox(false),m_geomQuad(new Quad(this)),skyColor(glm::vec4(0.37f, 0.74f, 1.0f, 1))
+      isSandbox(false),m_geomQuad(new Quad(this)),skyColor(glm::vec4(0.37f, 0.74f, 1.0f, 1)),schedule(new Scheduler(this))
 
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
@@ -27,6 +28,14 @@ MyGL::MyGL(QWidget *parent)
 
     setMouseTracking(true); // MyGL will track the mouse's movements even if a mouse button is not pressed
     setCursor(Qt::BlankCursor); // Make the cursor invisible
+    fptr = this->GLDrawScene;
+
+}
+
+void MyGL::run()
+{
+    GLDrawScene();
+
 }
 
 MyGL::~MyGL()
@@ -75,6 +84,8 @@ void MyGL::initializeGL()
 
 
 
+
+
     printGLErrorLog();
 
     // Create a Vertex Attribute Object
@@ -111,7 +122,7 @@ void MyGL::resizeGL(int w, int h)
     //This code sets the concatenated view and perspective projection matrices used for
     //our scene's camera view.
     *mp_camera = Camera(w, h, glm::vec3(mp_terrain->dimensions.x-10.f, mp_terrain->dimensions.y * 0.60, mp_terrain->dimensions.z-10.f),
-                       glm::vec3(mp_terrain->dimensions.x / 2, mp_terrain->dimensions.y*0.60, mp_terrain->dimensions.z / 2), glm::vec3(0,1,0));
+                       glm::vec3(mp_terrain->dimensions.x / 2, mp_terrain->dimensions.y * 0.60, mp_terrain->dimensions.z / 2), glm::vec3(0,1,0));
     glm::mat4 viewproj = mp_camera->getViewProj();
 
     // Upload the view-projection matrix to our shaders (i.e. onto the graphics card)
@@ -148,8 +159,10 @@ void MyGL::timerUpdate()
         mp_player->updateAttributes(); // updates player/camera position, velocity, etc
         mp_player->playerGeometry(); // updates player bounding box and limits
 
+
     }
     BlockType b1 = mp_player->checkSubmerged();
+
     if(b1==LAVA)
     {
         underwater = false;
@@ -171,7 +184,7 @@ void MyGL::timerUpdate()
 
     update();
 
-   // MoveMouseToCenter();
+  // MoveMouseToCenter();
 
 }
 
@@ -188,7 +201,9 @@ void MyGL::paintGL()
     mp_progLambert->setEyePos(glm::vec4(mp_camera->eye, 1.f));
     mp_progLambert->setTime((time - start_time) /1000.f); // convert time to seconds
 
-    GLDrawScene();
+   GLDrawScene();
+
+
 
     glDisable(GL_DEPTH_TEST);
     mp_progFlat->setModelMatrix(glm::mat4());
@@ -228,6 +243,7 @@ void MyGL::paintGL()
 
 void MyGL::GLDrawScene()
 {
+
     mp_progLambert->setModelMatrix(glm::mat4());
     int chunkX = mp_terrain->getChunkPosition1D(mp_camera->eye[0]);
     int chunkZ = mp_terrain->getChunkPosition1D(mp_camera->eye[2]);
@@ -242,6 +258,7 @@ void MyGL::GLDrawScene()
 
     int num = 10;
     int x, z;
+    mutex.lock();
 
     Chunk* ch;
     for (int i = -num; i < num; i++) {
@@ -274,6 +291,7 @@ void MyGL::GLDrawScene()
     for (Chunk* ch : chunks2Draw) {
         mp_progLambert->draw(*ch);
     }
+    mutex.unlock();
 
 }
 
@@ -490,7 +508,7 @@ void MyGL::createBlock(){
         BlockType b2 = mp_terrain->getBlockAt(insertPos[0], insertPos[1], insertPos[2]);
         // only build cube if there's an open space to place it
         if (b2 == EMPTY){
-            mp_terrain->addBlockAt(insertPos[0], insertPos[1], insertPos[2], WATER);
+            mp_terrain->addBlockAt(insertPos[0], insertPos[1], insertPos[2], STONE);
         }
     }
 }

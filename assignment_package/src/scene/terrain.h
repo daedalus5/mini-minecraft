@@ -4,6 +4,8 @@
 
 #include "drawable.h"
 #include <unordered_map>
+#include<QRunnable>
+#include<QMutex>
 
 // C++ 11 allows us to define the size of an enum. This lets us use only one byte
 // of memory to store our different block types. By default, the size of a C++ enum
@@ -34,10 +36,12 @@ private:
     BlockType block_array[65536]; // 16 x 256 x 16 (x by y by z)
 };
 
-class Terrain
+class Terrain:public QRunnable
 {
 public:
-    Terrain(OpenGLContext* context);
+    QMutex* mutex;
+    void run() override;
+    Terrain(OpenGLContext* context, QMutex*);
     ~Terrain();
 
     TerrainType* terrainType;

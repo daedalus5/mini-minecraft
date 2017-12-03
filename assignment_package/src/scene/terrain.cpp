@@ -50,7 +50,7 @@ GLenum Chunk::drawMode()
 // **********************************************************************************************
 // TERRAIN START
 
-Terrain::Terrain(OpenGLContext* in_context) :
+Terrain::Terrain(OpenGLContext* in_context, QMutex* mutex1) : mutex(mutex1),
     terrainType(nullptr),
     dimensions(64, 256, 64),
     chunk_dimensions(16, 256, 16),
@@ -284,6 +284,12 @@ glm::ivec2 Terrain::getChunkPosition(int x, int z) const {
         }
     }
     return chunk_pos;
+}
+
+void Terrain::run()
+{
+
+
 }
 
 glm::ivec3 Terrain::getChunkLocalPosition(int x, int y, int z) const {

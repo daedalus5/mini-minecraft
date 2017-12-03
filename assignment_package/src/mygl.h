@@ -17,9 +17,9 @@
 #include<QRunnable>
 #include<QMutex>
 #include<scene/quad.h>
-#include<scheduler.h>
-class Scheduler;
+#include<scene/scheduler.h>
 
+class Scheduler;
 
 
 struct ray{
@@ -27,11 +27,10 @@ struct ray{
     glm::vec3 dir;
 };
 
-class MyGL : public OpenGLContext, public QRunnable
+class MyGL : public OpenGLContext
 {
     Q_OBJECT
 private:
-    QMutex mutex;
     Cube* mp_geomCube;// The instance of a unit cube we can use to render any cube. Should NOT be used in final version of your project.
     WorldAxes* mp_worldAxes; // A wireframe representation of the world axes. It is hard-coded to sit centered at (32, 128, 32).
     ShaderProgram* mp_progLambert;// A shader program that uses lambertian reflection
@@ -55,8 +54,11 @@ private:
     bool isSandbox;
     Quad* m_geomQuad;
     glm::vec4 skyColor;
-    Scheduler* schedule;
-    void (MyGL::*fptr)(void);
+    QMutex mutex;
+    Scheduler* scheduler;
+    void (*func_ptr)(void);
+
+
 
 
 
@@ -78,18 +80,17 @@ public:
     void paintGL();
 
     void GLDrawScene();
-    void run() override;
 
 
 protected:
-    void keyPressEvent(QKeyEvent *e) override;
+    void keyPressEvent(QKeyEvent *e);
 
     //void mousePressEvent(QMouseEvent *e);
 
-    void keyReleaseEvent(QKeyEvent *r) override;
-    void mouseMoveEvent(QMouseEvent *m) override;
-    void mousePressEvent(QMouseEvent *mp) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
+    void keyReleaseEvent(QKeyEvent *r);
+    void mouseMoveEvent(QMouseEvent *m);
+    void mousePressEvent(QMouseEvent *mp);
+    void mouseReleaseEvent(QMouseEvent *event);
 
 
     void destroyBlock();    // destroys a block within a unit distance of the player
@@ -100,8 +101,6 @@ protected:
 private slots:
     /// Slot that gets called ~60 times per second
     void timerUpdate();
-
-    friend class Scheduler;
 
 };
 

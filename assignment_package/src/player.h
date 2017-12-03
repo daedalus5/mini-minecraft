@@ -67,7 +67,6 @@ public:
     void playerGeometry();// updates bounding box for player
     BlockType checkSubmerged();
 
-
     void mouseMoveState(QMouseEvent*);
     bool collisionDetect(); //detects collisions
     bool boundingBoxcheck(glm::vec3, glm::vec3, glm::vec3, glm::vec3);

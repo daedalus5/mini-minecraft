@@ -18,6 +18,8 @@ SOURCES += \
     $$PWD/player.cpp \
     $$PWD/texture.cpp \
     $$PWD/gamestate.cpp
+    $$PWD/scene/lsystem.cpp \
+    $$PWD/scene/quad.cpp
 
 HEADERS += \
     $$PWD/la.h \
@@ -36,3 +38,5 @@ HEADERS += \
     $$PWD/player.h \
     $$PWD/texture.h \
     $$PWD/gamestate.h
+    $$PWD/scene/lsystem.h \
+    $$PWD/scene/quad.h

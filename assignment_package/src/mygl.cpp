@@ -70,6 +70,7 @@ void MyGL::initializeGL()
 //    vao.bind();
     glBindVertexArray(vao);
 
+
     mp_gamestate = new PlayState(this);
 }
 
@@ -113,9 +114,9 @@ void MyGL::keyPressEvent(QKeyEvent *e) // triggered when key is pressed
 
     mp_gamestate->keyPress(e);
 
-    float amount = 1.0f;
+    //float amount = 1.0f;
     if(e->modifiers() & Qt::ShiftModifier){
-        amount = 10.0f;
+        //amount = 10.0f;
     }
 
 }

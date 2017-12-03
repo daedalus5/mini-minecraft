@@ -48,6 +48,7 @@ PlayState::PlayState(OpenGLContext* in_context)
     mp_progFlat->create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
 
     mp_terrain->setTerrainType(new Highland);
+    mp_terrain->createRivers();
 
     //mp_terrain->updateAllVBO();
 }

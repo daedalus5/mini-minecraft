@@ -33,12 +33,12 @@ void LSystem::generatePath(int n, QString seed){
 }
 
 void LSystem::populateOps(){
-    Rule leftBracketPtr = leftBracket;
-    Rule rightBracketPtr = rightBracket;
-    Rule FPtr = F;
-    Rule minusSignPtr = minusSign;
-    Rule plusSignPtr = plusSign;
-    Rule XPtr = X;
+    Rule leftBracketPtr = &LSystem::leftBracket;
+    Rule rightBracketPtr = &LSystem::rightBracket;
+    Rule FPtr = &LSystem::F;
+    Rule minusSignPtr = &LSystem::minusSign;
+    Rule plusSignPtr = &LSystem::plusSign;
+    Rule XPtr = &LSystem::X;
 
     charToDrawingOperation['['] = leftBracketPtr;
     charToDrawingOperation[']'] = rightBracketPtr;

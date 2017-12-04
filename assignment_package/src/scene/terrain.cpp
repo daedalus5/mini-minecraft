@@ -20,8 +20,7 @@ BlockType& Chunk::getBlockType(int x, int y, int z) {
     return block_array[x + 16 * y + 4096 * z];
 }
 
-void Chunk::createVBO(std::vector<glm::vec4> &everything,
-                      std::vector<GLuint> &indices)
+void Chunk::createVBO()
 {
     count = indices.size();
 
@@ -311,6 +310,8 @@ void Terrain::updateChunkVBO(int x, int z) {
         return;
     }
     Chunk* ch = index->second;
+    ch->everything.clear();
+    ch->indices.clear();
 
 
 
@@ -346,7 +347,7 @@ void Terrain::updateChunkVBO(int x, int z) {
                         neighbor = ch->getBlockType(i - 1, j, k);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
                             // Check neighboring x within this chunk
-                            addSquare(&world_pos, &ch->everything, &indices, 'A', block);
+                            addSquare(&world_pos, &(ch->everything), &(ch->indices), 'A', block);
                         }
                     }
 
@@ -354,14 +355,14 @@ void Terrain::updateChunkVBO(int x, int z) {
                         if (neighbor_x != nullptr) {
                             neighbor = neighbor_x->getBlockType(0, j, k);
                             if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                                addSquare(&world_pos, &everything, &indices, 'D', block);
+                                addSquare(&world_pos, &(ch->everything), &(ch->indices), 'D', block);
                             }
                         }
                     }
                     else {
                         neighbor = ch->getBlockType(i + 1, j, k);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                            addSquare(&world_pos, &everything, &indices, 'D', block);
+                            addSquare(&world_pos, &(ch->everything), &(ch->indices), 'D', block);
                         }
                     }
 
@@ -370,13 +371,13 @@ void Terrain::updateChunkVBO(int x, int z) {
                     if (j < 255) {
                         neighbor = ch->getBlockType(i, j + 1, k);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                            addSquare(&world_pos, &everything, &indices, 'E', block);
+                            addSquare(&world_pos, &(ch->everything), &(ch->indices), 'E', block);
                         }
                     }
                     if (j > 0) {
                         neighbor = ch->getBlockType(i, j - 1, k);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                            addSquare(&world_pos, &everything, &indices, 'Q', block);
+                            addSquare(&world_pos, &(ch->everything), &(ch->indices), 'Q', block);
                         }
                     }
 
@@ -385,13 +386,13 @@ void Terrain::updateChunkVBO(int x, int z) {
                         if (neighbor__z != nullptr) {
                             neighbor = neighbor__z->getBlockType(i, j, chunk_dimensions[2] - 1);
                             if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                                addSquare(&world_pos, &everything, &indices, 'S', block);
+                                addSquare(&world_pos, &(ch->everything), &(ch->indices), 'S', block);
                             }
                         }
                     } else {
                         neighbor = ch->getBlockType(i, j, k - 1);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                            addSquare(&world_pos, &everything, &indices, 'S', block);
+                            addSquare(&world_pos, &(ch->everything), &(ch->indices), 'S', block);
                         }
                     }
 
@@ -399,13 +400,13 @@ void Terrain::updateChunkVBO(int x, int z) {
                         if (neighbor_z != nullptr) {
                             neighbor = neighbor_z->getBlockType(i, j, 0);
                             if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                                addSquare(&world_pos, &everything, &indices, 'W', block);
+                                addSquare(&world_pos, &(ch->everything), &(ch->indices), 'W', block);
                             }
                         }
                     } else {
                         neighbor = ch->getBlockType(i, j, k + 1);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                            addSquare(&world_pos, &everything, &indices, 'W', block);
+                            addSquare(&world_pos, &(ch->everything), &(ch->indices), 'W', block);
                         }
                     }
 
@@ -414,7 +415,7 @@ void Terrain::updateChunkVBO(int x, int z) {
             }
         }
     }
-    ch->createVBO(everything, indices);
+
 }
 
 //void Terrain::updateAllVBO() {

@@ -27,7 +27,7 @@ MyGL::MyGL(QWidget *parent)
 
     setMouseTracking(true); // MyGL will track the mouse's movements even if a mouse button is not pressed
     setCursor(Qt::BlankCursor); // Make the cursor invisible
-    //func_ptr = &GLDrawScene;
+    func_ptr = &MyGL::GLDrawScene;
 
 }
 
@@ -177,7 +177,7 @@ void MyGL::timerUpdate()
     }
 
     time = QDateTime::currentMSecsSinceEpoch();
-    //QThreadPool::globalInstance()->start(scheduler);
+
 
 
 
@@ -246,6 +246,12 @@ void MyGL::GLDrawScene()
         if(ch->isCreated==true)
         {
         mp_progLambert->draw(*ch);
+        }
+       else
+        {
+            ch->createVBO();
+            mp_progLambert->draw(*ch);
+
         }
     }
 

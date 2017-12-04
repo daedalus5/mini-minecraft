@@ -30,8 +30,7 @@ public:
     GLenum drawMode() override;
     bool isCreated;
 
-    void createVBO(std::vector<glm::vec4> &everything,
-                      std::vector<GLuint> &indices);
+    void createVBO();
     std::vector<glm::vec4> everything ;
     std::vector<GLuint> indices;
 

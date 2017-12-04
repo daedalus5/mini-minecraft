@@ -56,7 +56,7 @@ private:
     glm::vec4 skyColor;
     QMutex mutex;
     Scheduler* scheduler;
-    void (*func_ptr)(void);
+    void (MyGL::*func_ptr)(void);
 
 
 

@@ -68,8 +68,8 @@ void main()
 
     // Compute final shaded color
 
-   vec4 c1 = vec4(0.0,0.0,1.0,1.0);
-   vec4 c2 = vec4(1.0,0.0,0.0,1.0);
+   vec4 c1 = vec4(0.0,0.0,1.0,1.0);// color for underwater
+   vec4 c2 = vec4(1.0,0.0,0.0,1.0);//color for under lava
 
 
 
@@ -78,10 +78,12 @@ void main()
     out_Col = mix(color, vec4(0.8, 0.8, 0.8, 1), fog);
     if(underwater == 1)
     {
+        //if player is under water, add overlay
         out_Col = mix(out_Col,c1,0.3);
     }
     else if(underlava==1)
     {
+        // if player is under lava, add overlay
         out_Col = mix(out_Col, c2,0.3);
 
 

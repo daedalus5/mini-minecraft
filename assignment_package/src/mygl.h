@@ -56,15 +56,7 @@ private:
     glm::vec4 skyColor;
     QMutex mutex;
     Scheduler* scheduler;
-    void (MyGL::*func_ptr)(void);
-
-
-
-
-
-
-
-    /// Timer linked to timerUpdate(). Fires approx. 60 times per second
+     /// Timer linked to timerUpdate(). Fires approx. 60 times per second
     QTimer timer;
 
     void MoveMouseToCenter(); // Forces the mouse position to the screen's center. You should call this

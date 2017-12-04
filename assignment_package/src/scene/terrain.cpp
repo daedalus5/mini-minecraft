@@ -800,7 +800,7 @@ void Terrain::drawScene()
             z = chunkZ + k;
             ch = getChunk(x, z);
             if (ch != nullptr) {
-                //chunksGonnaDraw.push_back(ch);
+
                 if(!ch->hasData())
                 {
                     chunks2Update.insert(convertToInt(x,z));
@@ -811,13 +811,12 @@ void Terrain::drawScene()
                     chunks2Update.insert(convertToInt(x, z - 1));
                 }
             } else {
-                //chunksGonnaDraw.push_back(createScene(x, z));
-                //keysGonnaDraw.push_back(convertToInt(x,z));
+
                 mutex->lock();
                 ch = createScene(x, z);
                 mutex->unlock();
                 if (ch != nullptr) {
-                   // chunk_map[convertToInt(x, z)] = ch;
+
                     chunksGonnaDraw.push_back(ch);
                     keysGonnaDraw.push_back(convertToInt(x, z));
                     chunks2Update.insert(convertToInt(x, z));

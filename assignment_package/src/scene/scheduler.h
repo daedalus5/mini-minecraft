@@ -7,7 +7,7 @@
 #include<player.h>
 
 
-class Scheduler:public QRunnable
+class Scheduler:public QRunnable //This is the class whose instances are used to create threads
 {
 public:
     Scheduler(Terrain*, QMutex*);

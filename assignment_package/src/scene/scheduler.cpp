@@ -10,16 +10,14 @@ void Scheduler::run()
     while(true)
     {
 
-        generateTerrain();
+        generateTerrain();//invokes the terrain generation function in the Terrain class
     }
 
 }
 
 void Scheduler::generateTerrain()
 {
-    //mutex->lock();
-    ptr_to_terrain->drawScene();
-   // mutex->unlock();
 
+    ptr_to_terrain->drawScene(); //invokes the terrain generation function in the Terrain class
 
 }

@@ -3,7 +3,11 @@
 #include <iostream>
 
 Chunk::Chunk(OpenGLContext* context)
+
     : Drawable(context),isCreated(false)
+
+
+
 {
     // Array in initialization list
     // does not work on Sagar's laptop
@@ -34,6 +38,7 @@ void Chunk::createVBO()
     generateEve();
     context->glBindBuffer(GL_ARRAY_BUFFER, bufEve);
     context->glBufferData(GL_ARRAY_BUFFER, everything.size() * sizeof(glm::vec4), everything.data(), GL_STATIC_DRAW);
+
     isCreated = true;
 }
 
@@ -54,6 +59,7 @@ GLenum Chunk::drawMode()
 
 Terrain::Terrain(OpenGLContext* in_context,Camera* camera,QMutex* mutexref) :
     terrainType(nullptr),
+    lsys(nullptr),
     dimensions(64, 256, 64),
     chunk_dimensions(16, 256, 16),
     chunk_map(std::unordered_map<uint64_t, Chunk*>()),
@@ -157,6 +163,13 @@ Terrain::Terrain(OpenGLContext* in_context,Camera* camera,QMutex* mutexref) :
     block_uv_map[ICE] = uv;
 
     uv.clear();
+    uv.push_back(glm::vec4(2.f/16.f, 15.f/16.f, 10.f, 0));
+    uv.push_back(glm::vec4(2.f/16.f, 14.f/16.f, 10.f, 0));
+    uv.push_back(glm::vec4(3.f/16.f, 14.f/16.f, 10.f, 0));
+    uv.push_back(glm::vec4(3.f/16.f, 15.f/16.f, 10.f, 0));
+    block_uv_map[SAND] = uv;
+
+    uv.clear();
     uv.push_back(glm::vec4(5.f/16.f, 13.f/16.f, 4.f, 0));
     uv.push_back(glm::vec4(5.f/16.f, 12.f/16.f, 4.f, 0));
     uv.push_back(glm::vec4(6.f/16.f, 12.f/16.f, 4.f, 0));
@@ -224,7 +237,8 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
         // but only sets the water blocks
 
         //ch = new Chunk(context);
-        chunk_map[chunk_pos] = createScene(getChunkPosition1D(x), getChunkPosition1D(z));
+        ch = createScene(getChunkPosition1D(x), getChunkPosition1D(z));
+        //chunk_map[chunk_pos] = ch;
     } else {
         ch = chunk_map[chunk_pos];
     }
@@ -473,6 +487,7 @@ void Terrain::addSquare(glm::vec3* pos,
 }
 
 uint64_t Terrain::convertToInt(int x, int z)  const {
+    uint64_t blah = ((uint64_t) x << 32) | ((uint64_t) z << 32 >> 32);
     return ((uint64_t) x << 32) | ((uint64_t) z << 32 >> 32);
 }
 
@@ -482,7 +497,7 @@ void Terrain::splitInt(uint64_t in, int *x, int *z) const {
 }
 
 // Given which Chunk to create
-// Make the highland terrain for that Chunk
+// Make the terrain for that Chunk
 Chunk* Terrain::createScene(int chunkX, int chunkZ) {
     // If Chunk already exists, no need to make it again
 
@@ -491,7 +506,9 @@ Chunk* Terrain::createScene(int chunkX, int chunkZ) {
         return nullptr;
     }
     Chunk* chunk = new Chunk(context);
+
     //chunk_map[convertToInt(chunkX, chunkZ)] = chunk;
+
 
     // The chunk's position in world coordinates
     int chunkWorldX = chunkX * chunk_dimensions[0];
@@ -513,14 +530,11 @@ Chunk* Terrain::createScene(int chunkX, int chunkZ) {
     int height;
     for(int x = 0; x < chunk_dimensions[0]; ++x){
         for(int z = 0; z < chunk_dimensions[2]; ++z){
-            //greyscale = fbm(x + 0.5f, z + 0.5f, persistance, octaves);
             greyscale = terrainType->fbm(x + chunkWorldX + 0.5f, z + chunkWorldZ + 0.5f, persistance, octaves);
             height = terrainType->mapToHeight(greyscale);
             for(int y = 128; y < height; ++y){
-                //setBlockAt(x, y, z, DIRT);
                 chunk->getBlockType(x, y, z) = DIRT;
             }
-            //setBlockAt(x, height, z, GRASS);
             chunk->getBlockType(x, height, z) = GRASS;
         }
     }
@@ -531,6 +545,157 @@ Chunk* Terrain::createScene(int chunkX, int chunkZ) {
 void Terrain::setTerrainType(TerrainType *t){
     delete terrainType;
     this->terrainType = t;
+}
+
+void Terrain::setLSystem(LSystem *l){
+    delete lsys;
+    this->lsys = l;
+}
+
+void Terrain::createRivers()
+{
+    srand(time(NULL));
+
+    // pass river desired start position and general heading (x, z)
+    setLSystem(new RiverDelta(glm::vec2(0,0), glm::vec2(0.0,1.0f)));
+    // set number of turtle steps and pass intial path seed
+    lsys->generatePath(MAX_DEPTH_DELTA, "F+-F+-FX");
+    // populate LSystems set of operations passed to turtle
+    lsys->populateOps();
+
+    // offsets are used to draw rivers with some thickness according to turtle recursion depth
+    std::vector<int> offsets = {4, 2, 1, 0};
+    traceRiverPath(offsets);
+
+    setLSystem(new River(glm::vec2(0,0), glm::vec2(0.0,-1.0f)));
+    lsys->generatePath(MAX_DEPTH_RIVER, "F+-F+-FX");
+    lsys->populateOps();
+    offsets.clear();
+    offsets = {4, 0, 0, 0};
+    traceRiverPath(offsets);
+}
+
+void Terrain::traceRiverPath(const std::vector<int>& offsets){
+    glm::vec2 start;
+    glm::vec2 end;
+    int zMin;
+    int zMax;
+    int xMin;
+    int xMax;
+    float intersect;
+
+    const int zeroHeight = 135;
+    int depth;
+    int offset;
+    int numShelves = 4;
+
+    // loop over LSystem string path
+    for(int i = 0; i < lsys->path.length(); ++i){
+        start = lsys->activeTurtle.position;
+        // dereference function pointer mapped to path character
+        (lsys->*(lsys->charToDrawingOperation[lsys->path[i]]))();
+        // if turtle moves forward, draw its path
+        if (lsys->path[i] == 'F'){
+            // draw linesegment2D along turtle path
+            end = lsys->activeTurtle.position;
+            LineSegment2D line = LineSegment2D(start, end);
+            zMin = start[1] <= end[1] ? start[1] : end[1];
+            zMax = end[1] >= start[1] ? end[1] : start[1];
+
+            // for drawing rivers with width
+            depth = lsys->activeTurtle.depth;
+            if (depth == 1){
+                offset = offsets[0];
+            }
+            if (depth == 2){
+                offset = offsets[1];
+            }
+            if (depth == 3){
+                offset = offsets[2];
+            }
+            if (depth > 3){
+                offset = offsets[3];
+            }
+
+            for(int k = zMin; k <= zMax; ++k){
+                // river by rasterization
+                bool check = line.intersectAt(k, &intersect);
+                if (check){ // river is travelling N/S
+                    int l = floor(intersect);
+                    for(int p = -offset; p <= offset; p++){
+                        setBlockAt(l + p, zeroHeight, k, WATER);
+                        setBlockAt(l + p, zeroHeight + 1, k, WATER);
+                        setBlockAt(l + p, zeroHeight + 2, k, WATER);
+                        setBlockAt(l + p, zeroHeight - 1, k, SAND);
+                        for(int q = zeroHeight + 3; q < 256; ++q){
+                            setBlockAt(l + p, q, k, EMPTY);
+                        }
+                    }
+                    // riverbanks
+                    for(int p = 0; p < 3; ++p){
+                        for(int q = zeroHeight + 1; q + p < zeroHeight + 3; ++q){
+                            setBlockAt(l - offset - 1 - 2*p, q + p, k, WATER);
+                            setBlockAt(l - offset - 1 - 2*p - 1, q + p, k, WATER);
+                            setBlockAt(l + offset + 1 + 2*p, q + p, k, WATER);
+                            setBlockAt(l + offset + 1 + 2*p + 1, q + p, k, WATER);
+                        }
+                        for(int q = zeroHeight + 3; q < 256; ++q){
+                            setBlockAt(l - offset - 1 - 2*p, q, k, EMPTY);
+                            setBlockAt(l - offset - 1 - 2*p - 1, q, k, EMPTY);
+                            setBlockAt(l + offset + 1 + 2*p, q, k, EMPTY);
+                            setBlockAt(l + offset + 1 + 2*p + 1, q, k, EMPTY);
+                        }
+                    }
+                    for(int p = 3; p < numShelves; ++p){
+                        for(int q = zeroHeight; q + p < 256; ++q){
+                            setBlockAt(l - offset - 1 - 2*p, q + p, k, EMPTY);
+                            setBlockAt(l - offset - 1 - 2*p - 1, q + p, k, EMPTY);
+                            setBlockAt(l + offset + 1 + 2*p, q + p, k, EMPTY);
+                            setBlockAt(l + offset + 1 + 2*p + 1, q + p, k, EMPTY);
+                        }
+                    }
+                }
+                else{   // river is travelling E/W
+                    xMin = start[0] <= end[0] ? start[0] : end[0];
+                    xMax = end[0] >= start[0] ? end[0] : start[0];
+                    for(int j = xMin; j <= xMax; ++j){
+                        for(int p = -offset; p <= offset; ++p){
+                            setBlockAt(j, zeroHeight, zMin + p, WATER);
+                            setBlockAt(j, zeroHeight + 1, zMin + p, WATER);
+                            setBlockAt(j, zeroHeight + 2, zMin + p, WATER);
+                            setBlockAt(j, zeroHeight - 1, zMin + p, SAND);
+                            for(int q = zeroHeight + 3; q < 256; ++q){
+                                setBlockAt(j, q, zMin + p, EMPTY);
+                            }
+                        }
+                        // riverbanks
+                        for(int p = 0; p < 3; ++p){
+                            for(int q = zeroHeight + 1; q + p < zeroHeight + 3; ++q){
+                                setBlockAt(j, q + p, zMin - offset - 1 - 2*p, WATER);
+                                setBlockAt(j, q + p, zMin - offset - 1 - 2*p - 1, WATER);
+                                setBlockAt(j, q + p, zMin + offset + 1 + 2*p, WATER);
+                                setBlockAt(j, q + p, zMin + offset + 1 + 2*p + 1, WATER);
+                            }
+                            for(int q = zeroHeight + 3; q < 256; ++q){
+                                setBlockAt(j, q, zMin - offset - 1 - 2*p, EMPTY);
+                                setBlockAt(j, q, zMin - offset - 1 - 2*p - 1, EMPTY);
+                                setBlockAt(j, q, zMin + offset + 1 + 2*p, EMPTY);
+                                setBlockAt(j, q, zMin + offset + 1 + 2*p + 1, EMPTY);
+                            }
+                        }
+                        for(int p = 3; p < numShelves; ++p){
+                            for(int q = zeroHeight + 1; q + p < 256; ++q){
+                                setBlockAt(j, q + p, zMin - offset - 1 - 2*p, EMPTY);
+                                setBlockAt(j, q + p, zMin - offset - 1 - 2*p - 1, EMPTY);
+                                setBlockAt(j, q + p, zMin + offset + 1 + 2*p, EMPTY);
+                                setBlockAt(j, q + p, zMin + offset + 1 + 2*p + 1, EMPTY);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 // TERRAIN END

@@ -107,7 +107,11 @@ void MyGL::initializeGL()
 
     mp_terrain->setTerrainType(new Highland);
 
+
     //const auto (*funcptr)= &(this->GLDrawScene);
+
+
+    mp_terrain->createRivers();
 
     //mp_terrain->updateAllVBO();
 
@@ -278,6 +282,7 @@ void MyGL::GLDrawScene()
             z = chunkZ + k;
             ch = mp_terrain->getChunk(x, z);
             if (ch != nullptr) {
+
                 //chunksGonnaDraw.push_back(ch);
                 /*if(ch->isCreated)
                 {
@@ -290,6 +295,14 @@ void MyGL::GLDrawScene()
             }
             /* else {
                 chunksGonnaDraw.push_back(createScene(x, z));
+=======
+                chunks2Draw.push_back(ch);
+                if (!ch->isCreated) {
+                    chunks2Update.insert(mp_terrain->convertToInt(x, z));
+                }
+            } else {
+                chunks2Draw.push_back(mp_terrain->createScene(x, z));
+>>>>>>> origin/milestone2
 
                 chunks2Update.insert(convertToInt(x, z));
 
@@ -302,11 +315,13 @@ void MyGL::GLDrawScene()
         }
     }
 
+
 //    int tempX, tempZ;
 //    for (uint64_t i : chunks2Update) {
 //        splitInt(i, &tempX, &tempZ);
 //        updateChunkVBO(tempX, tempZ);
 //    }
+
 
 }
 
@@ -332,9 +347,9 @@ void MyGL::keyPressEvent(QKeyEvent *e) // triggered when key is pressed
     }
     mp_player->keyPressState(e);
 
-    float amount = 1.0f;
+    //float amount = 1.0f;
     if(e->modifiers() & Qt::ShiftModifier){
-        amount = 10.0f;
+        //amount = 10.0f;
     }
 
 }

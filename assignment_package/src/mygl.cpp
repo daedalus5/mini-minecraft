@@ -289,8 +289,11 @@ void MyGL::GLDrawScene()
                     mp_progLambert->draw(*ch);
                 }*/
                // else {
+                //if (ch->isCreated) {
                     ch->createVBO();
                     mp_progLambert->draw(*ch);
+                //}
+
                // }
             }
             /* else {

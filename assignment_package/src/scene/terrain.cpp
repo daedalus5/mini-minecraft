@@ -26,8 +26,16 @@ BlockType& Chunk::getBlockType(int x, int y, int z) {
     return block_array[x + 16 * y + 4096 * z];
 }
 
+bool Chunk::hasData() {
+    return everything.size();
+}
+
 void Chunk::createVBO()
 {
+//    if (indices.size() == 0) {
+//        return;
+//    }
+
     count = indices.size();
 
     // Create a VBO on our GPU and store its handle in bufIdx
@@ -38,8 +46,6 @@ void Chunk::createVBO()
     generateEve();
     context->glBindBuffer(GL_ARRAY_BUFFER, bufEve);
     context->glBufferData(GL_ARRAY_BUFFER, everything.size() * sizeof(glm::vec4), everything.data(), GL_STATIC_DRAW);
-
-    isCreated = true;
 }
 
 void Chunk::create() {
@@ -238,7 +244,7 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
 
         //ch = new Chunk(context);
         ch = createScene(getChunkPosition1D(x), getChunkPosition1D(z));
-        //chunk_map[chunk_pos] = ch;
+        chunk_map[chunk_pos] = ch;
     } else {
         ch = chunk_map[chunk_pos];
     }
@@ -795,7 +801,7 @@ void Terrain::drawScene()
             ch = getChunk(x, z);
             if (ch != nullptr) {
                 //chunksGonnaDraw.push_back(ch);
-                if(!ch->isCreated)
+                if(!ch->hasData())
                 {
                     chunks2Update.insert(convertToInt(x,z));
                     // Update neighboring Chunks

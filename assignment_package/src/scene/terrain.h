@@ -34,6 +34,7 @@ public:
 
     void create() override;
     GLenum drawMode() override;
+    bool hasData();
     bool isCreated;
 
     void createVBO();

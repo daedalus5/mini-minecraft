@@ -553,7 +553,7 @@ void Terrain::createRivers()
     // set desired length of river and pass intial path seed
     lsys->generatePath(MAX_DEPTH_DELTA, "F+-F+-FX");
     lsys->populateOps();
-    std::vector<int> offsets = {4, 2, 1, 0};
+    std::vector<int> offsets = {4, 1, 0, 0};
     traceRiverPath(offsets);
 
     setLSystem(new River(glm::vec2(0,0), glm::vec2(0.0,-1.0f)));
@@ -576,7 +576,7 @@ void Terrain::traceRiverPath(const std::vector<int>& offsets){
     const int zeroHeight = 135;
     int depth;
     int offset;
-    int numShelves = 5;
+    int numShelves = 4;
 
     // loop over LSystem string path
     for(int i = 0; i < lsys->path.length(); ++i){

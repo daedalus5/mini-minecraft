@@ -89,7 +89,7 @@ float LSystem::rand01(){
 
 RiverDelta::RiverDelta(glm::vec2 pos, glm::vec2 heading) :
     LSystem(pos, heading){
-    this->branchProb = 0.05f;
+    this->branchProb = 0.042f;
 }
 
 RiverDelta::~RiverDelta(){}

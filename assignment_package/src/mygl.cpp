@@ -21,8 +21,7 @@ MyGL::MyGL(QWidget *parent)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
-    // Tell the timer to redraw 60 times per second
-    timer.start(16);
+
     setFocusPolicy(Qt::ClickFocus);
 
     setMouseTracking(true); // MyGL will track the mouse's movements even if a mouse button is not pressed
@@ -112,6 +111,10 @@ void MyGL::initializeGL()
     QThreadPool::globalInstance()->start(scheduler);
     //QThreadPool::globalInstance()->waitForDone();
 
+
+    // Tell the timer to redraw 60 times per second
+    timer.start(16);
+
 }
 
 void MyGL::resizeGL(int w, int h)
@@ -139,6 +142,7 @@ void MyGL::resizeGL(int w, int h)
 // We're treating MyGL as our game engine class, so we're going to use timerUpdate
 void MyGL::timerUpdate()
 {
+
     mp_player->isSandbox = isSandbox;
 
 
@@ -242,18 +246,55 @@ void MyGL::GLDrawScene()
 {
     mp_progLambert->setModelMatrix(glm::mat4());
 
-    for (Chunk* ch : mp_terrain->chunksGonnaDraw) {
-        if(ch->isCreated==true)
-        {
-        mp_progLambert->draw(*ch);
-        }
-       else
-        {
-            ch->createVBO();
-            mp_progLambert->draw(*ch);
+    int chunkX = mp_terrain->getChunkPosition1D(mp_camera->eye[0]);
+    int chunkZ = mp_terrain->getChunkPosition1D(mp_camera->eye[2]);
 
+    // Create collection of Chunks to update/draw
+    // Because we want to update VBO after all new Chunks are created
+
+    // List of Chunks to draw
+    //chunksGonnaDraw = std::vector<Chunk*>();
+    // List of Chunks that need VBO updated
+    std::set<uint64_t> chunks2Update = std::set<uint64_t>();
+
+    int num = 10;
+    int x, z;
+
+    Chunk* ch;
+    for (int i = -num; i < num; i++) {
+        for (int k = -num; k < num; k++) {
+            x = chunkX + i;
+            z = chunkZ + k;
+            ch = mp_terrain->getChunk(x, z);
+            if (ch != nullptr) {
+                //chunksGonnaDraw.push_back(ch);
+                if(ch->isCreated)
+                {
+                    mp_progLambert->draw(*ch);
+                }
+                else {
+                    ch->createVBO();
+                    mp_progLambert->draw(*ch);
+                }
+            }/* else {
+                chunksGonnaDraw.push_back(createScene(x, z));
+
+                chunks2Update.insert(convertToInt(x, z));
+
+                // Update neighboring Chunks
+                chunks2Update.insert(convertToInt(x + 1, z));
+                chunks2Update.insert(convertToInt(x - 1, z));
+                chunks2Update.insert(convertToInt(x, z + 1));
+                chunks2Update.insert(convertToInt(x, z - 1));
+            }*/
         }
     }
+
+//    int tempX, tempZ;
+//    for (uint64_t i : chunks2Update) {
+//        splitInt(i, &tempX, &tempZ);
+//        updateChunkVBO(tempX, tempZ);
+//    }
 
 }
 

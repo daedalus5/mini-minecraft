@@ -49,9 +49,14 @@ public:
     Chunk* createScene(int x, int z);
     Camera* mp_camera;
     std::vector<Chunk*> chunksGonnaDraw;
+    std::vector<uint64_t> keysGonnaDraw;
 
     glm::ivec3 dimensions;
     glm::ivec3 chunk_dimensions;
+
+    // Maps Chunk Position to the Chunk
+    // Chunk Position obtained through getChunkPosition
+    std::unordered_map<uint64_t, Chunk*> chunk_map;
 
     BlockType getBlockAt(int x, int y, int z) const;       // Given a world-space coordinate (which may have negative
                                                            // values) return the block stored at that point in space.
@@ -79,10 +84,6 @@ public:
 
 private:
     OpenGLContext* context; // To pass on to Chunks
-
-    // Maps Chunk Position to the Chunk
-    // Chunk Position obtained through getChunkPosition
-    std::unordered_map<uint64_t, Chunk*> chunk_map;
 
     std::unordered_map<char, glm::vec4> color_map; // Map of char (BlockType) to a color
     std::unordered_map<char, glm::vec4> normal_vec_map; // Map of char (direction) to its normal vector

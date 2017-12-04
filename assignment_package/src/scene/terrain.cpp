@@ -1,5 +1,7 @@
 #include <scene/terrain.h>
 
+#include <iostream>
+
 Chunk::Chunk(OpenGLContext* context)
     : Drawable(context),isCreated(false)
 {
@@ -488,7 +490,7 @@ Chunk* Terrain::createScene(int chunkX, int chunkZ) {
         return nullptr;
     }
     Chunk* chunk = new Chunk(context);
-    chunk_map[convertToInt(chunkX, chunkZ)] = chunk;
+    //chunk_map[convertToInt(chunkX, chunkZ)] = chunk;
 
     // The chunk's position in world coordinates
     int chunkWorldX = chunkX * chunk_dimensions[0];
@@ -611,6 +613,7 @@ void Terrain::drawScene()
 
     // List of Chunks to draw
     chunksGonnaDraw = std::vector<Chunk*>();
+    keysGonnaDraw = std::vector<uint64_t>();
     // List of Chunks that need VBO updated
     std::set<uint64_t> chunks2Update = std::set<uint64_t>();
 
@@ -624,21 +627,30 @@ void Terrain::drawScene()
             z = chunkZ + k;
             ch = getChunk(x, z);
             if (ch != nullptr) {
-                chunksGonnaDraw.push_back(ch);
-                if(ch->isCreated==false)
+                //chunksGonnaDraw.push_back(ch);
+                if(!ch->isCreated)
                 {
                     chunks2Update.insert(convertToInt(x,z));
+                    // Update neighboring Chunks
+                    chunks2Update.insert(convertToInt(x + 1, z));
+                    chunks2Update.insert(convertToInt(x - 1, z));
+                    chunks2Update.insert(convertToInt(x, z + 1));
+                    chunks2Update.insert(convertToInt(x, z - 1));
                 }
             } else {
-                chunksGonnaDraw.push_back(createScene(x, z));
+                //chunksGonnaDraw.push_back(createScene(x, z));
+                //keysGonnaDraw.push_back(convertToInt(x,z));
+                ch = createScene(x, z);
+                if (ch != nullptr) {
+                    chunk_map[convertToInt(x, z)] = ch;
+                    chunks2Update.insert(convertToInt(x, z));
 
-                chunks2Update.insert(convertToInt(x, z));
-
-                // Update neighboring Chunks
-                chunks2Update.insert(convertToInt(x + 1, z));
-                chunks2Update.insert(convertToInt(x - 1, z));
-                chunks2Update.insert(convertToInt(x, z + 1));
-                chunks2Update.insert(convertToInt(x, z - 1));
+                    // Update neighboring Chunks
+                    chunks2Update.insert(convertToInt(x + 1, z));
+                    chunks2Update.insert(convertToInt(x - 1, z));
+                    chunks2Update.insert(convertToInt(x, z + 1));
+                    chunks2Update.insert(convertToInt(x, z - 1));
+                }
             }
         }
     }
@@ -648,7 +660,6 @@ void Terrain::drawScene()
         splitInt(i, &tempX, &tempZ);
         updateChunkVBO(tempX, tempZ);
     }
-
 
 }
 

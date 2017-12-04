@@ -104,8 +104,8 @@ void MyGL::initializeGL()
 
     mp_terrain->setTerrainType(new Highland);
     mp_terrain->createRivers();
+
     QThreadPool::globalInstance()->start(scheduler);
-    //QThreadPool::globalInstance()->waitForDone();
 
 
     // Tell the timer to redraw 60 times per second
@@ -247,18 +247,13 @@ void MyGL::paintGL()
 
 void MyGL::GLDrawScene()
 {
+//    glm::mat4 matrixHack = glm::mat4();
+//    matrixHack[3] = glm::vec4(0, 0, 0, 1);
+//    mp_progLambert->setModelMatrix(matrixHack);
     mp_progLambert->setModelMatrix(glm::mat4());
 
     int chunkX = mp_terrain->getChunkPosition1D(mp_camera->eye[0]);
     int chunkZ = mp_terrain->getChunkPosition1D(mp_camera->eye[2]);
-
-    // Create collection of Chunks to update/draw
-    // Because we want to update VBO after all new Chunks are created
-
-    // List of Chunks to draw
-    //chunksGonnaDraw = std::vector<Chunk*>();
-    // List of Chunks that need VBO updated
-    std::set<uint64_t> chunks2Update = std::set<uint64_t>();
 
     int num = 10;
     int x, z;
@@ -271,50 +266,22 @@ void MyGL::GLDrawScene()
             z = chunkZ + k;
             ch = mp_terrain->getChunk(x, z);
             if (ch != nullptr) {
-
-                //chunksGonnaDraw.push_back(ch);
-                /*if(ch->isCreated)
-                {
-                    mp_progLambert->draw(*ch);
-                }*/
-               // else {
-                //if (ch->isCreated) {
+                // If Chunk data has not been passed to the GPU
+                // But it has VBO data ready to be passed
+                // Then pass the data
+                if (!ch->isCreated && ch->hasData) {
                     ch->createVBO();
-                    mp_progLambert->draw(*ch);
-                //}
-
-               // }
-            }
-            /* else {
-                chunksGonnaDraw.push_back(createScene(x, z));
-=======
-                chunks2Draw.push_back(ch);
-                if (!ch->isCreated) {
-                    chunks2Update.insert(mp_terrain->convertToInt(x, z));
                 }
-            } else {
-                chunks2Draw.push_back(mp_terrain->createScene(x, z));
->>>>>>> origin/milestone2
 
-                chunks2Update.insert(convertToInt(x, z));
+                // If Chunk has VBO data in GPU,
+                // draw it
+                if (ch->isCreated) {
+                    mp_progLambert->draw(*ch);
+                }
 
-                // Update neighboring Chunks
-                chunks2Update.insert(convertToInt(x + 1, z));
-                chunks2Update.insert(convertToInt(x - 1, z));
-                chunks2Update.insert(convertToInt(x, z + 1));
-                chunks2Update.insert(convertToInt(x, z - 1));
-            }*/
+            }
         }
     }
-
-
-//    int tempX, tempZ;
-//    for (uint64_t i : chunks2Update) {
-//        splitInt(i, &tempX, &tempZ);
-//        updateChunkVBO(tempX, tempZ);
-//    }
-
-
 }
 
 

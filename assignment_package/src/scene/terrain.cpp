@@ -4,13 +4,13 @@
 
 Chunk::Chunk(OpenGLContext* context)
 
-    : Drawable(context),isCreated(false)
+    : Drawable(context),isCreated(false), hasData(false)
 
 
 
 {
     // Array in initialization list
-    // does not work on Sagar's laptop
+    // does not work on Sagar's laptop (Macs suck!)
 
    for(int i=0;i<65536;i++)
     {
@@ -26,15 +26,13 @@ BlockType& Chunk::getBlockType(int x, int y, int z) {
     return block_array[x + 16 * y + 4096 * z];
 }
 
-bool Chunk::hasData() {
-    return everything.size();
-}
-
+// Sends the VBO data to the GPU
+// Only runs if Chunk has data
 void Chunk::createVBO()
 {
-//    if (indices.size() == 0) {
-//        return;
-//    }
+    if (!hasData) {
+        return;
+    }
 
     count = indices.size();
 
@@ -46,6 +44,8 @@ void Chunk::createVBO()
     generateEve();
     context->glBindBuffer(GL_ARRAY_BUFFER, bufEve);
     context->glBufferData(GL_ARRAY_BUFFER, everything.size() * sizeof(glm::vec4), everything.data(), GL_STATIC_DRAW);
+
+    isCreated = true;
 }
 
 void Chunk::create() {
@@ -76,12 +76,16 @@ Terrain::Terrain(OpenGLContext* in_context,Camera* camera,QMutex* mutexref) :
 
     offset(glm::vec3(0.5, 0.5, 0.5))
 {
+    // Map BlockType to colors
+    // Not currently used because we have textures
     color_map[GRASS] = glm::vec4(95.f, 159.f, 53.f, 255.f) / 255.f;
     color_map[DIRT] = glm::vec4(121.f, 85.f, 58.f, 255.f) / 255.f;
     color_map[STONE] = glm::vec4(0.5, 0.5, 0.5, 1);
     color_map[LAVA] = glm::vec4(207.f, 16.f, 32.f, 128.f) / 255.f;
 
 
+    // Map a direction to its normal vector
+    // Used when drawing faces
     // Letters correspond to movement controls
     // ex: 'W' corresponds to forward z direction
     normal_vec_map['D'] = glm::vec4(1, 0, 0, 0);
@@ -91,6 +95,9 @@ Terrain::Terrain(OpenGLContext* in_context,Camera* camera,QMutex* mutexref) :
     normal_vec_map['E'] = glm::vec4(0, 1, 0, 0);
     normal_vec_map['Q'] = glm::vec4(0, -1, 0, 0);
 
+    // Map a direction to a point
+    // Used when drawing faces. This point is what
+    // we rotate to procedurally create a square
     draw_start_map['D'] = glm::vec4(0.5, 0.5, 0.5, 1);
     draw_start_map['A'] = glm::vec4(-0.5, 0.5, -0.5, 1);
     draw_start_map['W'] = glm::vec4(-0.5, 0.5, 0.5, 1);
@@ -103,6 +110,8 @@ Terrain::Terrain(OpenGLContext* in_context,Camera* camera,QMutex* mutexref) :
     // index 0, 1 are the UVs
     // index 2 is the specular cosine power
     // index 3 is flag for whether this block is animated
+    // If Block has multiple textures,
+    // add direction character and store that.
     std::vector<glm::vec4> uv = std::vector<glm::vec4>();
 
     uv.clear();
@@ -212,6 +221,8 @@ Terrain::~Terrain() {
     delete terrainType;
 }
 
+// Given world coordinates, return BlockType
+// Returns empty if the block does not exist
 BlockType Terrain::getBlockAt(int x, int y, int z) const
 {
     if (y < 0 || y > 255) {
@@ -226,6 +237,9 @@ BlockType Terrain::getBlockAt(int x, int y, int z) const
     return EMPTY;
 }
 
+// Given world coordinates, sets the block at that position
+// If the Chunk at that position does not exist,
+// create it
 void Terrain::setBlockAt(int x, int y, int z, BlockType t)
 {
     if (y < 0 || y > 255) {
@@ -242,28 +256,32 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
         // by river generation, which might need to create new chunks
         // but only sets the water blocks
 
-        //ch = new Chunk(context);
         ch = createScene(getChunkPosition1D(x), getChunkPosition1D(z));
         chunk_map[chunk_pos] = ch;
     } else {
         ch = chunk_map[chunk_pos];
     }
     ch->getBlockType(getChunkLocalPosition1D(x), y, getChunkLocalPosition1D(z)) = t;
+    ch->hasData = false; // Need to update VBO
 }
 
+// Same as setBlockAt
+// Originally this updated the VBO data
+// But that was moved to drawScene
 void Terrain::addBlockAt(int x, int y, int z, BlockType t) {
     setBlockAt(x, y, z, t);
-    updateChunkVBO(getChunkPosition1D(x), getChunkPosition1D(z));
+    //updateChunkVBO(getChunkPosition1D(x), getChunkPosition1D(z));
 
     // Update neighboring Chunks
     // They may need to add/delete a wall
-    updateChunkVBO(getChunkPosition1D(x + 1), getChunkPosition1D(z));
-    updateChunkVBO(getChunkPosition1D(x - 1), getChunkPosition1D(z));
-    updateChunkVBO(getChunkPosition1D(x), getChunkPosition1D(z + 1));
-    updateChunkVBO(getChunkPosition1D(x), getChunkPosition1D(z - 1));
+//    updateChunkVBO(getChunkPosition1D(x + 1), getChunkPosition1D(z));
+//    updateChunkVBO(getChunkPosition1D(x - 1), getChunkPosition1D(z));
+//    updateChunkVBO(getChunkPosition1D(x), getChunkPosition1D(z + 1));
+//    updateChunkVBO(getChunkPosition1D(x), getChunkPosition1D(z - 1));
 }
 
-// Changed to use chunk position
+// Given Chunk position in Chunk coordinates,
+// return the Chunk
 Chunk* Terrain::getChunk(int x, int z) const {
 
     auto index = chunk_map.find(convertToInt(x, z));
@@ -273,6 +291,7 @@ Chunk* Terrain::getChunk(int x, int z) const {
     return nullptr;
 }
 
+// Converts world coordinate to Chunk coordinate
 int Terrain::getChunkPosition1D(int x) const {
     int temp = x / 16;
     if (x < 0) {
@@ -283,6 +302,8 @@ int Terrain::getChunkPosition1D(int x) const {
     return temp;
 }
 
+// Converts world coordinate to local Chunk coordinate
+// (The local position of the block within the Chunk)
 int Terrain::getChunkLocalPosition1D(int x) const {
     int temp = x % 16;
     if (x < 0) {
@@ -293,6 +314,9 @@ int Terrain::getChunkLocalPosition1D(int x) const {
     return temp;
 }
 
+// Given world coordinates, return Chunk coordinates
+// Not used. Instead, we call getChunkPosition1D twice.
+// I hope that's faster...
 glm::ivec2 Terrain::getChunkPosition(int x, int z) const {
     glm::ivec2 chunk_pos = glm::ivec2(x / 16, z / 16);
     if (x < 0) {
@@ -308,8 +332,11 @@ glm::ivec2 Terrain::getChunkPosition(int x, int z) const {
     return chunk_pos;
 }
 
+// Given world coordinates, return the local position within Chunk
+// Not used. Instead, we call getChunkLocalPosition1D twice.
+// I hope that's faster...
 glm::ivec3 Terrain::getChunkLocalPosition(int x, int y, int z) const {
-    glm::ivec3 local_pos = glm::ivec3(x % 16, y, z % 16); // position within chunk
+    glm::ivec3 local_pos = glm::ivec3(x % 16, y, z % 16);
     if (x < 0) {
         if (local_pos[0] != 0) {
             local_pos[0] = local_pos[0] + 16;
@@ -323,24 +350,30 @@ glm::ivec3 Terrain::getChunkLocalPosition(int x, int y, int z) const {
     return local_pos;
 }
 
-// x and z are the chunk's world position
-// maybe take in the chunk's numbers instead? yes
+// Creates the Chunk's VBO data
+// Parameters are the Chunk position in Chunk coordinates
+// (ex: world 16, 16 -> chunk 1, 1)
 void Terrain::updateChunkVBO(int x, int z) {
 
+    // If Chunk does not exist in map,
+    // Do not do anything
     auto index = chunk_map.find(convertToInt(x, z));
     if (index == chunk_map.end()) {
         return;
     }
+
+    // Clear out the Chunk's current data
     Chunk* ch = index->second;
     ch->everything.clear();
     ch->indices.clear();
+    ch->hasData = false; // VBO data has been cleared.
 
-
-
-    BlockType block, neighbor;
-    glm::vec3 world_pos;
+    // Variables that are reused in loop
+    BlockType block, neighbor; // Current BlockType and neighbor BlockType
+    glm::vec3 world_pos; // World position of current block
 
     // Chunk neighbors
+    // Used for checking neighboring faces
     Chunk* neighbor_x = getChunk(x + 1, z);
     Chunk* neighbor__x = getChunk(x - 1, z);
     Chunk* neighbor_z = getChunk(x, z + 1);
@@ -357,31 +390,34 @@ void Terrain::updateChunkVBO(int x, int z) {
                     world_pos = glm::vec3(i, j, k)
                             + glm::vec3(x * chunk_dimensions[0], 0, z * chunk_dimensions[2]);
 
-                    // Check neighboring Chunk in x direction
+                    // Check neighbor in -x direction
                     if (i == 0) {
                         if (neighbor__x != nullptr) {
+                            // Check neighboring Chunk in -x direction
                             neighbor = neighbor__x->getBlockType(chunk_dimensions[0] - 1, j, k);
                             if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
                                 addSquare(&world_pos, &(ch->everything), &(ch->indices), 'A', block);
                             }
                         }
                     } else {
+                        // Check neighboring -x within this chunk
                         neighbor = ch->getBlockType(i - 1, j, k);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                            // Check neighboring x within this chunk
                             addSquare(&world_pos, &(ch->everything), &(ch->indices), 'A', block);
                         }
                     }
 
+                    // Check neighbor in +x direction
                     if (i == chunk_dimensions[0] - 1) {
+                        // Check neighboring Chunk in +x direction
                         if (neighbor_x != nullptr) {
                             neighbor = neighbor_x->getBlockType(0, j, k);
                             if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
                                 addSquare(&world_pos, &(ch->everything), &(ch->indices), 'D', block);
                             }
                         }
-                    }
-                    else {
+                    } else {
+                        // Check neighboring +x within this chunk
                         neighbor = ch->getBlockType(i + 1, j, k);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
                             addSquare(&world_pos, &(ch->everything), &(ch->indices), 'D', block);
@@ -389,13 +425,14 @@ void Terrain::updateChunkVBO(int x, int z) {
                     }
 
 
-                    // Check neighboring y
+                    // Check neighboring +y within this Chunk
                     if (j < 255) {
                         neighbor = ch->getBlockType(i, j + 1, k);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
                             addSquare(&world_pos, &(ch->everything), &(ch->indices), 'E', block);
                         }
                     }
+                    // Check neighboring -y within this Chunk
                     if (j > 0) {
                         neighbor = ch->getBlockType(i, j - 1, k);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
@@ -403,8 +440,9 @@ void Terrain::updateChunkVBO(int x, int z) {
                         }
                     }
 
-                    // Check neighboring Chunk in z direction
+                    // Check neighbor in -z direction
                     if (k == 0) {
+                        // Check neighboring Chunk in -z direction
                         if (neighbor__z != nullptr) {
                             neighbor = neighbor__z->getBlockType(i, j, chunk_dimensions[2] - 1);
                             if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
@@ -412,13 +450,16 @@ void Terrain::updateChunkVBO(int x, int z) {
                             }
                         }
                     } else {
+                        // Check neighboring -z within this chunk
                         neighbor = ch->getBlockType(i, j, k - 1);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
                             addSquare(&world_pos, &(ch->everything), &(ch->indices), 'S', block);
                         }
                     }
 
+                    // Check neighbor in +z direction
                     if (k == chunk_dimensions[2] - 1) {
+                        // Check neighboring Chunk in +z direction
                         if (neighbor_z != nullptr) {
                             neighbor = neighbor_z->getBlockType(i, j, 0);
                             if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
@@ -426,6 +467,7 @@ void Terrain::updateChunkVBO(int x, int z) {
                             }
                         }
                     } else {
+                        // Check neighboring +z within this chunk
                         neighbor = ch->getBlockType(i, j, k + 1);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
                             addSquare(&world_pos, &(ch->everything), &(ch->indices), 'W', block);
@@ -437,21 +479,27 @@ void Terrain::updateChunkVBO(int x, int z) {
             }
         }
     }
-
+    ch->hasData = true; // VBO data has been created
+    ch->isCreated = false; // Need to pass VBO to GPU
 }
 
+// Loops through all existing Chunks and creates VBO data
+// Originally for use in initialization, but currently not used
 //void Terrain::updateAllVBO() {
+//    int x, z;
 //    for ( auto it = chunk_map.begin(); it != chunk_map.end(); ++it ) {
-//        //updateChunkVBO(16 * it->first[0], 16 * it->first[1]);
+//        splitInt(it->first, &x, &z);
+//        updateChunkVBO(x, z);
 //    }
 //}
 
+// Adds a square face to the VBO data
 void Terrain::addSquare(glm::vec3* pos,
                       std::vector<glm::vec4> *everything,
                       std::vector<GLuint> *indices,
                       char direction, BlockType block) {
 
-    // grab size of positions
+    // grab size of positions for current index
     int index = everything->size() / 3;
     glm::vec4 normal = normal_vec_map[direction];
     glm::vec3 normal3 = glm::vec3(normal);
@@ -469,14 +517,17 @@ void Terrain::addSquare(glm::vec3* pos,
         uv_list = mapped_uv->second;
     }
 
+    // Make the face
     for (int k = 0; k < 4; k++) {
         // Rotate by 90 degrees 4 times
-        // Push them into positions vector
+        // Rotate about the normal vector stored in normal_vec_map. Depends on direction
+        // The point to rotate is from start_draw_map. Depends on direction
+        // Push position into positions vector
         everything->push_back(glm::translate(glm::mat4(), *pos + offset)
                             * glm::rotate(glm::mat4(), glm::radians(90.f * k), normal3)
                             * draw_start_map[direction]);
 
-        // Push normals
+        // Push normal
         everything->push_back(normal);
         // Push UV
         everything->push_back(uv_list[k]);
@@ -492,11 +543,17 @@ void Terrain::addSquare(glm::vec3* pos,
 
 }
 
+// Takes the Chunk position (in Chunk coordinates. ex: world 16, 16 -> chunk 1, 1)
+// Converts the x and z into a single 64 bit integer to use for
+// chunk_map's key
 uint64_t Terrain::convertToInt(int x, int z)  const {
     uint64_t blah = ((uint64_t) x << 32) | ((uint64_t) z << 32 >> 32);
     return ((uint64_t) x << 32) | ((uint64_t) z << 32 >> 32);
 }
 
+// Takes a 64 bit integer and splits it into two 32 bit ints
+// Basically, takes a chunk_map key and converts to
+// Chunk position in Chunk coordinates
 void Terrain::splitInt(uint64_t in, int *x, int *z) const {
     *x = (int) (in>>32);
     *z = (int) in;
@@ -505,16 +562,14 @@ void Terrain::splitInt(uint64_t in, int *x, int *z) const {
 // Given which Chunk to create
 // Make the terrain for that Chunk
 Chunk* Terrain::createScene(int chunkX, int chunkZ) {
-    // If Chunk already exists, no need to make it again
 
+    // If Chunk already exists, no need to make it again
     auto index = chunk_map.find(convertToInt(chunkX, chunkZ));
     if (index != chunk_map.end()) {
         return nullptr;
     }
+
     Chunk* chunk = new Chunk(context);
-
-    //chunk_map[convertToInt(chunkX, chunkZ)] = chunk;
-
 
     // The chunk's position in world coordinates
     int chunkWorldX = chunkX * chunk_dimensions[0];
@@ -704,6 +759,75 @@ void Terrain::traceRiverPath(const std::vector<int>& offsets){
     }
 }
 
+// Loops through Chunks surrounding the camera
+// Creates Chunk data if it does not have data
+// Invoked by thread
+void Terrain::drawScene()
+{
+
+    int chunkX = getChunkPosition1D(mp_camera->eye[0]);
+    int chunkZ = getChunkPosition1D(mp_camera->eye[2]);
+
+    // Create collection of Chunks to update/draw
+    // Because we want to update VBO after all new Chunks are created
+
+    // List of Chunks to draw
+    chunksGonnaDraw = std::vector<Chunk*>();
+    keysGonnaDraw = std::vector<uint64_t>();
+    // List of Chunks that need VBO updated
+    std::set<uint64_t> chunks2Update = std::set<uint64_t>();
+
+    int num = 10;
+    int x, z;
+
+    Chunk* ch;
+    for (int i = -num; i < num; i++) {
+        for (int k = -num; k < num; k++) {
+            x = chunkX + i;
+            z = chunkZ + k;
+            ch = getChunk(x, z);
+            if (ch != nullptr) {
+
+                if(!ch->hasData)
+                {
+                    chunks2Update.insert(convertToInt(x,z));
+                    // Update neighboring Chunks
+                    chunks2Update.insert(convertToInt(x + 1, z));
+                    chunks2Update.insert(convertToInt(x - 1, z));
+                    chunks2Update.insert(convertToInt(x, z + 1));
+                    chunks2Update.insert(convertToInt(x, z - 1));
+                }
+            } else {
+
+                mutex->lock();
+                ch = createScene(x, z);
+                mutex->unlock();
+                if (ch != nullptr) {
+
+                    chunksGonnaDraw.push_back(ch);
+                    keysGonnaDraw.push_back(convertToInt(x, z));
+                    chunks2Update.insert(convertToInt(x, z));
+
+                    // Update neighboring Chunks
+                    chunks2Update.insert(convertToInt(x + 1, z));
+                    chunks2Update.insert(convertToInt(x - 1, z));
+                    chunks2Update.insert(convertToInt(x, z + 1));
+                    chunks2Update.insert(convertToInt(x, z - 1));
+
+                }
+
+            }
+        }
+    }
+
+    int tempX, tempZ;
+    for (uint64_t i : chunks2Update) {
+        splitInt(i, &tempX, &tempZ);
+        updateChunkVBO(tempX, tempZ);
+    }
+
+}
+
 // TERRAIN END
 // **********************************************************************************************
 // **********************************************************************************************
@@ -773,72 +897,6 @@ float TerrainType::getResolution() const{
 
 float TerrainType::getDampen() const{
     return dampen;
-}
-
-void Terrain::drawScene()
-{
-
-    int chunkX = getChunkPosition1D(mp_camera->eye[0]);
-    int chunkZ = getChunkPosition1D(mp_camera->eye[2]);
-
-    // Create collection of Chunks to update/draw
-    // Because we want to update VBO after all new Chunks are created
-
-    // List of Chunks to draw
-    chunksGonnaDraw = std::vector<Chunk*>();
-    keysGonnaDraw = std::vector<uint64_t>();
-    // List of Chunks that need VBO updated
-    std::set<uint64_t> chunks2Update = std::set<uint64_t>();
-
-    int num = 10;
-    int x, z;
-
-    Chunk* ch;
-    for (int i = -num; i < num; i++) {
-        for (int k = -num; k < num; k++) {
-            x = chunkX + i;
-            z = chunkZ + k;
-            ch = getChunk(x, z);
-            if (ch != nullptr) {
-
-                if(!ch->hasData())
-                {
-                    chunks2Update.insert(convertToInt(x,z));
-                    // Update neighboring Chunks
-                    chunks2Update.insert(convertToInt(x + 1, z));
-                    chunks2Update.insert(convertToInt(x - 1, z));
-                    chunks2Update.insert(convertToInt(x, z + 1));
-                    chunks2Update.insert(convertToInt(x, z - 1));
-                }
-            } else {
-
-                mutex->lock();
-                ch = createScene(x, z);
-                mutex->unlock();
-                if (ch != nullptr) {
-
-                    chunksGonnaDraw.push_back(ch);
-                    keysGonnaDraw.push_back(convertToInt(x, z));
-                    chunks2Update.insert(convertToInt(x, z));
-
-                    // Update neighboring Chunks
-                    chunks2Update.insert(convertToInt(x + 1, z));
-                    chunks2Update.insert(convertToInt(x - 1, z));
-                    chunks2Update.insert(convertToInt(x, z + 1));
-                    chunks2Update.insert(convertToInt(x, z - 1));
-
-                }
-
-            }
-        }
-    }
-
-    int tempX, tempZ;
-    for (uint64_t i : chunks2Update) {
-        splitInt(i, &tempX, &tempZ);
-        updateChunkVBO(tempX, tempZ);
-    }
-
 }
 
 // TERRAINTYPE END

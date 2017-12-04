@@ -34,11 +34,19 @@ public:
 
     void create() override;
     GLenum drawMode() override;
-    bool hasData();
-    bool isCreated;
 
+    // Flag for whether this Chunk's data is in GPU
+    bool isCreated;
+    // Flag for whether this Chunk's data has been populated
+    bool hasData;
+
+    // Passes the VBO data to the GPU
     void createVBO();
+
+    // VBO data
+    // everything is the interleaved data of positions, normals, and UVs
     std::vector<glm::vec4> everything ;
+    // indices is the indices info
     std::vector<GLuint> indices;
 
 
@@ -61,7 +69,13 @@ public:
     Chunk* createScene(int x, int z);
 
     Camera* mp_camera;
+
+    // Data of Chunks that need to be added to map
+    // They are added in MyGL's timerUpdate
+    // Need to make more robust so multiple threads work with it
+    // Array of Chunks that need to be added to map
     std::vector<Chunk*> chunksGonnaDraw;
+    // Array of keys for the Chunks that need to be added to map
     std::vector<uint64_t> keysGonnaDraw;
 
     void traceRiverPath(const std::vector<int>& depths);// sets river cubes in scene
@@ -82,16 +96,23 @@ public:
                                                            // given type.
 
     Chunk* getChunk(int x, int z) const;
+
+    // Converts a world coordinate to Chunk coordinate
     int getChunkPosition1D(int x) const;
+
+    // Uses camera position to loop through visible Chunks to player
+    // Updates their VBO data if needed
+    // Invoked by thread
     void drawScene();
 
-    // Does almost same as setBlockAt, but also updates VBO
+    // Does same as setBlockAt
+    // Originally it also updated VBO, but that is handled elsewhere now
     void addBlockAt(int x, int y, int z, BlockType t);
-    //void destroyBlockAt(int x, int y, int z);
 
     // Updates a single Chunk's VBO
-    // x and z are world space coordinates that belong in the Chunk
+    // x and z are Chunk coordinates
     void updateChunkVBO(int x, int z);
+
     // Loops through all Chunks and updates their VBOs
     // Used during game initialization
     //void updateAllVBO();

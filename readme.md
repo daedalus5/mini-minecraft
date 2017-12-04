@@ -4,7 +4,8 @@
 
 ##### Sagar- 
 
-##### Connie Chang - 
+##### Connie Chang - Textures and Animation
+I created a Texture from the provided image, which the lambert shader samples from. I also added some Blinn-Phong specular light to the shader. For animation, I shifted the UVs based on time to give the illusion of movement. To send all this data to the shader, I passed all of this in a vec4. The first two indices represent the UV. The third is the cosine exponent for Blinn-Phong. The fourth is a flag for animation. Finally, I enabled alpha blending for transparency.
 
 ##### Zach Corse - L-System Rivers
 

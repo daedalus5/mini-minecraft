@@ -41,7 +41,7 @@ MyGL::~MyGL()
     delete mp_worldAxes;
     delete mp_progLambert;
     delete mp_progFlat;
-    delete mp_lavavision;
+
     delete scheduler;
 
 

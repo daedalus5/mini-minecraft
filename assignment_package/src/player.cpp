@@ -2,7 +2,7 @@
 #include<QKeyEvent>
 #include<iostream>
 
-Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),isWpressed(false),isApressed(false),isDpressed(false),isSpacepressed(false),isQpressed(false),isLMBpressed(false),isRMBpressed(false),controllerState(false),mouseState(false),isSandbox(false){
+Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),isWpressed(false),isApressed(false),isSpressed(false),isDpressed(false),isSpacepressed(false),isQpressed(false),isLMBpressed(false),isRMBpressed(false),mouseOrientFlag(false),controllerState(false),mouseState(false),isSandbox(false){
 
     pos= ptr_to_cam->eye;
 

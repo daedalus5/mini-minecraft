@@ -229,7 +229,7 @@ void MyGL::paintGL()
     glEnable(GL_DEPTH_TEST);
     if(underlava==true)
     {
-    glm::vec4 lavaColor= glm::vec4(1.0,0.0,0.0,0.3);
+    glm::vec4 lavaColor= glm::vec4(1.0,0.60,0.5,0.3);
     skyColor = glm::mix(lavaColor,skyColor,0.3);
     glClearColor(skyColor.r,skyColor.g,skyColor.b,skyColor.a);
     glm::vec2 r = glm::vec2(0.0,1.0);
@@ -238,8 +238,9 @@ void MyGL::paintGL()
 
     if(underwater==true)
     {
-        glm::vec4 waterColor = glm::vec4(0.0,0.0,1.0,0.3);
+        glm::vec4 waterColor = glm::vec4(0.20,0.50,1.0,0.3);
         skyColor = glm::mix(waterColor,skyColor,0.3);
+        skyColor.a = 1.0;
         glClearColor(skyColor.r,skyColor.g,skyColor.b,skyColor.a);
         glm::vec2 r = glm::vec2(1.0,0.0);
         mp_progLambert->setSubmerged(r);
@@ -541,7 +542,7 @@ void MyGL::createBlock(){
         BlockType b2 = mp_terrain->getBlockAt(insertPos[0], insertPos[1], insertPos[2]);
         // only build cube if there's an open space to place it
         if (b2 == EMPTY){
-            mp_terrain->addBlockAt(insertPos[0], insertPos[1], insertPos[2], WATER);
+            mp_terrain->addBlockAt(insertPos[0], insertPos[1], insertPos[2], LAVA);
         }
     }
 }

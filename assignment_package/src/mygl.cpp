@@ -14,7 +14,7 @@ MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       mp_geomCube(new Cube(this)), mp_worldAxes(new WorldAxes(this)),
       mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),
-      mp_camera(new Camera()), mp_terrain(new Terrain(this)), mp_crosshairs(new CrossHairs(this)),
+      mp_camera(new Camera()), mp_terrain(new Terrain(this,mp_camera)), mp_crosshairs(new CrossHairs(this)),
        mp_player(new Player(mp_camera, mp_terrain)),underwater(false),underlava(false),start_time(QDateTime::currentMSecsSinceEpoch()),
       isSandbox(false),m_geomQuad(new Quad(this)),skyColor(glm::vec4(0.37f, 0.74f, 1.0f, 1)),scheduler(new Scheduler(mp_terrain,&mutex))
 
@@ -108,6 +108,10 @@ void MyGL::initializeGL()
     //const auto (*funcptr)= &(this->GLDrawScene);
 
     //mp_terrain->updateAllVBO();
+
+    QThreadPool::globalInstance()->start(scheduler);
+    //QThreadPool::globalInstance()->waitForDone();
+
 }
 
 void MyGL::resizeGL(int w, int h)
@@ -136,6 +140,7 @@ void MyGL::resizeGL(int w, int h)
 void MyGL::timerUpdate()
 {
     mp_player->isSandbox = isSandbox;
+
 
      //obtains number of milliseconds elapsed since January 1, 1970
     dt = QDateTime::currentMSecsSinceEpoch() - time; //calculates dt, the change in time since the last timerUpdate
@@ -172,6 +177,9 @@ void MyGL::timerUpdate()
     }
 
     time = QDateTime::currentMSecsSinceEpoch();
+    //QThreadPool::globalInstance()->start(scheduler);
+
+
 
     update();
 
@@ -233,50 +241,12 @@ void MyGL::paintGL()
 void MyGL::GLDrawScene()
 {
     mp_progLambert->setModelMatrix(glm::mat4());
-    int chunkX = mp_terrain->getChunkPosition1D(mp_camera->eye[0]);
-    int chunkZ = mp_terrain->getChunkPosition1D(mp_camera->eye[2]);
 
-    // Create collection of Chunks to update/draw
-    // Because we want to update VBO after all new Chunks are created
-
-    // List of Chunks to draw
-    std::vector<Chunk*> chunks2Draw = std::vector<Chunk*>();
-    // List of Chunks that need VBO updated
-    std::set<uint64_t> chunks2Update = std::set<uint64_t>();
-
-    int num = 10;
-    int x, z;
-
-    Chunk* ch;
-    for (int i = -num; i < num; i++) {
-        for (int k = -num; k < num; k++) {
-            x = chunkX + i;
-            z = chunkZ + k;
-            ch = mp_terrain->getChunk(x, z);
-            if (ch != nullptr) {
-                chunks2Draw.push_back(ch);
-            } else {
-                chunks2Draw.push_back(mp_terrain->createScene(x, z));
-
-                chunks2Update.insert(mp_terrain->convertToInt(x, z));
-
-                // Update neighboring Chunks
-                chunks2Update.insert(mp_terrain->convertToInt(x + 1, z));
-                chunks2Update.insert(mp_terrain->convertToInt(x - 1, z));
-                chunks2Update.insert(mp_terrain->convertToInt(x, z + 1));
-                chunks2Update.insert(mp_terrain->convertToInt(x, z - 1));
-            }
-        }
-    }
-
-    int tempX, tempZ;
-    for (uint64_t i : chunks2Update) {
-        mp_terrain->splitInt(i, &tempX, &tempZ);
-        mp_terrain->updateChunkVBO(tempX, tempZ);
-    }
-
-    for (Chunk* ch : chunks2Draw) {
+    for (Chunk* ch : mp_terrain->chunksGonnaDraw) {
+        if(ch->isCreated==true)
+        {
         mp_progLambert->draw(*ch);
+        }
     }
 
 }

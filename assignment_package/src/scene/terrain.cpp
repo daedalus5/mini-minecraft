@@ -1,7 +1,7 @@
 #include <scene/terrain.h>
 
 Chunk::Chunk(OpenGLContext* context)
-    : Drawable(context)
+    : Drawable(context),isCreated(false)
 {
     // Array in initialization list
     // does not work on Sagar's laptop
@@ -33,6 +33,7 @@ void Chunk::createVBO(std::vector<glm::vec4> &everything,
     generateEve();
     context->glBindBuffer(GL_ARRAY_BUFFER, bufEve);
     context->glBufferData(GL_ARRAY_BUFFER, everything.size() * sizeof(glm::vec4), everything.data(), GL_STATIC_DRAW);
+    isCreated = true;
 }
 
 void Chunk::create() {
@@ -50,7 +51,7 @@ GLenum Chunk::drawMode()
 // **********************************************************************************************
 // TERRAIN START
 
-Terrain::Terrain(OpenGLContext* in_context) :
+Terrain::Terrain(OpenGLContext* in_context,Camera* camera) :
     terrainType(nullptr),
     dimensions(64, 256, 64),
     chunk_dimensions(16, 256, 16),
@@ -58,7 +59,7 @@ Terrain::Terrain(OpenGLContext* in_context) :
     color_map(std::unordered_map<char, glm::vec4>()),
     normal_vec_map(std::unordered_map<char, glm::vec4>()),
     block_uv_map(std::unordered_map<char, std::vector<glm::vec4>>()),
-    context(in_context),
+    context(in_context),mp_camera(camera),
 
     offset(glm::vec3(0.5, 0.5, 0.5))
 {
@@ -597,6 +598,58 @@ float TerrainType::getResolution() const{
 
 float TerrainType::getDampen() const{
     return dampen;
+}
+
+void Terrain::drawScene()
+{
+
+    int chunkX = getChunkPosition1D(mp_camera->eye[0]);
+    int chunkZ = getChunkPosition1D(mp_camera->eye[2]);
+
+    // Create collection of Chunks to update/draw
+    // Because we want to update VBO after all new Chunks are created
+
+    // List of Chunks to draw
+    chunksGonnaDraw = std::vector<Chunk*>();
+    // List of Chunks that need VBO updated
+    std::set<uint64_t> chunks2Update = std::set<uint64_t>();
+
+    int num = 10;
+    int x, z;
+
+    Chunk* ch;
+    for (int i = -num; i < num; i++) {
+        for (int k = -num; k < num; k++) {
+            x = chunkX + i;
+            z = chunkZ + k;
+            ch = getChunk(x, z);
+            if (ch != nullptr) {
+                chunksGonnaDraw.push_back(ch);
+                if(ch->isCreated==false)
+                {
+                    chunks2Update.insert(convertToInt(x,z));
+                }
+            } else {
+                chunksGonnaDraw.push_back(createScene(x, z));
+
+                chunks2Update.insert(convertToInt(x, z));
+
+                // Update neighboring Chunks
+                chunks2Update.insert(convertToInt(x + 1, z));
+                chunks2Update.insert(convertToInt(x - 1, z));
+                chunks2Update.insert(convertToInt(x, z + 1));
+                chunks2Update.insert(convertToInt(x, z - 1));
+            }
+        }
+    }
+
+    int tempX, tempZ;
+    for (uint64_t i : chunks2Update) {
+        splitInt(i, &tempX, &tempZ);
+        updateChunkVBO(tempX, tempZ);
+    }
+
+
 }
 
 // TERRAINTYPE END

@@ -4,6 +4,8 @@
 
 #include "drawable.h"
 #include <unordered_map>
+#include<camera.h>
+#include<set>
 
 // C++ 11 allows us to define the size of an enum. This lets us use only one byte
 // of memory to store our different block types. By default, the size of a C++ enum
@@ -26,6 +28,7 @@ public:
 
     void create() override;
     GLenum drawMode() override;
+    bool isCreated;
 
     void createVBO(std::vector<glm::vec4> &everything,
                       std::vector<GLuint> &indices);
@@ -37,12 +40,14 @@ private:
 class Terrain
 {
 public:
-    Terrain(OpenGLContext* context);
+    Terrain(OpenGLContext* context,Camera*);
     ~Terrain();
 
     TerrainType* terrainType;
     void setTerrainType(TerrainType* t);
     Chunk* createScene(int x, int z);
+    Camera* mp_camera;
+    std::vector<Chunk*> chunksGonnaDraw;
 
     glm::ivec3 dimensions;
     glm::ivec3 chunk_dimensions;
@@ -55,6 +60,7 @@ public:
 
     Chunk* getChunk(int x, int z) const;
     int getChunkPosition1D(int x) const;
+    void drawScene();
 
     // Does almost same as setBlockAt, but also updates VBO
     void addBlockAt(int x, int y, int z, BlockType t);

@@ -7,13 +7,17 @@ Scheduler::Scheduler(Terrain* terr, QMutex* ptr_to_mutex): ptr_to_terrain(terr),
 
 void Scheduler::run()
 {
-generateTerrain();
+    while(true)
+    {
+
+        generateTerrain();
+    }
 }
 
 void Scheduler::generateTerrain()
 {
     mutex->lock();
-
+    ptr_to_terrain->drawScene();
     mutex->unlock();
 
 

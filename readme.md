@@ -2,6 +2,8 @@
 ## Milestone 2
 ### Team: Merge Conflict
 
+**_We noticed that collisions are sometimes offset by one. We could not figure out why as it does not always happen._**
+
 ##### Sagar- Sandbox Mode, Lava and Water Collisions, Multithreading
 
 Sandbox mode was straightforward given what we implemented in Milestone 1. I disabled collisions with lava and water blocks, and slowed the player's velocity down when moving through Lava or Water. I also modified the vertical deceleration when the player is above a water or lava block to create a sinking effect. 

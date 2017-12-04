@@ -312,8 +312,7 @@ void Terrain::updateChunkVBO(int x, int z) {
     }
     Chunk* ch = index->second;
 
-    std::vector<glm::vec4> everything = std::vector<glm::vec4>();
-    std::vector<GLuint> indices = std::vector<GLuint>();
+
 
     BlockType block, neighbor;
     glm::vec3 world_pos;
@@ -340,14 +339,14 @@ void Terrain::updateChunkVBO(int x, int z) {
                         if (neighbor__x != nullptr) {
                             neighbor = neighbor__x->getBlockType(chunk_dimensions[0] - 1, j, k);
                             if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
-                                addSquare(&world_pos, &everything, &indices, 'A', block);
+                                addSquare(&world_pos, &(ch->everything), &(ch->indices), 'A', block);
                             }
                         }
                     } else {
                         neighbor = ch->getBlockType(i - 1, j, k);
                         if (neighbor == EMPTY || ((neighbor == LAVA || neighbor == WATER) && neighbor != block)) {
                             // Check neighboring x within this chunk
-                            addSquare(&world_pos, &everything, &indices, 'A', block);
+                            addSquare(&world_pos, &ch->everything, &indices, 'A', block);
                         }
                     }
 

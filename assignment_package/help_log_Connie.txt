@@ -1,5 +1,21 @@
 Connie Chang
 
+Milestone 2
+
+How do you repeat just a single tile in the texture?
+Answer: Asked in class
+You hard-code when the loop the texture in the fragment shader. Since all the tiles are 1/16 in width and height of the image dimensions, we can use % 1/16.
+
+Why is the transparency weird? You can see the sky at some angles.
+Answer: Asked Vasu
+Since we are drawing Chunks one at a time, a transparent block may be drawn before its background is drawn. So the fragment shader does not know to use the background terrain for color.
+
+
+
+
+
+Milestone 1
+
 How do you convert from a 1D index to 3D?
 Answer: https://stackoverflow.com/questions/7367770/how-to-flatten-or-index-3d-array-in-1d-array
 The web link shows the math behind it.

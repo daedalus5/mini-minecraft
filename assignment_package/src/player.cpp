@@ -125,7 +125,7 @@ bool Player::boundingBoxcheck(glm::vec3 box1min, glm::vec3 box1max, glm::vec3 bo
 
 bool Player::collisionDetect() // returns true if any of the player vertices faces a potential collision in the next timerUpdate()
 {
-    if(isSandbox)
+    if(isSandbox) //disable collisions if game is being run in Sandbox Mode
     {
         return false;
     }
@@ -220,9 +220,6 @@ void Player::gravityCheck() // implements gravity
          {
             pos = pos + velocity*(float)dt;
          }
-
-
-
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
@@ -230,6 +227,7 @@ void Player::gravityCheck() // implements gravity
     }
     else if((a==LAVA)&&(b==LAVA)&&(c==LAVA)&&(d==LAVA))
     {
+        //disable collision detection for LAVA blocks, and dampen gravity to simulate a sinking effect
 
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
@@ -241,35 +239,29 @@ void Player::gravityCheck() // implements gravity
          {
             pos = pos + velocity*(float)dt;
          }
-
-
-
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
     }
     else if((a==WATER)&&(b==WATER)&&(c==WATER)&&(d==WATER))
     {
+        //disable collision detection for WATER blocks, and dampen gravity to simulate a sinking effect
 
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
-
-        velocity.y = velocity.y - 0.5f; // downward velocity to simulate gravity
-
+        velocity.y = velocity.y - 0.9f; // downward velocity to simulate gravity
         bool cldetect = collisionDetect();
         if(cldetect==false)
          {
             pos = pos + velocity*(float)dt;
          }
-
-
-
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
     }
     else if(((a==WATER)||(a==LAVA)||(a==EMPTY))&&((b==WATER)||(b==LAVA)||(b==EMPTY))&&((c==WATER)||(c==LAVA)||(c==EMPTY))&&((d==WATER)||(d==LAVA)||(d==EMPTY)))
     {
+        //if player has any combination of lava, water, and empty blocks beneath it, add sinking effect and disable collisions
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
 
@@ -280,24 +272,12 @@ void Player::gravityCheck() // implements gravity
          {
             pos = pos + velocity*(float)dt;
          }
-
-
-
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
 
     }
-
-
-
-
-
 }
-
-
-
-
 
 void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player updates its position and velocity based on dt passed to updateTime().
 {
@@ -391,7 +371,7 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
 
     if(isQpressed)
     {
-        if(isSandbox)
+        if(isSandbox) //only work if in sandbox mode
         {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
@@ -409,7 +389,7 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
 
     if(isEpressed)
     {
-        if(isSandbox)
+        if(isSandbox) //only work if in sandbox mode
         {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
@@ -426,9 +406,6 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
 
 
     }
-
-
-
 }
 void Player::mouseMoveState(QMouseEvent *m) //detects change in cursor position. Rotates Camera accordingly
 {

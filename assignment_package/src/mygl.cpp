@@ -103,15 +103,7 @@ void MyGL::initializeGL()
     glBindVertexArray(vao);
 
     mp_terrain->setTerrainType(new Highland);
-
-
-    //const auto (*funcptr)= &(this->GLDrawScene);
-
-
     mp_terrain->createRivers();
-
-    //mp_terrain->updateAllVBO();
-
     QThreadPool::globalInstance()->start(scheduler);
     //QThreadPool::globalInstance()->waitForDone();
 
@@ -223,7 +215,7 @@ void MyGL::paintGL()
     mp_progFlat->setViewProjMatrix(glm::mat4());
     mp_progFlat->draw(*mp_crosshairs);
     glEnable(GL_DEPTH_TEST);
-    if(underlava==true)
+    if(underlava==true) // change sky color if player is under lava
     {
     glm::vec4 lavaColor= glm::vec4(1.0,0.60,0.5,0.3);
     skyColor = glm::mix(lavaColor,skyColor,0.3);
@@ -232,7 +224,7 @@ void MyGL::paintGL()
     mp_progLambert->setSubmerged(r);
     }
 
-    if(underwater==true)
+    if(underwater==true) // change sky color if player is underwater
     {
         glm::vec4 waterColor = glm::vec4(0.20,0.50,1.0,0.3);
         skyColor = glm::mix(waterColor,skyColor,0.3);
@@ -241,7 +233,7 @@ void MyGL::paintGL()
         glm::vec2 r = glm::vec2(1.0,0.0);
         mp_progLambert->setSubmerged(r);
     }
-    if((underlava==false)&&(underwater==false))
+    if((underlava==false)&&(underwater==false)) // disable sky color change if player is not submerged
     {
         skyColor = glm::vec4(0.37f, 0.74f, 1.0f, 1);
 

@@ -44,13 +44,13 @@ public:
     Terrain(OpenGLContext* context);
     ~Terrain();
 
-    TerrainType* terrainType;
-    LSystem* lsys;
+    TerrainType* terrainType;                           // pointer to terrain type set in initialzeGL
+    LSystem* lsys;                                      // pointer to LSystem we want to use for river generation
     void setTerrainType(TerrainType* t);
     void setLSystem(LSystem* l);
     Chunk* createScene(int x, int z);
-    void traceRiverPath(const std::vector<int>& depths);
-    void createRivers();
+    void traceRiverPath(const std::vector<int>& depths);// sets river cubes in scene
+    void createRivers();                                // create the rivers in this terrain
 
     glm::ivec3 dimensions;
     glm::ivec3 chunk_dimensions;
@@ -123,7 +123,7 @@ public:
     virtual float fbm(const float x,
               const float z,
               const float persistance,
-              const int octaves) const;     // returns a pseudorandom number between 0 and 1 for FBM noise
+              const int octaves) const;             // returns a pseudorandom number between 0 and 1 for FBM noise
     virtual int mapToHeight(const float val) const; // maps [0, 1] -> [128, 255]
 
 protected:
@@ -133,19 +133,19 @@ protected:
     float dampen;
 
     // For procedural terrain
-    float rand(const glm::vec2 n) const;    // pseudorandom number generator for FBM noise
-                                            // returns a pseudorandom value between -1 and 1
+    float rand(const glm::vec2 n) const;        // pseudorandom number generator for FBM noise
+                                                // returns a pseudorandom value between -1 and 1
     float interpNoise2D(const float x,
-                        const float z) const;  // 2D noise interpolation function for smooth FBM noise
+                        const float z) const;   // 2D noise interpolation function for smooth FBM noise
 };
 
-class Highland : public TerrainType{
+class Highland : public TerrainType{    // generates a "highland" terrain
 public:
     Highland();
     virtual ~Highland();
 };
 
-class Foothills : public TerrainType{
+class Foothills : public TerrainType{   // generates "foothill" terrain
 public:
     Foothills();
     virtual ~Foothills();

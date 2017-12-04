@@ -12,9 +12,9 @@
 const float PI_4 = 0.78539816;
 const float PI_6 = 0.52359877;
 const float PI_8 = 0.39269908;
-const float F_DISTANCE = 4.0f;
-const int MAX_DEPTH_DELTA = 60;
-const int MAX_DEPTH_RIVER = 60;
+const float F_DISTANCE = 4.0f;  // how far the turtle moves each step
+const int MAX_DEPTH_DELTA = 60; // number of steps to generate river delta
+const int MAX_DEPTH_RIVER = 60; // number of steps to generate main river
 
 class LSystem;
 
@@ -23,9 +23,9 @@ typedef void (LSystem::*Rule)(void);
 class Turtle
 {
 public:
-    glm::vec2 position;
-    glm::vec2 orientation;
-    int depth;  // recursion depth
+    glm::vec2 position;     // starting position of river
+    glm::vec2 orientation;  // staring orientation of river
+    int depth;              // recursion depth
 
     Turtle();
     Turtle(glm::vec2 pos, glm::vec2 heading);
@@ -52,7 +52,7 @@ public:
     QStack<Turtle> turtleStack;
     QHash<QChar, QString> ruleSet;              // char -> string map replacement rules for generating turtle path instructions
     QHash<QChar, Rule> charToDrawingOperation;  // maps characters to LSystem functions controlling this turtle
-    float branchProb;
+    float branchProb;                           // probability of branch generation
 
     LSystem(glm::vec2 pos, glm::vec2 heading);
     virtual ~LSystem();
@@ -93,7 +93,7 @@ public:
     void plusSign() override;
 };
 
-class LineSegment2D{
+class LineSegment2D{            // river is drawn by testing intersections with 2D line segments traced by turtle movement
 public:
     glm::vec2 start;
     glm::vec2 end;

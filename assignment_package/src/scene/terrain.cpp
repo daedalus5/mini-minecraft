@@ -550,10 +550,13 @@ void Terrain::createRivers()
 
     // pass river desired start position and general heading (x, z)
     setLSystem(new RiverDelta(glm::vec2(0,0), glm::vec2(0.0,1.0f)));
-    // set desired length of river and pass intial path seed
+    // set number of turtle steps and pass intial path seed
     lsys->generatePath(MAX_DEPTH_DELTA, "F+-F+-FX");
+    // populate LSystems set of operations passed to turtle
     lsys->populateOps();
-    std::vector<int> offsets = {4, 1, 0, 0};
+
+    // offsets are used to draw rivers with some thickness according to turtle recursion depth
+    std::vector<int> offsets = {4, 2, 1, 0};
     traceRiverPath(offsets);
 
     setLSystem(new River(glm::vec2(0,0), glm::vec2(0.0,-1.0f)));

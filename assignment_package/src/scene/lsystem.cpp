@@ -135,13 +135,13 @@ void RiverDelta::generatePath(int n, QString seed){
 
 void RiverDelta::minusSign(){
     activeTurtle.turnLeft();
-    if (activeTurtle.orientation[1] < 0) {
+    if (activeTurtle.orientation[1] < 0) {  // keep the turtle moving North
         activeTurtle.orientation = glm::vec2(-1.0f,0);
     }
 }
 void RiverDelta::plusSign(){
     activeTurtle.turnRight();
-    if (activeTurtle.orientation[1] < 0) {
+    if (activeTurtle.orientation[1] < 0) {  // keep the turtle moving North
         activeTurtle.orientation = glm::vec2(1.0f,0);
     }
 }
@@ -203,13 +203,13 @@ void River::leftBracket(){
     turtleStack.push(turtleCopy);
     activeTurtle.increaseDepth();
 }
-void River::minusSign(){
+void River::minusSign(){    // keep the turtle moving South
     activeTurtle.turnLeft();
     if (activeTurtle.orientation[1] > 0) {
         activeTurtle.orientation = glm::vec2(1.0f,0);
     }
 }
-void River::plusSign(){
+void River::plusSign(){     // keep the turtle moving South
     activeTurtle.turnRight();
     if (activeTurtle.orientation[1] > 0) {
         activeTurtle.orientation = glm::vec2(-1.0f,0);

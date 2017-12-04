@@ -2,7 +2,15 @@
 ## Milestone 2
 ### Team: Merge Conflict
 
-##### Sagar- 
+##### Sagar- Sandbox Mode, Lava and Water Collisions, Multithreading
+
+Sandbox mode was straightforward given what we implemented in Milestone 1. I disabled collisions with lava and water blocks, and slowed the player's velocity down when moving through Lava or Water. I also modified the vertical deceleration when the player is above a water or lava block to create a sinking effect. 
+
+    To create the overlay, I modified the existing lambert shader to mix in a higher contribution of red or blue depending on whether the player was submerged in water or lava. I also modified the sky color seperately in these states by creating a new vec4 variable called skyColor and passing it to glClearColor when the player is submerged.
+
+To improve the efficiency of rendering and terrain generation, I have a thread (apart from the main thread)which invokes the terrain height field generation, and the adding of new chunks in a new class which subclasses from QRunnable. I start this thread in the InitializeGL function. 
+
+
 
 ##### Connie Chang - Textures and Animation
 I created a Texture from the provided image, which the lambert shader samples from. I also added some Blinn-Phong specular light to the shader. For animation, I shifted the UVs based on time to give the illusion of movement. To send all this data to the shader, I passed all of this in a vec4. The first two indices represent the UV. The third is the cosine exponent for Blinn-Phong. The fourth is a flag for animation. Finally, I enabled alpha blending for transparency.

@@ -26,7 +26,7 @@ MyGL::MyGL(QWidget *parent)
 
     setMouseTracking(true); // MyGL will track the mouse's movements even if a mouse button is not pressed
     setCursor(Qt::BlankCursor); // Make the cursor invisible
-    func_ptr = &MyGL::GLDrawScene;
+
 
 }
 
@@ -41,10 +41,7 @@ MyGL::~MyGL()
     delete mp_worldAxes;
     delete mp_progLambert;
     delete mp_progFlat;
-
     delete scheduler;
-
-
     delete mp_camera;
     delete mp_terrain;
     delete mp_crosshairs;
@@ -121,6 +118,7 @@ void MyGL::initializeGL()
 
     // Tell the timer to redraw 60 times per second
     timer.start(16);
+    mp_player->keeptime = 5.f;
 
 }
 
@@ -151,9 +149,7 @@ void MyGL::timerUpdate()
 {
 
     mp_player->isSandbox = isSandbox;
-
-
-     //obtains number of milliseconds elapsed since January 1, 1970
+    //obtains number of milliseconds elapsed since January 1, 1970
     dt = QDateTime::currentMSecsSinceEpoch() - time; //calculates dt, the change in time since the last timerUpdate
     if(!isSandbox)
     {mp_player->gravityCheck();

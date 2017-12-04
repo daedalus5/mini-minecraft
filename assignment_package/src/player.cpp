@@ -2,7 +2,7 @@
 #include<QKeyEvent>
 #include<iostream>
 
-Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),isWpressed(false),isApressed(false),isSpressed(false),isDpressed(false),isSpacepressed(false),isQpressed(false),isLMBpressed(false),isRMBpressed(false),mouseOrientFlag(false),controllerState(false),mouseState(false),isSandbox(false){
+Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),isWpressed(false),isApressed(false),isSpressed(false),isDpressed(false),isSpacepressed(false),isQpressed(false),isEpressed(false),isLMBpressed(false),isRMBpressed(false),mouseOrientFlag(false),controllerState(false),mouseState(false),isSandbox(false){
 
     pos= ptr_to_cam->eye;
 
@@ -57,6 +57,10 @@ void Player::keyPressState(QKeyEvent *e) // invoked by keyPressEvent. sets key f
     {
         isQpressed = true;
     }
+    if(e->key()==Qt::Key_E)
+    {
+        isEpressed = true;
+    }
 }
 void Player::keyReleaseState(QKeyEvent *e)// invoked by keyReleaseEvent. sets key flags.
 {
@@ -80,10 +84,15 @@ void Player::keyReleaseState(QKeyEvent *e)// invoked by keyReleaseEvent. sets ke
     if(e->key()==Qt::Key_Space)
     {
         isSpacepressed = false;
+        keeptime = 5.f;
     }
     if(e->key()==Qt::Key_Q)
     {
         isQpressed = false;
+    }
+    if(e->key()==Qt::Key_E)
+    {
+        isEpressed = false;
     }
 
 }
@@ -139,14 +148,12 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
         BlockType currentblock = ptr_to_terrain->getBlockAt(vertexpositions[i].x, vertexpositions[i].y, vertexpositions[i].z);
         if((ptr_to_terrain->getBlockAt(nextpositions[i].x,nextpositions[i].y,nextpositions[i].z) != EMPTY)&&(ptr_to_terrain->getBlockAt(nextpositions[i].x,nextpositions[i].y,nextpositions[i].z) != WATER)&&(ptr_to_terrain->getBlockAt(nextpositions[i].x,nextpositions[i].y,nextpositions[i].z) != LAVA))//check if nextposition has a non-empty block
         {
-
-
-
             flag = 1;
             velocity.x = 0.f;
-            velocity.y = 0.f;
-
-
+            if(velocity.y>0)
+            {
+                velocity.y= 0.f;
+            }
             return true;
            /* glm::vec3 intersectBoxMin;
             glm::vec3 intersectBoxMax;
@@ -294,11 +301,11 @@ void Player::gravityCheck() // implements gravity
 
 void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player updates its position and velocity based on dt passed to updateTime().
 {
+
     if(isWpressed == true)
     {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
-
         velocity = 5.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->look,0))); //velocity along the camera's look vector
         velocity.y=0; //prevents flight
         bool cldetect = collisionDetect();
@@ -306,9 +313,6 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
         {
             pos = pos + velocity*(float)dt;
         }
-
-
-
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye + translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
@@ -318,8 +322,6 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
     {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
-
-
         velocity = -5.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->right,0)));
         velocity.y=0;
         bool cldetect = collisionDetect();
@@ -328,8 +330,6 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
             pos = pos + velocity*(float)dt;
 
         }
-
-
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
@@ -350,9 +350,7 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
-
-
-    }
+     }
     if(isDpressed)
     {
         pos = ptr_to_cam->eye;
@@ -371,25 +369,30 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
     }
     if(isSpacepressed)
     {
+        keeptime = keeptime - dt;
+        if(keeptime > 0.f)
+        {
+
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
-
-
         velocity = 10.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->world_up,0)));
          bool cldetect = collisionDetect();
          if(cldetect==false)
          {
             pos = pos + velocity*(float)dt;
          }
-
-
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
+        }
+
+
     }
 
     if(isQpressed)
     {
+        if(isSandbox)
+        {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
         velocity = -5.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->world_up,0)));
@@ -401,14 +404,16 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
-
+        }
     }
 
-    if(aerialState==true)
-    {/*
+    if(isEpressed)
+    {
+        if(isSandbox)
+        {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
-        velocity.y = velocity.y-1.5;
+        velocity = 5.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->world_up,0)));
         bool cldetect = collisionDetect();
         if(cldetect==false)
          {
@@ -417,8 +422,12 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
-        */
+        }
+
+
     }
+
+
 
 }
 void Player::mouseMoveState(QMouseEvent *m) //detects change in cursor position. Rotates Camera accordingly

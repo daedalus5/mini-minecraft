@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include<camera.h>
 #include<set>
+#include<QMutex>
 
 // C++ 11 allows us to define the size of an enum. This lets us use only one byte
 // of memory to store our different block types. By default, the size of a C++ enum
@@ -41,8 +42,9 @@ private:
 class Terrain
 {
 public:
-    Terrain(OpenGLContext* context,Camera*);
+    Terrain(OpenGLContext* context,Camera*,QMutex*);
     ~Terrain();
+    QMutex* mutex;
 
     TerrainType* terrainType;
     void setTerrainType(TerrainType* t);

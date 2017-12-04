@@ -14,7 +14,7 @@ MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       mp_geomCube(new Cube(this)), mp_worldAxes(new WorldAxes(this)),
       mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),
-      mp_camera(new Camera()), mp_terrain(new Terrain(this,mp_camera)), mp_crosshairs(new CrossHairs(this)),
+      mp_camera(new Camera()), mp_terrain(new Terrain(this,mp_camera,&mutex)), mp_crosshairs(new CrossHairs(this)),
        mp_player(new Player(mp_camera, mp_terrain)),underwater(false),underlava(false),start_time(QDateTime::currentMSecsSinceEpoch()),
       isSandbox(false),m_geomQuad(new Quad(this)),skyColor(glm::vec4(0.37f, 0.74f, 1.0f, 1)),scheduler(new Scheduler(mp_terrain,&mutex))
 
@@ -41,6 +41,9 @@ MyGL::~MyGL()
     delete mp_worldAxes;
     delete mp_progLambert;
     delete mp_progFlat;
+    delete mp_lavavision;
+    delete scheduler;
+
 
     delete mp_camera;
     delete mp_terrain;
@@ -181,6 +184,13 @@ void MyGL::timerUpdate()
     }
 
     time = QDateTime::currentMSecsSinceEpoch();
+    for(int i=0;i<mp_terrain->chunksGonnaDraw.size();i++)
+    {
+        mp_terrain->chunk_map[mp_terrain->keysGonnaDraw[i]] = mp_terrain->chunksGonnaDraw[i];
+
+    }
+    mp_terrain->keysGonnaDraw.clear();
+    mp_terrain->chunksGonnaDraw.clear();
 
 
 
@@ -261,6 +271,7 @@ void MyGL::GLDrawScene()
     int x, z;
 
     Chunk* ch;
+
     for (int i = -num; i < num; i++) {
         for (int k = -num; k < num; k++) {
             x = chunkX + i;
@@ -268,15 +279,16 @@ void MyGL::GLDrawScene()
             ch = mp_terrain->getChunk(x, z);
             if (ch != nullptr) {
                 //chunksGonnaDraw.push_back(ch);
-                if(ch->isCreated)
+                /*if(ch->isCreated)
                 {
                     mp_progLambert->draw(*ch);
-                }
-                else {
+                }*/
+               // else {
                     ch->createVBO();
                     mp_progLambert->draw(*ch);
-                }
-            }/* else {
+               // }
+            }
+            /* else {
                 chunksGonnaDraw.push_back(createScene(x, z));
 
                 chunks2Update.insert(convertToInt(x, z));

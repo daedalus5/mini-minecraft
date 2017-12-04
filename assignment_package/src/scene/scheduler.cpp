@@ -12,13 +12,14 @@ void Scheduler::run()
 
         generateTerrain();
     }
+
 }
 
 void Scheduler::generateTerrain()
 {
-    mutex->lock();
+    //mutex->lock();
     ptr_to_terrain->drawScene();
-    mutex->unlock();
+   // mutex->unlock();
 
 
 }

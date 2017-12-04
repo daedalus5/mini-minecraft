@@ -52,7 +52,7 @@ GLenum Chunk::drawMode()
 // **********************************************************************************************
 // TERRAIN START
 
-Terrain::Terrain(OpenGLContext* in_context,Camera* camera) :
+Terrain::Terrain(OpenGLContext* in_context,Camera* camera,QMutex* mutexref) :
     terrainType(nullptr),
     dimensions(64, 256, 64),
     chunk_dimensions(16, 256, 16),
@@ -60,7 +60,7 @@ Terrain::Terrain(OpenGLContext* in_context,Camera* camera) :
     color_map(std::unordered_map<char, glm::vec4>()),
     normal_vec_map(std::unordered_map<char, glm::vec4>()),
     block_uv_map(std::unordered_map<char, std::vector<glm::vec4>>()),
-    context(in_context),mp_camera(camera),
+    context(in_context),mp_camera(camera),mutex(mutexref),
 
     offset(glm::vec3(0.5, 0.5, 0.5))
 {
@@ -485,6 +485,7 @@ void Terrain::splitInt(uint64_t in, int *x, int *z) const {
 // Make the highland terrain for that Chunk
 Chunk* Terrain::createScene(int chunkX, int chunkZ) {
     // If Chunk already exists, no need to make it again
+
     auto index = chunk_map.find(convertToInt(chunkX, chunkZ));
     if (index != chunk_map.end()) {
         return nullptr;
@@ -523,6 +524,7 @@ Chunk* Terrain::createScene(int chunkX, int chunkZ) {
             chunk->getBlockType(x, height, z) = GRASS;
         }
     }
+
     return chunk;
 }
 
@@ -640,9 +642,13 @@ void Terrain::drawScene()
             } else {
                 //chunksGonnaDraw.push_back(createScene(x, z));
                 //keysGonnaDraw.push_back(convertToInt(x,z));
+                mutex->lock();
                 ch = createScene(x, z);
+                mutex->unlock();
                 if (ch != nullptr) {
-                    chunk_map[convertToInt(x, z)] = ch;
+                   // chunk_map[convertToInt(x, z)] = ch;
+                    chunksGonnaDraw.push_back(ch);
+                    keysGonnaDraw.push_back(convertToInt(x, z));
                     chunks2Update.insert(convertToInt(x, z));
 
                     // Update neighboring Chunks
@@ -650,7 +656,9 @@ void Terrain::drawScene()
                     chunks2Update.insert(convertToInt(x - 1, z));
                     chunks2Update.insert(convertToInt(x, z + 1));
                     chunks2Update.insert(convertToInt(x, z - 1));
+
                 }
+
             }
         }
     }

@@ -133,39 +133,39 @@ void MyGL::keyReleaseEvent(QKeyEvent *r) // triggered when key is released
 
 void MyGL::mouseMoveEvent(QMouseEvent *m) // triggered at mouse movement
 {
-//    QRect s = geometry();
-//    int x = m->globalX();
-//    int y = m->globalY();
+    QRect s = geometry();
+    int x = m->globalX();
+    int y = m->globalY();
 
-//    bool reset = false;
+    bool reset = false;
 
-//    if(m->x()<0)
-//    {
-//        x -=  m->x();
-//        reset = true;
-//    }
-//    else if(m->x() >=s.width())
-//    {
-//        x += s.width() - m->x() - 1;
-//        reset = true;
-//    }
+    if(m->x()<0)
+    {
+        x -=  m->x();
+        reset = true;
+    }
+    else if(m->x() >=s.width())
+    {
+        x += s.width() - m->x() - 1;
+        reset = true;
+    }
 
-//    if(m->y()<0)
-//    {
-//        y -= m->y();
-//        reset = true;
-//    }
+    if(m->y()<0)
+    {
+        y -= m->y();
+        reset = true;
+    }
 
-//    if(m->y() >=s.height())
-//    {
-//        y += s.height() - m->y() - 1;
-//        reset = true;
-//    }
+    if(m->y() >=s.height())
+    {
+        y += s.height() - m->y() - 1;
+        reset = true;
+    }
 
-//    if (reset)
-//    {
-//        QCursor::setPos(x,y);
-//    }
+    if (reset)
+    {
+        QCursor::setPos(x,y);
+    }
 
     mp_gamestate->mouseMove(m);
 
@@ -182,8 +182,11 @@ void MyGL::mousePressEvent(QMouseEvent *e)
 }
 
 void MyGL::set2PlayState() {
-    timer.stop();
-    delete mp_gamestate;
-    mp_gamestate = new PlayState(this);
-    timer.start();
+    //timer.stop();
+    GameState* temp_new = new PlayState(this);
+    GameState* temp_old = mp_gamestate;
+    //delete mp_gamestate;
+    mp_gamestate = temp_new;
+    delete temp_old;
+    //timer.start(16);
 }

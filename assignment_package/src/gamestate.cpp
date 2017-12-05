@@ -55,20 +55,20 @@ PlayState::PlayState(OpenGLContext* in_context)
     mp_progFlat->create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
     // mp_lavavision->create(":/glsl/lavavision.vert.glsl", ":/glsl/lavavision.frag.glsl");
 
+    mp_camera->eye = glm::vec3(mp_terrain->dimensions.x-10.f, mp_terrain->dimensions.y * 0.60, mp_terrain->dimensions.z-10.f);
+    resizeWindow(context->width(), context->height());
+
+
     mp_terrain->setTerrainType(new Highland);
     mp_terrain->drawScene();
     mp_terrain->createRivers();
-
-    //mp_terrain->updateAllVBO();
-
-    mp_camera->eye = glm::vec3(mp_terrain->dimensions.x-10.f, mp_terrain->dimensions.y * 0.60, mp_terrain->dimensions.z-10.f);
-    resizeWindow(context->width(), context->height());
-    //mp_player = new Player(mp_camera, mp_terrain);
 
     QThreadPool::globalInstance()->start(scheduler);
     mp_player->keeptime = 5.f;
 
     context->glClearColor(skyColor.r,skyColor.g,skyColor.b,skyColor.a);
+
+    time = 1;
 }
 
 PlayState::~PlayState() {
@@ -111,11 +111,14 @@ void PlayState::mousePress(QMouseEvent *e) {
 }
 
 void PlayState::update() {
+    if (time == 0) {
+        return;
+    }
     // Initialize time if it hasn't been initialized yet
     // Cannot be done in constructor because the time passed between
     // constructor and first update could be so much
     // that player falls through ground
-    if (time == 0) {
+    if (time == 1) {
         time = QDateTime::currentMSecsSinceEpoch();
     }
     //obtains number of milliseconds elapsed since January 1, 1970

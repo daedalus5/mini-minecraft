@@ -37,8 +37,11 @@ PlayState::PlayState(OpenGLContext* in_context)
     : GameState(in_context),
       mp_worldAxes(new WorldAxes(in_context)),
       mp_progLambert(new ShaderProgram(in_context)), mp_progFlat(new ShaderProgram(in_context)),
-      mp_camera(new Camera()), mp_terrain(new Terrain(in_context)), mp_crosshairs(new CrossHairs(in_context)),
-      mp_player(new Player(mp_camera, mp_terrain)), start_time(QDateTime::currentMSecsSinceEpoch())
+      mp_camera(new Camera()), mp_terrain(new Terrain(in_context, mp_camera, &mutex)), mp_crosshairs(new CrossHairs(in_context)),
+      mp_player(new Player(mp_camera, mp_terrain)), underwater(false), underlava(false), time(0), dt(0),
+      start_time(QDateTime::currentMSecsSinceEpoch()),
+      skyColor(glm::vec4(0.37f, 0.74f, 1.0f, 1)),
+      scheduler(new Scheduler(mp_terrain, &mutex))
 {
 
     //Create the instance of Cube
@@ -50,6 +53,7 @@ PlayState::PlayState(OpenGLContext* in_context)
     mp_progLambert->setTexture(":/textures/minecraft_textures_all.png");
     // Create and set up the flat lighting shader
     mp_progFlat->create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
+    // mp_lavavision->create(":/glsl/lavavision.vert.glsl", ":/glsl/lavavision.frag.glsl");
 
     mp_terrain->setTerrainType(new Highland);
     mp_terrain->createRivers();
@@ -58,8 +62,12 @@ PlayState::PlayState(OpenGLContext* in_context)
 
     mp_camera->eye = glm::vec3(mp_terrain->dimensions.x-10.f, mp_terrain->dimensions.y * 0.60, mp_terrain->dimensions.z-10.f);
     resizeWindow(context->width(), context->height());
-    time = QDateTime::currentMSecsSinceEpoch();
     //mp_player = new Player(mp_camera, mp_terrain);
+
+    QThreadPool::globalInstance()->start(scheduler);
+    mp_player->keeptime = 5.f;
+
+    context->glClearColor(skyColor.r,skyColor.g,skyColor.b,skyColor.a);
 }
 
 PlayState::~PlayState() {
@@ -70,6 +78,7 @@ PlayState::~PlayState() {
     delete mp_worldAxes;
     delete mp_progLambert;
     delete mp_progFlat;
+    delete scheduler;
     delete mp_camera;
     delete mp_terrain;
     delete mp_crosshairs;
@@ -101,12 +110,20 @@ void PlayState::mousePress(QMouseEvent *e) {
 }
 
 void PlayState::update() {
-     //obtains number of milliseconds elapsed since January 1, 1970
+    // Initialize time if it hasn't been initialized yet
+    // Cannot be done in constructor because the time passed between
+    // constructor and first update could be so much
+    // that player falls through ground
+    if (time == 0) {
+        time = QDateTime::currentMSecsSinceEpoch();
+    }
+    //obtains number of milliseconds elapsed since January 1, 1970
     dt = QDateTime::currentMSecsSinceEpoch() - time; //calculates dt, the change in time since the last timerUpdate
     if(!mp_player->isSandbox)
     {
         mp_player->gravityCheck();
     }
+
     if(mp_player->controllerState == true || mp_player->mouseState==true) // reads if the player is recieving input from the controller, then proceeds to pass it dt and cause it to change
                                            // its attributes like position, velocity, etc.
     {
@@ -117,7 +134,32 @@ void PlayState::update() {
         mp_player->playerGeometry(); // updates player bounding box and limits
 
     }
+    BlockType b1 = mp_player->checkSubmerged();
+    if(b1==LAVA)
+    {
+        underwater = false;
+        underlava = true;
+    }
+    else if(b1==WATER)
+    {
+        underlava = false;
+        underwater = true;
+
+    }
+    else
+    {
+        underlava= false;
+        underwater = false;
+    }
+
     time = QDateTime::currentMSecsSinceEpoch();
+    for(int i=0;i<mp_terrain->chunksGonnaDraw.size();i++)
+    {
+        mp_terrain->chunk_map[mp_terrain->keysGonnaDraw[i]] = mp_terrain->chunksGonnaDraw[i];
+
+    }
+    mp_terrain->keysGonnaDraw.clear();
+    mp_terrain->chunksGonnaDraw.clear();
 }
 
 void PlayState::resizeWindow(int w, int h) {
@@ -148,65 +190,76 @@ void PlayState::paint() {
 
     GLDrawScene();
 
-    context->glDisable(GL_DEPTH_TEST);
+    glDisable(GL_DEPTH_TEST);
     mp_progFlat->setModelMatrix(glm::mat4());
     //mp_progFlat->draw(*mp_worldAxes);
 
     mp_progFlat->setViewProjMatrix(glm::mat4());
     mp_progFlat->draw(*mp_crosshairs);
-    context->glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
+    if(underlava==true) // change sky color if player is under lava
+    {
+        glm::vec4 lavaColor= glm::vec4(1.0,0.60,0.5,0.3);
+        skyColor = glm::mix(lavaColor,skyColor,0.3);
+        context->glClearColor(skyColor.r,skyColor.g,skyColor.b,skyColor.a);
+        glm::vec2 r = glm::vec2(0.0,1.0);
+        mp_progLambert->setSubmerged(r);
+    }
+
+    if(underwater==true) // change sky color if player is underwater
+    {
+        glm::vec4 waterColor = glm::vec4(0.20,0.50,1.0,0.3);
+        skyColor = glm::mix(waterColor,skyColor,0.3);
+        skyColor.a = 1.0;
+        context->glClearColor(skyColor.r,skyColor.g,skyColor.b,skyColor.a);
+        glm::vec2 r = glm::vec2(1.0,0.0);
+        mp_progLambert->setSubmerged(r);
+    }
+    if((underlava==false)&&(underwater==false)) // disable sky color change if player is not submerged
+    {
+        skyColor = glm::vec4(0.37f, 0.74f, 1.0f, 1);
+
+        context->glClearColor(skyColor.r,skyColor.g,skyColor.b,skyColor.a);
+        glm::vec2 r = glm::vec2(0.0,0.0);
+        mp_progLambert->setSubmerged(r);
+
+
+    }
 }
 
 void PlayState::GLDrawScene()
 {
     mp_progLambert->setModelMatrix(glm::mat4());
+
     int chunkX = mp_terrain->getChunkPosition1D(mp_camera->eye[0]);
     int chunkZ = mp_terrain->getChunkPosition1D(mp_camera->eye[2]);
-
-    // Create collection of Chunks to update/draw
-    // Because we want to update VBO after all new Chunks are created
-
-    // List of Chunks to draw
-    std::vector<Chunk*> chunks2Draw = std::vector<Chunk*>();
-    // List of Chunks that need VBO updated
-    std::set<uint64_t> chunks2Update = std::set<uint64_t>();
 
     int num = 10;
     int x, z;
 
     Chunk* ch;
+
     for (int i = -num; i < num; i++) {
         for (int k = -num; k < num; k++) {
             x = chunkX + i;
             z = chunkZ + k;
             ch = mp_terrain->getChunk(x, z);
             if (ch != nullptr) {
-                chunks2Draw.push_back(ch);
-                if (!ch->isCreated) {
-                    chunks2Update.insert(mp_terrain->convertToInt(x, z));
+                // If Chunk data has not been passed to the GPU
+                // But it has VBO data ready to be passed
+                // Then pass the data
+                if (!ch->isCreated && ch->hasData) {
+                    ch->createVBO();
                 }
-            } else {
-                chunks2Draw.push_back(mp_terrain->createScene(x, z));
 
-                chunks2Update.insert(mp_terrain->convertToInt(x, z));
+                // If Chunk has VBO data in GPU,
+                // draw it
+                if (ch->isCreated) {
+                    mp_progLambert->draw(*ch);
+                }
 
-                // Update neighboring Chunks
-                chunks2Update.insert(mp_terrain->convertToInt(x + 1, z));
-                chunks2Update.insert(mp_terrain->convertToInt(x - 1, z));
-                chunks2Update.insert(mp_terrain->convertToInt(x, z + 1));
-                chunks2Update.insert(mp_terrain->convertToInt(x, z - 1));
             }
         }
-    }
-
-    int tempX, tempZ;
-    for (uint64_t i : chunks2Update) {
-        mp_terrain->splitInt(i, &tempX, &tempZ);
-        mp_terrain->updateChunkVBO(tempX, tempZ);
-    }
-
-    for (Chunk* ch : chunks2Draw) {
-        mp_progLambert->draw(*ch);
     }
 
 }

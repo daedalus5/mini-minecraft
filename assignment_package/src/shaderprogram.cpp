@@ -9,7 +9,7 @@ ShaderProgram::ShaderProgram(OpenGLContext *context)
     : vertShader(), fragShader(), prog(),
       attrPos(-1), attrNor(-1), attrCol(-1), attrUV(-1),
       unifModel(-1), unifModelInvTr(-1), unifViewProj(-1), unifColor(-1), unifEyePos(-1),
-     unifSampler2D(-1), unifTime(-1),  mp_texture(nullptr),
+     unifSampler2D(-1), unifTime(-1), underlava(-1),underwater(-1), mp_texture(nullptr),
       context(context)
 {}
 
@@ -65,6 +65,8 @@ void ShaderProgram::create(const char *vertfile, const char *fragfile)
     attrNor = context->glGetAttribLocation(prog, "vs_Nor");
     attrCol = context->glGetAttribLocation(prog, "vs_Col");
     attrUV = context->glGetAttribLocation(prog, "vs_UV");
+   underwater = context->glGetUniformLocation(prog, "underwater");
+   underlava = context->glGetUniformLocation(prog, "underlava");
 
     unifModel      = context->glGetUniformLocation(prog, "u_Model");
     unifModelInvTr = context->glGetUniformLocation(prog, "u_ModelInvTr");
@@ -312,5 +314,24 @@ void ShaderProgram::setTexture(const char * filepath) {
         mp_texture->bind(0);
         useMe();
         context->glUniform1i(unifSampler2D, /*GL_TEXTURE*/0);
+    }
+}
+
+void ShaderProgram::setSubmerged(glm::vec2 r)
+{
+    useMe();
+    if(r.x==1)
+    {
+        context->glUniform1i(underwater,1 );
+
+    }
+    else if(r.y == 1)
+    {
+        context->glUniform1i(underlava,1);
+    }
+    else if((r.x==0)&&(r.y==0))
+    {
+        context->glUniform1i(underwater,0);
+        context->glUniform1i(underlava,0);
     }
 }

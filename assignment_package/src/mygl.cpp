@@ -6,6 +6,7 @@
 #include <QKeyEvent>
 #include<QDateTime>
 
+
 #include <set>
 
 
@@ -14,12 +15,13 @@ MyGL::MyGL(QWidget *parent)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
-    // Tell the timer to redraw 60 times per second
-    timer.start(16);
+
     setFocusPolicy(Qt::ClickFocus);
 
     setMouseTracking(true); // MyGL will track the mouse's movements even if a mouse button is not pressed
     setCursor(Qt::BlankCursor); // Make the cursor invisible
+
+
 }
 
 MyGL::~MyGL()
@@ -55,6 +57,8 @@ void MyGL::initializeGL()
     // Set the color with which the screen is filled at the start of each render call.
     glClearColor(0.37f, 0.74f, 1.0f, 1);
 
+
+
     printGLErrorLog();
 
     // Create a Vertex Attribute Object
@@ -70,8 +74,9 @@ void MyGL::initializeGL()
 //    vao.bind();
     glBindVertexArray(vao);
 
-
     mp_gamestate = new MenuState(this);
+    // Tell the timer to redraw 60 times per second
+    timer.start(16);
 }
 
 void MyGL::resizeGL(int w, int h)
@@ -86,7 +91,6 @@ void MyGL::resizeGL(int w, int h)
 // We're treating MyGL as our game engine class, so we're going to use timerUpdate
 void MyGL::timerUpdate()
 {
-
     mp_gamestate->update();
     update();
 
@@ -129,8 +133,42 @@ void MyGL::keyReleaseEvent(QKeyEvent *r) // triggered when key is released
 
 void MyGL::mouseMoveEvent(QMouseEvent *m) // triggered at mouse movement
 {
+//    QRect s = geometry();
+//    int x = m->globalX();
+//    int y = m->globalY();
+
+//    bool reset = false;
+
+//    if(m->x()<0)
+//    {
+//        x -=  m->x();
+//        reset = true;
+//    }
+//    else if(m->x() >=s.width())
+//    {
+//        x += s.width() - m->x() - 1;
+//        reset = true;
+//    }
+
+//    if(m->y()<0)
+//    {
+//        y -= m->y();
+//        reset = true;
+//    }
+
+//    if(m->y() >=s.height())
+//    {
+//        y += s.height() - m->y() - 1;
+//        reset = true;
+//    }
+
+//    if (reset)
+//    {
+//        QCursor::setPos(x,y);
+//    }
 
     mp_gamestate->mouseMove(m);
+
 }
 
 void MyGL::mouseReleaseEvent(QMouseEvent *mr)// triggered when mousebutton is released
@@ -144,6 +182,8 @@ void MyGL::mousePressEvent(QMouseEvent *e)
 }
 
 void MyGL::set2PlayState() {
+    timer.stop();
     delete mp_gamestate;
     mp_gamestate = new PlayState(this);
+    timer.start();
 }

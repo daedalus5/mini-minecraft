@@ -21,6 +21,11 @@ public:
     int attrNor; // A handle for the "in" vec4 representing vertex normal in the vertex shader
     int attrCol; // A handle for the "in" vec4 representing vertex color in the vertex shader
     int attrUV;
+    int underwater;
+    int underlava;
+
+
+
 
     int unifModel; // A handle for the "uniform" mat4 representing model matrix in the vertex shader
     int unifModelInvTr; // A handle for the "uniform" mat4 representing inverse transpose of the model matrix in the vertex shader
@@ -58,7 +63,11 @@ public:
 
     void setTime(float t);
     void setEyePos(glm::vec4 p);
+
     void setTexture(const char * filepath);
+
+    void setSubmerged(glm::vec2);
+
 
 private:
     OpenGLContext* context;   // Since Qt's OpenGL support is done through classes like QOpenGLFunctions_3_2_Core,

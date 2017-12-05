@@ -1,23 +1,38 @@
 # Mini Minecraft
-## Milestone 1
+## Milestone 2
 ### Team: Merge Conflict
 
-##### Sagar- Camera Controls, Player Physics, Collisions.
+##### Sagar- Sandbox Mode, Lava and Water Collisions, Multithreading
 
-For collision detection, I tried to predict the next position of each vertex of the bounding box of the player, and then preemptively stop the motion of the player if a potential collision was detected. The main challenges I faced with this assignment were the implementation of the collision detection and keeping track of the flow of information across the files.
+Sandbox mode was straightforward given what we implemented in Milestone 1. I disabled collisions with lava and water blocks, and slowed the player's velocity down when moving through Lava or Water. I also modified the vertical deceleration when the player is above a water or lava block to create a sinking effect. 
 
-##### Connie Chang - Chunking, Efficient VBOs/Rendering
+    To create the overlay, I modified the existing lambert shader to mix in a higher contribution of red or blue depending on whether the player was submerged in water or lava. I also modified the sky color seperately in these states by creating a new vec4 variable called skyColor and passing it to glClearColor when the player is submerged.
 
-Chunking is pretty straightforward. It is an array of 16 x 256 x 16 BlockTypes. I used an unordered map to keep track of Chunks in the Terrain class. The key was a uint64_t where the first 32 bits are the x position and last 32 bits are the z position. The Terrain class creates the data for VBO generation, which is passed to corresponding Chunk. That way, I can check neighboring Chunks for EMPTY blocks. The VBOs are interleaved with position, normal, and color all together, so I had to modify Drawable.cpp and ShaderProgram.cpp. To draw the Chunks, I looped through 10 Chunks in each direction (+x, -x, +z, -z) in MyGL::GLDrawScene and drew them. If the Chunk did not exist in that position, I would create a new one. Creating 20 new Chunks at once is a little laggy, taking about 1 - 2 seconds.
+To improve the efficiency of rendering and terrain generation, I have a thread (apart from the main thread)which invokes the terrain height field generation, and the adding of new chunks in a new class which subclasses from QRunnable. I start this thread in the InitializeGL function. 
 
-To make VBO data generation even more efficient, I stored variables that are used over and over again (such as the 6 possible normals for a grid-aligned square) as const member variables in Terrain. I also made a color map to map from BlockType to a glm::vec4 color. To add even more efficiency, I modified Zach's Terrain::CreateScene method. Originally, we had him use Terrain::setBlockAt by passing in the world coordinates. However, all the coordinates he passed in were part of the same Chunk. So having setBlockAt convert from world coordinates to Chunk was a lot of extra overhead to call on every Block and receive the same result on all of them. Therefore, I changed the method to directly use the Chunk's getBlockAt.
 
-##### Zach Corse - Procedural Terrain, Block Creation and Destruction, Crosshairs
 
-Procedural Terrain: This relies on the basic FBM method we learned in class. It samples the given noise function at a finer scale, however, to give the terrain smoother height transitions between neighboring blocks. Additionally, a dampening parameter is introduced to control the general height difference between peaks and valleys in the terrain such that one can choose whether one wants the terrain to consist of hills or mountains.
+##### Connie Chang - Textures and Animation
+I created a Texture from the provided image, which the lambert shader samples from. I also added some Blinn-Phong specular light to the shader. For animation, I shifted the UVs based on time to give the illusion of movement. To send all this data to the shader, I passed all of this in a vec4. The first two indices represent the UV. The third is the cosine exponent for Blinn-Phong. The fourth is a flag for animation. Finally, I enabled alpha blending for transparency.
 
-Block Destruction: A ray is cast down the player's look vector. The Kay & Kayjia ray-box intersection algorithm is used to determine whether the player's look ray intersects with one or more of the cubes surrounding the player. We currently test against 3 x 4 x 3 - 1 = 35 cubes (we test two cubes beneath the player's eye because the player is two cubes tall). This test produces the shortest ray intersection distance, and uses that value to destroy the cube associated with the intersection point at that distance along the look ray.
+##### Zach Corse - L-System Rivers
 
-Block Creation: A ray is cast down the player's look vector. It looks for a box intersection two look vectors away. If there is a box intersection, it detects the closest face of the box. If that face is adjacent to an EMPTY cube, a new box is constructed in that cube of space.
+I worked with two L-System grammars to generate two different river systems. The first is what one would think of as a "normal" river, which includes the possibility of small creek offshoots. The second is a river delta, which includes more frequent branching and varying branch thicknesses according to turtle recursion depth.
 
-Crosshairs: Added crosshairs to the center of the screen so the player knows where he/she is looking/aiming.
+The "normal" river grammar is:
+X -> [+FX]+--+FY
+Y -> [-FY]+--+FX
+the difference in X and Y rules allows creeks to offshoot to the left and right of the main river. +--+FX is meant to direct the primary river branch forward.
+
+The river delta grammar is:
+X->[-FX]+FX
+
+Both river types include a probability of branch generation. If a branch is to be drawn, it uses the L-System grammar described above. Otherwise, it uses "X -> +--+FX". They're both drawn by the "turtle" method we discussed in class. (-) turns the turtle left, and (+) turns the turtle right. Both incorporate some randomness. Hence, I decided to use +--+, which is more random than +-, when I wanted the river to travel (generally speaking) in the forward direction.
+
+The turtle step size is set to 4 blocks. I found that this step size allowed the river to "meander" naturally. In order to maintain a natural amount of branching, this meant that the probability of branch generation had to be kept relatively small (as there were many potential branching events).
+
+The rivers have banks as well. These are carved away from the surrouding landscape in L shapes (1 up, 2 to the side). The number of these "L-shelves" can be specified, but 5 seems to work well. The cubes beneath the river are set to sand.
+
+***Lastly, and importantly I've connected the two rivers, so that it appears that the primary river meanders for awhile then terminates in a river delta. What looks like a single river is in fact two rivers. One is initialized at (0,0) and is directed North, and the other is intialized at (0,0) and is directed South.
+
+

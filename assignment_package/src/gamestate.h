@@ -10,12 +10,17 @@
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
+#include <QThreadPool>
+#include <QRunnable>
+#include <QMutex>
 #include "player.h"
 #include "scene/quad.h"
 #include "mygl.h"
+#include "scene/scheduler.h"
 
 // Forward declaration
 class MyGL;
+class Scheduler;
 
 class GameState
 {
@@ -65,6 +70,9 @@ private:
     CrossHairs* mp_crosshairs;
     Player* mp_player; // Instance of Player
 
+    bool underwater;
+    bool underlava;
+
     quint64 time; // this holds the milliseconds value of Time since Epoch, i.e. time since January 1, 1970
     quint64 dt; // time elapsed since last timerUpdate()
     const quint64 start_time; // time when the game started in milliseconds since Epoch
@@ -75,6 +83,10 @@ private:
                                                                           // returns t_near, -1 if no intersection
                                                                           // Kay and Kayjia algorithm
     void GLDrawScene();
+
+    glm::vec4 skyColor;
+    QMutex mutex;
+    Scheduler* scheduler;
 };
 
 class MenuState : public GameState {

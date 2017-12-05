@@ -1,7 +1,5 @@
 #include "quad.h"
 
-Quad::Quad(OpenGLContext *context) : Drawable(context)
-{}
 
 void Quad::create()
 {
@@ -32,7 +30,9 @@ void Quad::create()
     generatePos();
     context->glBindBuffer(GL_ARRAY_BUFFER, bufPos);
     context->glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(glm::vec4), vert_pos, GL_STATIC_DRAW);
+
     generateUV();
     context->glBindBuffer(GL_ARRAY_BUFFER, bufUV);
     context->glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(glm::vec2), vert_UV, GL_STATIC_DRAW);
+
 }

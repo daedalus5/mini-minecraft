@@ -16,10 +16,12 @@ SOURCES += \
     $$PWD/scene/terrain.cpp \
     $$PWD/scene/worldaxes.cpp \
     $$PWD/player.cpp \
+    $$PWD/scene/lsystem.cpp \
+    $$PWD/scene/quad.cpp \
     $$PWD/texture.cpp \
     $$PWD/gamestate.cpp \
-    $$PWD/scene/lsystem.cpp \
-    $$PWD/scene/quad.cpp
+    $$PWD/scene/scheduler.cpp
+
 
 HEADERS += \
     $$PWD/la.h \
@@ -39,4 +41,9 @@ HEADERS += \
     $$PWD/texture.h \
     $$PWD/gamestate.h \
     $$PWD/scene/lsystem.h \
-    $$PWD/scene/quad.h
+    $$PWD/scene/quad.h \
+    $$PWD/scene/lsystem.h \
+    $$PWD/scene/scheduler.h
+
+DISTFILES += \
+    $$PWD/lavavision.frag

@@ -40,6 +40,7 @@ private:
 
 
     bool isQpressed;
+    bool isEpressed;
 
     bool aerialState; //Determines if the player is grounded or aerial. If aerial, gravity will pull him/her down
     Qt::MouseButton mouseButtonPressed;
@@ -50,6 +51,7 @@ private:
     glm::vec3 box2max;
 
 public:
+    float keeptime;
     bool isSandbox;
     Player(Camera*, Terrain*);
     glm::vec2 rotation;
@@ -65,6 +67,7 @@ public:
     void updateAttributes();// updates position and velocity. Invoked by myGL's timerUpdate().
     void updateCameraOrientation(); // adjusts camera orientation
     void playerGeometry();// updates bounding box for player
+    BlockType checkSubmerged();
 
     void mouseMoveState(QMouseEvent*);
     bool collisionDetect(); //detects collisions

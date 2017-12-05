@@ -1,11 +1,27 @@
 Help log
 
+Milestone 1
+
 6:30 pm 11/19/2017 Adam helped me identify that the terrain pointer in the player class was null, and helped me fix it.
 
 4:00 pm 11/17/2017 Chloe helped me identify problems with my camera movement, which were occurring due to some flag variables.
 
 12:30 pm 11/18/2017 Hannah helped me figure out how to make my camera movement smoother.
 
-2:30 pm 11/16/2017 Rishabh helped me figure out some of the functions for mouse moevement.
+2:30 pm 11/16/2017 Rishabh helped me figure out some of the functions for mouse movement.
+
+
+Milestone 2
+
+
+1:30 pm 12/02/2017 Rudraksha pointed out that I may not have to render a Quad at the near clip to get the overlay. He used the mix function with an existing shader to demonstrate this effect. He also explained how multithreading would make the terrain generation efficient. 
+
+7:00 pm 12/03/2017 Mauricio helped me understand how to set up the run() function in my thread class, and other fixes.
+
+8:00 pm 12/03/2017 Adam helped me fix an issue with function pointers that was occurring after merging with l-systems code.
+
+Connie helped me with the implementation of multithreading by explaining how the chunking and VBO population happens. She also helped me set up the threading by changing code to fit with the new multi-threading code: specifically the way the chunk VBOS were being populated, and when new chunks were being added to the chunk map.
+
+
 
 

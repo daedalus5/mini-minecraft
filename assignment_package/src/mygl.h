@@ -15,6 +15,7 @@ private:
     GLuint vao; // A handle for our vertex array object. This will store the VBOs created in our geometry classes.
                 // Don't worry too much about this. Just know it is necessary in order to render geometry.
 
+
     /// Timer linked to timerUpdate(). Fires approx. 60 times per second
     QTimer timer;
 

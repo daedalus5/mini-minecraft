@@ -1,7 +1,7 @@
 #pragma once
 
-#include "drawable.h"
-#include <la.h>
+#include "../drawable.h"
+#include "../la.h"
 
 #include <QOpenGLContext>
 #include <QOpenGLBuffer>
@@ -10,6 +10,6 @@
 class Quad : public Drawable
 {
 public:
-    Quad(OpenGLContext* context);
-    virtual void create();
+    Quad(OpenGLContext* context):Drawable(context){}
+    void create() override;
 };

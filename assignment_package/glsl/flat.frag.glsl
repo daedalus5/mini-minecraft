@@ -11,4 +11,5 @@ void main()
 {
     // Copy the color; there is no shading.
     out_Col = fs_Col;
+
 }

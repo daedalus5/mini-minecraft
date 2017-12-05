@@ -4,7 +4,14 @@
 
 #include "drawable.h"
 #include <unordered_map>
+
+#include<camera.h>
+#include<set>
+#include<QMutex>
+
 #include "lsystem.h"
+#include <time.h>
+
 
 // C++ 11 allows us to define the size of an enum. This lets us use only one byte
 // of memory to store our different block types. By default, the size of a C++ enum
@@ -15,7 +22,7 @@ class TerrainType;
 
 enum BlockType : unsigned char
 {
-    EMPTY, GRASS, DIRT, STONE, LAVA, WATER, WOOD, LEAF, BEDROCK, ICE
+    EMPTY, GRASS, DIRT, STONE, LAVA, WATER, WOOD, LEAF, BEDROCK, ICE, SAND
 };
 
 class Chunk : public Drawable
@@ -28,10 +35,21 @@ public:
     void create() override;
     GLenum drawMode() override;
 
-    void createVBO(std::vector<glm::vec4> &everything,
-                      std::vector<GLuint> &indices);
-
+    // Flag for whether this Chunk's data is in GPU
     bool isCreated;
+    // Flag for whether this Chunk's data has been populated
+    bool hasData;
+
+    // Passes the VBO data to the GPU
+    void createVBO();
+
+    // VBO data
+    // everything is the interleaved data of positions, normals, and UVs
+    std::vector<glm::vec4> everything ;
+    // indices is the indices info
+    std::vector<GLuint> indices;
+
+
 
 private:
     BlockType block_array[65536]; // 16 x 256 x 16 (x by y by z)
@@ -40,18 +58,36 @@ private:
 class Terrain
 {
 public:
-    Terrain(OpenGLContext* context);
+    Terrain(OpenGLContext* context,Camera*,QMutex*);
     ~Terrain();
+    QMutex* mutex;
 
-    TerrainType* terrainType;
-    LSystem* lsys;
+    TerrainType* terrainType;                           // pointer to terrain type set in initialzeGL
+    LSystem* lsys;                                      // pointer to LSystem we want to use for river generation
     void setTerrainType(TerrainType* t);
     void setLSystem(LSystem* l);
     Chunk* createScene(int x, int z);
-    void createRivers();
+
+    Camera* mp_camera;
+
+    // Data of Chunks that need to be added to map
+    // They are added in MyGL's timerUpdate
+    // Need to make more robust so multiple threads work with it
+    // Array of Chunks that need to be added to map
+    std::vector<Chunk*> chunksGonnaDraw;
+    // Array of keys for the Chunks that need to be added to map
+    std::vector<uint64_t> keysGonnaDraw;
+
+    void traceRiverPath(const std::vector<int>& depths);// sets river cubes in scene
+    void createRivers();                                // create the rivers in this terrain
+
 
     glm::ivec3 dimensions;
     glm::ivec3 chunk_dimensions;
+
+    // Maps Chunk Position to the Chunk
+    // Chunk Position obtained through getChunkPosition
+    std::unordered_map<uint64_t, Chunk*> chunk_map;
 
     BlockType getBlockAt(int x, int y, int z) const;       // Given a world-space coordinate (which may have negative
                                                            // values) return the block stored at that point in space.
@@ -60,15 +96,23 @@ public:
                                                            // given type.
 
     Chunk* getChunk(int x, int z) const;
+
+    // Converts a world coordinate to Chunk coordinate
     int getChunkPosition1D(int x) const;
 
-    // Does almost same as setBlockAt, but also updates VBO
+    // Uses camera position to loop through visible Chunks to player
+    // Updates their VBO data if needed
+    // Invoked by thread
+    void drawScene();
+
+    // Does same as setBlockAt
+    // Originally it also updated VBO, but that is handled elsewhere now
     void addBlockAt(int x, int y, int z, BlockType t);
-    //void destroyBlockAt(int x, int y, int z);
 
     // Updates a single Chunk's VBO
-    // x and z are world space coordinates that belong in the Chunk
+    // x and z are Chunk coordinates
     void updateChunkVBO(int x, int z);
+
     // Loops through all Chunks and updates their VBOs
     // Used during game initialization
     //void updateAllVBO();
@@ -78,10 +122,6 @@ public:
 
 private:
     OpenGLContext* context; // To pass on to Chunks
-
-    // Maps Chunk Position to the Chunk
-    // Chunk Position obtained through getChunkPosition
-    std::unordered_map<uint64_t, Chunk*> chunk_map;
 
     std::unordered_map<char, glm::vec4> color_map; // Map of char (BlockType) to a color
     std::unordered_map<char, glm::vec4> normal_vec_map; // Map of char (direction) to its normal vector
@@ -121,7 +161,7 @@ public:
     virtual float fbm(const float x,
               const float z,
               const float persistance,
-              const int octaves) const;     // returns a pseudorandom number between 0 and 1 for FBM noise
+              const int octaves) const;             // returns a pseudorandom number between 0 and 1 for FBM noise
     virtual int mapToHeight(const float val) const; // maps [0, 1] -> [128, 255]
 
 protected:
@@ -131,19 +171,19 @@ protected:
     float dampen;
 
     // For procedural terrain
-    float rand(const glm::vec2 n) const;    // pseudorandom number generator for FBM noise
-                                            // returns a pseudorandom value between -1 and 1
+    float rand(const glm::vec2 n) const;        // pseudorandom number generator for FBM noise
+                                                // returns a pseudorandom value between -1 and 1
     float interpNoise2D(const float x,
-                        const float z) const;  // 2D noise interpolation function for smooth FBM noise
+                        const float z) const;   // 2D noise interpolation function for smooth FBM noise
 };
 
-class Highland : public TerrainType{
+class Highland : public TerrainType{    // generates a "highland" terrain
 public:
     Highland();
     virtual ~Highland();
 };
 
-class Foothills : public TerrainType{
+class Foothills : public TerrainType{   // generates "foothill" terrain
 public:
     Foothills();
     virtual ~Foothills();

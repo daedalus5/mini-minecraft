@@ -56,6 +56,7 @@ PlayState::PlayState(OpenGLContext* in_context)
     // mp_lavavision->create(":/glsl/lavavision.vert.glsl", ":/glsl/lavavision.frag.glsl");
 
     mp_terrain->setTerrainType(new Highland);
+    mp_terrain->drawScene();
     mp_terrain->createRivers();
 
     //mp_terrain->updateAllVBO();

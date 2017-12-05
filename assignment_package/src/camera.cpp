@@ -31,6 +31,7 @@ Camera::Camera(unsigned int w, unsigned int h, const glm::vec3 &e, const glm::ve
     world_up(worldUp)
 
 {
+    phi = 0;
     RecomputeAttributes();
 }
 

@@ -182,11 +182,11 @@ void MyGL::mousePressEvent(QMouseEvent *e)
 }
 
 void MyGL::set2PlayState() {
-    //timer.stop();
+    timer.stop();
     GameState* temp_new = new PlayState(this);
     GameState* temp_old = mp_gamestate;
     //delete mp_gamestate;
     mp_gamestate = temp_new;
     delete temp_old;
-    //timer.start(16);
+    timer.start(16);
 }

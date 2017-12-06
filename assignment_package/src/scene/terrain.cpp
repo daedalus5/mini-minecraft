@@ -1,7 +1,5 @@
 #include <scene/terrain.h>
 
-#include <iostream>
-
 Chunk::Chunk(OpenGLContext* context)
 
     : Drawable(context),isCreated(false), hasData(false)
@@ -30,7 +28,7 @@ BlockType& Chunk::getBlockType(int x, int y, int z) {
 // Only runs if Chunk has data
 void Chunk::createVBO()
 {
-    if (!hasData) {
+    if (!hasData || everything.size() == 0 || indices.size() == 0) {
         return;
     }
 
@@ -226,7 +224,7 @@ Terrain::~Terrain() {
 BlockType Terrain::getBlockAt(int x, int y, int z) const
 {
     if (y < 0 || y > 255) {
-        return EMPTY;
+        return NOTHING;
     }
 
     auto index = chunk_map.find(convertToInt(getChunkPosition1D(x), getChunkPosition1D(z)));
@@ -234,7 +232,7 @@ BlockType Terrain::getBlockAt(int x, int y, int z) const
         Chunk* ch = index->second;
         return ch->getBlockType(getChunkLocalPosition1D(x), y, getChunkLocalPosition1D(z));
     }
-    return EMPTY;
+    return NOTHING;
 }
 
 // Given world coordinates, sets the block at that position
@@ -259,7 +257,7 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
         ch = createScene(getChunkPosition1D(x), getChunkPosition1D(z));
         chunk_map[chunk_pos] = ch;
     } else {
-        ch = chunk_map[chunk_pos];
+        ch = index->second;
     }
     ch->getBlockType(getChunkLocalPosition1D(x), y, getChunkLocalPosition1D(z)) = t;
     ch->hasData = false; // Need to update VBO
@@ -364,9 +362,9 @@ void Terrain::updateChunkVBO(int x, int z) {
 
     // Clear out the Chunk's current data
     Chunk* ch = index->second;
+    ch->hasData = false; // VBO data has been cleared.
     ch->everything.clear();
     ch->indices.clear();
-    ch->hasData = false; // VBO data has been cleared.
 
     // Variables that are reused in loop
     BlockType block, neighbor; // Current BlockType and neighbor BlockType
@@ -385,7 +383,7 @@ void Terrain::updateChunkVBO(int x, int z) {
 
                 block = ch->getBlockType(i, j, k);
 
-                if (block != EMPTY) {
+                if (block != EMPTY && block != NOTHING) {
 
                     world_pos = glm::vec3(i, j, k)
                             + glm::vec3(x * chunk_dimensions[0], 0, z * chunk_dimensions[2]);
@@ -790,7 +788,7 @@ void Terrain::drawScene()
 
                 if(!ch->hasData)
                 {
-                    chunks2Update.insert(convertToInt(x,z));
+                    chunks2Update.insert(convertToInt(x, z));
                     // Update neighboring Chunks
                     chunks2Update.insert(convertToInt(x + 1, z));
                     chunks2Update.insert(convertToInt(x - 1, z));
@@ -799,13 +797,14 @@ void Terrain::drawScene()
                 }
             } else {
 
-                mutex->lock();
+                //mutex->lock();
                 ch = createScene(x, z);
-                mutex->unlock();
+                //mutex->unlock();
                 if (ch != nullptr) {
 
-                    chunksGonnaDraw.push_back(ch);
-                    keysGonnaDraw.push_back(convertToInt(x, z));
+                    //chunksGonnaDraw.push_back(ch);
+                    //keysGonnaDraw.push_back(convertToInt(x, z));
+                    chunk_map[convertToInt(x, z)] = ch;
                     chunks2Update.insert(convertToInt(x, z));
 
                     // Update neighboring Chunks

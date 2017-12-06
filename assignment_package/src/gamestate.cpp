@@ -60,8 +60,17 @@ PlayState::PlayState(OpenGLContext* in_context)
 
 
     mp_terrain->setTerrainType(new Highland);
-    mp_terrain->drawScene();
+
     mp_terrain->createRivers();
+    mp_terrain->drawScene();
+
+
+//    for(int i=0;i<mp_terrain->chunksGonnaDraw.size();i++)
+//    {
+//        mp_terrain->chunk_map[mp_terrain->keysGonnaDraw[i]] = mp_terrain->chunksGonnaDraw[i];
+//    }
+//    mp_terrain->keysGonnaDraw.clear();
+//    mp_terrain->chunksGonnaDraw.clear();
 
     QThreadPool::globalInstance()->start(scheduler);
     mp_player->keeptime = 5.f;
@@ -121,8 +130,18 @@ void PlayState::update() {
     if (time == 1) {
         time = QDateTime::currentMSecsSinceEpoch();
     }
+
+//    for(int i = 0; i < mp_terrain->chunksGonnaDraw.size(); ++i)
+//    {
+//        mp_terrain->chunk_map[mp_terrain->keysGonnaDraw[i]] = mp_terrain->chunksGonnaDraw[i];
+
+//    }
+//    mp_terrain->keysGonnaDraw.clear();
+//    mp_terrain->chunksGonnaDraw.clear();
+
     //obtains number of milliseconds elapsed since January 1, 1970
     dt = QDateTime::currentMSecsSinceEpoch() - time; //calculates dt, the change in time since the last timerUpdate
+
     if(!mp_player->isSandbox)
     {
         mp_player->gravityCheck();
@@ -157,13 +176,6 @@ void PlayState::update() {
     }
 
     time = QDateTime::currentMSecsSinceEpoch();
-    for(int i=0;i<mp_terrain->chunksGonnaDraw.size();i++)
-    {
-        mp_terrain->chunk_map[mp_terrain->keysGonnaDraw[i]] = mp_terrain->chunksGonnaDraw[i];
-
-    }
-    mp_terrain->keysGonnaDraw.clear();
-    mp_terrain->chunksGonnaDraw.clear();
 }
 
 void PlayState::resizeWindow(int w, int h) {
@@ -261,7 +273,6 @@ void PlayState::GLDrawScene()
                 if (ch->isCreated) {
                     mp_progLambert->draw(*ch);
                 }
-
             }
         }
     }

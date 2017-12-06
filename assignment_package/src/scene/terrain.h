@@ -22,7 +22,9 @@ class TerrainType;
 
 enum BlockType : unsigned char
 {
-    EMPTY, GRASS, DIRT, STONE, LAVA, WATER, WOOD, LEAF, BEDROCK, ICE, SAND
+    EMPTY, GRASS, DIRT, STONE, LAVA, WATER, WOOD, LEAF, BEDROCK, ICE, SAND, NOTHING
+    // NOTHING means that this block does not exist
+    // Used in GetBlockAt, which returns nothing if block does not exist
 };
 
 class Chunk : public Drawable

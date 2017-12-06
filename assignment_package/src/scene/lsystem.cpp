@@ -8,8 +8,8 @@
 // **********************************************************************************************
 // LSYSTEM START
 
-LSystem::LSystem(glm::vec2 pos, glm::vec2 heading) :
-    path(""), activeTurtle(Turtle(pos, heading)), turtleStack(), ruleSet(), charToDrawingOperation(), branchProb(1.0f) {}
+LSystem::LSystem(glm::vec2 pos, glm::vec2 heading, float fDistance) :
+    path(""), activeTurtle(Turtle(pos, heading, fDistance)), turtleStack(), ruleSet(), charToDrawingOperation(), branchProb(1.0f) {}
 
 LSystem::~LSystem(){}
 
@@ -87,8 +87,8 @@ float LSystem::rand01(){
 // **********************************************************************************************
 // RIVERDELTA START
 
-RiverDelta::RiverDelta(glm::vec2 pos, glm::vec2 heading) :
-    LSystem(pos, heading){
+RiverDelta::RiverDelta(glm::vec2 pos, glm::vec2 heading, float fDistance) :
+    LSystem(pos, heading, fDistance){
     this->branchProb = 0.042f;
 }
 
@@ -152,8 +152,8 @@ void RiverDelta::plusSign(){
 // **********************************************************************************************
 // RIVER START
 
-River::River(glm::vec2 pos, glm::vec2 heading) :
-    LSystem(pos, heading){
+River::River(glm::vec2 pos, glm::vec2 heading, float fDistance) :
+    LSystem(pos, heading, fDistance){
     this->branchProb = 0.01f;
 }
 
@@ -223,14 +223,14 @@ void River::plusSign(){     // keep the turtle moving South
 // TURTLE START
 
 Turtle::Turtle() :
-    position(glm::vec2(0,0)), orientation(glm::vec2(0,1)), depth(1) {}
+    position(glm::vec2(0,0)), orientation(glm::vec2(0,1)), depth(1), fDistance(1.0f) {}
 
-Turtle::Turtle(glm::vec2 pos, glm::vec2 heading) :
-    position(pos), orientation(heading), depth(1)
+Turtle::Turtle(glm::vec2 pos, glm::vec2 heading, float fDistance) :
+    position(pos), orientation(heading), depth(1), fDistance(fDistance)
 {}
 
 Turtle::Turtle(const Turtle& t) :
-    position(t.position), orientation(t.orientation), depth(t.depth)
+    position(t.position), orientation(t.orientation), depth(t.depth), fDistance(t.fDistance)
 {}
 
 Turtle::~Turtle(){}
@@ -248,7 +248,7 @@ void Turtle::turnRight(){
 }
 
 void Turtle::moveForward(){
-    glm::vec2 change = orientation * F_DISTANCE;
+    glm::vec2 change = orientation * fDistance;
     position += change;
 }
 
@@ -306,3 +306,16 @@ bool LineSegment2D::intersectAt(const int row, float* xIntersect){
     *xIntersect = x;
     return true;
 }
+
+// LINESEGMENT2D END
+// **********************************************************************************************
+// **********************************************************************************************
+// **********************************************************************************************
+// TREE START
+
+Tree::Tree(glm::vec2 pos, float fDistance) :
+    LSystem(pos, glm::vec2(0.0f, 1.0f), fDistance){
+    this->branchProb = 0.7f;
+}
+
+Tree::~Tree(){}

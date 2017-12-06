@@ -80,6 +80,8 @@ public:
 
     void traceRiverPath(const std::vector<int>& depths);// sets river cubes in scene
     void createRivers();                                // create the rivers in this terrain
+    void createForest();                                // populates the world with randomly distributed trees
+    void drawTree(glm::ivec2 pos);                      // draws a tree at position
 
 
     glm::ivec3 dimensions;
@@ -145,6 +147,9 @@ private:
     // Converts global x, y, z coordinates to a local position within Chunk
     // Does not find which Chunk this position belongs to
     glm::ivec3 getChunkLocalPosition(int x, int y, int z) const;
+
+    // gets height of terrain at (x, z) pos
+    int getHeightAt(glm::ivec2 pos);
 
 };
 

@@ -5,6 +5,7 @@
 #include <QApplication>
 #include <QKeyEvent>
 #include<QDateTime>
+#include <time.h>
 
 
 #include <set>
@@ -103,6 +104,7 @@ void MyGL::initializeGL()
     glBindVertexArray(vao);
 
     mp_terrain->setTerrainType(new Highland);
+    mp_terrain->createForest();
     mp_terrain->createRivers();
 
     QThreadPool::globalInstance()->start(scheduler);

@@ -66,13 +66,14 @@ GLenum Chunk::drawMode()
 Terrain::Terrain(OpenGLContext* in_context,Camera* camera,QMutex* mutexref) :
     terrainType(nullptr),
     lsys(nullptr),
+    context(in_context),mp_camera(camera),mutex(mutexref),
     dimensions(64, 256, 64),
     chunk_dimensions(16, 256, 16),
     chunk_map(std::unordered_map<uint64_t, Chunk*>()),
     color_map(std::unordered_map<char, glm::vec4>()),
     normal_vec_map(std::unordered_map<char, glm::vec4>()),
     block_uv_map(std::unordered_map<char, std::vector<glm::vec4>>()),
-    context(in_context),mp_camera(camera),mutex(mutexref),
+
 
     offset(glm::vec3(0.5, 0.5, 0.5))
 {
@@ -615,10 +616,10 @@ void Terrain::setLSystem(LSystem *l){
 
 void Terrain::createRivers()
 {
-    srand(time(NULL));
 
+    srand(time(NULL));
     // pass river desired start position and general heading (x, z)
-    setLSystem(new RiverDelta(glm::vec2(0,0), glm::vec2(0.0,1.0f)));
+    setLSystem(new RiverDelta(glm::vec2(0,0), glm::vec2(0.0,1.0f), 4.0f));
     // set number of turtle steps and pass intial path seed
     lsys->generatePath(MAX_DEPTH_DELTA, "F+-F+-FX");
     // populate LSystems set of operations passed to turtle
@@ -628,7 +629,7 @@ void Terrain::createRivers()
     std::vector<int> offsets = {4, 2, 1, 0};
     traceRiverPath(offsets);
 
-    setLSystem(new River(glm::vec2(0,0), glm::vec2(0.0,-1.0f)));
+    setLSystem(new River(glm::vec2(0,0), glm::vec2(0.0,-1.0f), 4.0f));
     lsys->generatePath(MAX_DEPTH_RIVER, "F+-F+-FX");
     lsys->populateOps();
     offsets.clear();
@@ -826,6 +827,66 @@ void Terrain::drawScene()
         updateChunkVBO(tempX, tempZ);
     }
 
+}
+
+void Terrain::createForest(){
+    srand(time(NULL));
+    drawTree(glm::ivec2(54, 54));
+}
+
+void Terrain::drawTree(glm::ivec2 pos){
+    Tree* tr = new Tree(glm::vec2(0.5f, 0.5f), 1.0f);
+    setBlockAt(pos[0], 255, pos[1], EMPTY); // temporary fix
+    int h = getHeightAt(pos);
+
+    tr->generatePath(TREE_DEPTH, "FX");
+    tr->populateOps();
+
+    // draw the tree trunk
+    int n = 5 + (int)(4.0f * (static_cast <float> (rand()) / static_cast <float> (RAND_MAX)));
+
+    for(int i = 1; i <= n; ++i){
+        setBlockAt(pos[0], h + i, pos[1], WOOD);
+    }
+
+    glm::vec2 turtlePos;
+    int xPos;
+    int yPos;
+
+    // loop over LSystem string path
+    for(int i = 0; i < tr->path.length(); ++i){
+        // dereference function pointer mapped to path character
+        (tr->*(tr->charToDrawingOperation[tr->path[i]]))();
+        // if turtle moves forward, draw a leaf block
+        if (tr->path[i] == 'F'){
+            turtlePos = tr->activeTurtle.position;
+            yPos = floor(turtlePos[1]);
+            glm::vec2 leafDir = glm::vec2(turtlePos[0], 0.0f);
+            float angle = 0.0f;
+            for(int j = 0; j < 16; ++j){
+                angle = 11.25f;
+                leafDir = glm::vec2(leafDir[0] * cosf(angle) - leafDir[1] * sinf(angle),
+                                    leafDir[0] * sinf(angle) + leafDir[1] * cosf(angle));
+                BlockType t = getBlockAt(leafDir[0] + pos[0], h + n + yPos, leafDir[1] + pos[1]);
+                if (t == EMPTY){
+                    setBlockAt(leafDir[0] + pos[0], h + n + yPos, leafDir[1] + pos[1], LEAF);
+                }
+            }
+        }
+    }
+    delete tr;
+}
+
+int Terrain::getHeightAt(glm::ivec2 pos){
+    int x = pos[0];
+    int z = pos[1];
+    BlockType t = getBlockAt(x, 255, z);
+    int yMin = 255;
+    for(int i = 255; t == EMPTY; i--){
+        t = getBlockAt(x, i, z);
+        yMin = i;
+    }
+    return yMin;
 }
 
 // TERRAIN END

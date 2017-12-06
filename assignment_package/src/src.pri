@@ -45,5 +45,4 @@ HEADERS += \
     $$PWD/scene/lsystem.h \
     $$PWD/scene/scheduler.h
 
-DISTFILES += \
-    $$PWD/lavavision.frag
+DISTFILES +=

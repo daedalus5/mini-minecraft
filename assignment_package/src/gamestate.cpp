@@ -4,6 +4,8 @@
 
 #include <set>
 
+#include <iostream>
+
 GameState::GameState(OpenGLContext* in_context)
     : context(in_context) {
 
@@ -36,24 +38,29 @@ void GameState::mousePress(QMouseEvent *e) {
 PlayState::PlayState(OpenGLContext* in_context)
     : GameState(in_context),
       mp_worldAxes(new WorldAxes(in_context)),
-      mp_progLambert(new ShaderProgram(in_context)), mp_progFlat(new ShaderProgram(in_context)),
+      mp_progLambert(new ShaderProgram(in_context)), mp_progFlat(new ShaderProgram(in_context)), mp_lavavision(new ShaderProgram(in_context)),
       mp_camera(new Camera()), mp_terrain(new Terrain(in_context, mp_camera, &mutex)), mp_crosshairs(new CrossHairs(in_context)),
       mp_player(new Player(mp_camera, mp_terrain)), underwater(false), underlava(false), time(0), dt(0),
       start_time(QDateTime::currentMSecsSinceEpoch()),
       skyColor(glm::vec4(0.37f, 0.74f, 1.0f, 1)),
-      scheduler(new Scheduler(mp_terrain, &mutex))
+      scheduler(new Scheduler(mp_terrain, &mutex)), mp_quad(new Quad(in_context))
 {
 
     //Create the instance of Cube
     //mp_geomCube->create();
     mp_worldAxes->create();
+    mp_quad->create();
 
     // Create and set up the diffuse shader
     mp_progLambert->create(":/glsl/lambert.vert.glsl", ":/glsl/lambert.frag.glsl");
-    mp_progLambert->setTexture(":/textures/minecraft_textures_all.png");
+    mp_progLambert->addTexture(":/textures/minecraft_textures_all.png");
+    mp_progLambert->bindTexture(0);
     // Create and set up the flat lighting shader
     mp_progFlat->create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
-    // mp_lavavision->create(":/glsl/lavavision.vert.glsl", ":/glsl/lavavision.frag.glsl");
+    mp_lavavision->create(":/glsl/lavavision.vert.glsl", ":/glsl/lavavision.frag.glsl");
+    mp_lavavision->addTexture(":/textures/minecraft_textures_all.png");
+    mp_lavavision->addTexture(":/textures/water_overlay.png");
+    mp_lavavision->bindTexture(0);
 
     mp_camera->eye = glm::vec3(mp_terrain->dimensions.x-10.f, mp_terrain->dimensions.y * 0.60, mp_terrain->dimensions.z-10.f);
     resizeWindow(context->width(), context->height());
@@ -212,33 +219,19 @@ void PlayState::paint() {
     mp_progFlat->setViewProjMatrix(glm::mat4());
     mp_progFlat->draw(*mp_crosshairs);
     glEnable(GL_DEPTH_TEST);
-    if(underlava==true) // change sky color if player is under lava
+
+    if(underlava==true) // add overlay if player is under lava
     {
-        glm::vec4 lavaColor= glm::vec4(1.0,0.60,0.5,0.3);
-        skyColor = glm::mix(lavaColor,skyColor,0.3);
-        context->glClearColor(skyColor.r,skyColor.g,skyColor.b,skyColor.a);
-        glm::vec2 r = glm::vec2(0.0,1.0);
-        mp_progLambert->setSubmerged(r);
+        mp_lavavision->setTime((time - start_time) /1000.f); // convert time to seconds
+        mp_lavavision->bindTexture(0);
+        mp_lavavision->draw(*mp_quad);
+
     }
-
-    if(underwater==true) // change sky color if player is underwater
+    else if(underwater==true) // add overlay if player is underwater
     {
-        glm::vec4 waterColor = glm::vec4(0.20,0.50,1.0,0.3);
-        skyColor = glm::mix(waterColor,skyColor,0.3);
-        skyColor.a = 1.0;
-        context->glClearColor(skyColor.r,skyColor.g,skyColor.b,skyColor.a);
-        glm::vec2 r = glm::vec2(1.0,0.0);
-        mp_progLambert->setSubmerged(r);
-    }
-    if((underlava==false)&&(underwater==false)) // disable sky color change if player is not submerged
-    {
-        skyColor = glm::vec4(0.37f, 0.74f, 1.0f, 1);
-
-        context->glClearColor(skyColor.r,skyColor.g,skyColor.b,skyColor.a);
-        glm::vec2 r = glm::vec2(0.0,0.0);
-        mp_progLambert->setSubmerged(r);
-
-
+        mp_lavavision->setTime((time - start_time) /1000.f); // convert time to seconds
+        mp_lavavision->bindTexture(1);
+        mp_lavavision->draw(*mp_quad);
     }
 }
 
@@ -409,7 +402,9 @@ MenuState::MenuState(MyGL* in_mygl)
       mp_progMenu(new ShaderProgram(in_mygl))
 {
     mp_progMenu->create(":/glsl/menu.vert.glsl", ":/glsl/menu.frag.glsl");
-    mp_progMenu->setTexture(":/textures/title.png");
+    mp_progMenu->addTexture(":/textures/title.png");
+    mp_progMenu->addTexture(":/textures/minecraft_textures_all.png");
+    mp_progMenu->bindTexture(0);
     mp_quad->create();
 }
 
@@ -430,6 +425,7 @@ void MenuState::paint() {
 }
 
 void MenuState::keyPress(QKeyEvent *e) {
+    mp_progMenu->bindTexture(1);
     mygl->set2PlayState();
 }
 

@@ -21,11 +21,6 @@ public:
     int attrNor; // A handle for the "in" vec4 representing vertex normal in the vertex shader
     int attrCol; // A handle for the "in" vec4 representing vertex color in the vertex shader
     int attrUV;
-    int underwater;
-    int underlava;
-
-
-
 
     int unifModel; // A handle for the "uniform" mat4 representing model matrix in the vertex shader
     int unifModelInvTr; // A handle for the "uniform" mat4 representing inverse transpose of the model matrix in the vertex shader
@@ -37,6 +32,7 @@ public:
     int unifTime; // A handle for the "uniform" float representing time in the shader
 
     Texture* mp_texture;
+    std::vector<Texture*> texture_list;
 
 public:
     ShaderProgram(OpenGLContext* context);
@@ -65,14 +61,16 @@ public:
     void setEyePos(glm::vec4 p);
 
     void setTexture(const char * filepath);
-
-    void setSubmerged(glm::vec2);
+    void addTexture(const char * filepath);
+    void bindTexture(int index);
 
 
 private:
     OpenGLContext* context;   // Since Qt's OpenGL support is done through classes like QOpenGLFunctions_3_2_Core,
                             // we need to pass our OpenGL context to the Drawable in order to call GL functions
                             // from within this class.
+
+    int texture_index;
 };
 
 

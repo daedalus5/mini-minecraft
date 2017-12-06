@@ -47,6 +47,4 @@ HEADERS +=
 
 SOURCES +=
 
-DISTFILES += \
-    glsl/lavavision.frag.glsl \
-    glsl/lavavision.vert.glsl
+DISTFILES +=

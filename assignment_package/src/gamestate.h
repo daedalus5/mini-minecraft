@@ -87,6 +87,7 @@ private:
     glm::vec4 skyColor;
     QMutex mutex;
     Scheduler* scheduler;
+    Quad* mp_quad;
 };
 
 class MenuState : public GameState {

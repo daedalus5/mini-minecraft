@@ -65,22 +65,25 @@ PlayState::PlayState(OpenGLContext* in_context)
     mp_terrain->drawScene();
 
 
-//    for(int i=0;i<mp_terrain->chunksGonnaDraw.size();i++)
-//    {
-//        mp_terrain->chunk_map[mp_terrain->keysGonnaDraw[i]] = mp_terrain->chunksGonnaDraw[i];
-//    }
-//    mp_terrain->keysGonnaDraw.clear();
-//    mp_terrain->chunksGonnaDraw.clear();
+    for(int i = 0; i < mp_terrain->chunks2Add.size(); ++i)
+    {
+        mp_terrain->chunk_map[mp_terrain->chunks2Add[i].key] = mp_terrain->chunks2Add[i].ch;
+
+    }
+    mp_terrain->chunks2Add.clear();
 
     QThreadPool::globalInstance()->start(scheduler);
     mp_player->keeptime = 5.f;
 
     context->glClearColor(skyColor.r,skyColor.g,skyColor.b,skyColor.a);
 
-    time = 1;
+    //time = 1;
 }
 
-PlayState::~PlayState() { 
+PlayState::~PlayState() {
+    scheduler->setRunMode(false);
+    QThreadPool::globalInstance()->waitForDone();
+
     mp_worldAxes->destroy();
     mp_crosshairs->destroy();
 
@@ -88,7 +91,7 @@ PlayState::~PlayState() {
     delete mp_worldAxes;
     delete mp_progLambert;
     delete mp_progFlat;
-    delete scheduler;
+    //delete scheduler; // This line throws a seg fault for some reason...
     delete mp_camera;
     delete mp_terrain;
     delete mp_crosshairs;
@@ -120,24 +123,20 @@ void PlayState::mousePress(QMouseEvent *e) {
 }
 
 void PlayState::update() {
-    if (time == 0) {
-        return;
-    }
     // Initialize time if it hasn't been initialized yet
     // Cannot be done in constructor because the time passed between
     // constructor and first update could be so much
     // that player falls through ground
-    if (time == 1) {
+    if (time == 0) {
         time = QDateTime::currentMSecsSinceEpoch();
     }
 
-//    for(int i = 0; i < mp_terrain->chunksGonnaDraw.size(); ++i)
-//    {
-//        mp_terrain->chunk_map[mp_terrain->keysGonnaDraw[i]] = mp_terrain->chunksGonnaDraw[i];
+    for(int i = 0; i < mp_terrain->chunks2Add.size(); ++i)
+    {
+        mp_terrain->chunk_map[mp_terrain->chunks2Add[i].key] = mp_terrain->chunks2Add[i].ch;
 
-//    }
-//    mp_terrain->keysGonnaDraw.clear();
-//    mp_terrain->chunksGonnaDraw.clear();
+    }
+    mp_terrain->chunks2Add.clear();
 
     //obtains number of milliseconds elapsed since January 1, 1970
     dt = QDateTime::currentMSecsSinceEpoch() - time; //calculates dt, the change in time since the last timerUpdate

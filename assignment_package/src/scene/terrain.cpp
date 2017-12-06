@@ -72,7 +72,8 @@ Terrain::Terrain(OpenGLContext* in_context,Camera* camera,QMutex* mutexref) :
     block_uv_map(std::unordered_map<char, std::vector<glm::vec4>>()),
     context(in_context),mp_camera(camera),mutex(mutexref),
 
-    offset(glm::vec3(0.5, 0.5, 0.5))
+    offset(glm::vec3(0.5, 0.5, 0.5)),
+    chunks2Add(std::vector<chunkMapData>())
 {
     // Map BlockType to colors
     // Not currently used because we have textures
@@ -766,13 +767,8 @@ void Terrain::drawScene()
     int chunkX = getChunkPosition1D(mp_camera->eye[0]);
     int chunkZ = getChunkPosition1D(mp_camera->eye[2]);
 
-    // Create collection of Chunks to update/draw
-    // Because we want to update VBO after all new Chunks are created
-
-    // List of Chunks to draw
-    chunksGonnaDraw = std::vector<Chunk*>();
-    keysGonnaDraw = std::vector<uint64_t>();
     // List of Chunks that need VBO updated
+    // Save this until end, after all new Chunks have been made
     std::set<uint64_t> chunks2Update = std::set<uint64_t>();
 
     int num = 10;
@@ -802,9 +798,14 @@ void Terrain::drawScene()
                 //mutex->unlock();
                 if (ch != nullptr) {
 
-                    //chunksGonnaDraw.push_back(ch);
-                    //keysGonnaDraw.push_back(convertToInt(x, z));
-                    chunk_map[convertToInt(x, z)] = ch;
+                    // Add new Chunk to list, so it can be
+                    // added to map by PlayState
+                    chunkMapData data;
+                    data.ch = ch;
+                    data.key = convertToInt(x, z);
+                    chunks2Add.push_back(data);
+
+                    //chunk_map[convertToInt(x, z)] = ch;
                     chunks2Update.insert(convertToInt(x, z));
 
                     // Update neighboring Chunks

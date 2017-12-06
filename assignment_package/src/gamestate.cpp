@@ -80,7 +80,7 @@ PlayState::PlayState(OpenGLContext* in_context)
     time = 1;
 }
 
-PlayState::~PlayState() {
+PlayState::~PlayState() { 
     mp_worldAxes->destroy();
     mp_crosshairs->destroy();
 

@@ -28,6 +28,7 @@ MyGL::~MyGL()
 {
     makeCurrent();
     glDeleteVertexArrays(1, &vao);
+    delete mp_gamestate;
 }
 
 

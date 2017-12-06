@@ -58,7 +58,7 @@ PlayState::PlayState(OpenGLContext* in_context)
     // Create and set up the flat lighting shader
     mp_progFlat->create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
     mp_lavavision->create(":/glsl/lavavision.vert.glsl", ":/glsl/lavavision.frag.glsl");
-    mp_lavavision->addTexture(":/textures/minecraft_textures_all.png");
+    mp_lavavision->addTexture(":/textures/fire1.png");
     mp_lavavision->addTexture(":/textures/water_overlay.png");
     mp_lavavision->bindTexture(0);
 

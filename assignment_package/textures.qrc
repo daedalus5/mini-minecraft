@@ -5,5 +5,6 @@
 	<file>textures/minecraft_textures_all_grey_grass.png</file>
 	<file>textures/title.png</file>
 	<file>textures/water_overlay.png</file>
+	<file>textures/fire1.png</file>
     </qresource>
 </RCC>

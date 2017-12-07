@@ -144,9 +144,9 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
     }
     for(int i=0;i<nextpositions.size();i++)
     {
-        BlockType nextblock = ptr_to_terrain->getBlockAt(nextpositions[i].x,nextpositions[i].y,nextpositions[i].z);
+        BlockType nextblock = ptr_to_terrain->getBlockAt(floor(nextpositions[i].x),floor(nextpositions[i].y),floor(nextpositions[i].z));
         BlockType currentblock = ptr_to_terrain->getBlockAt(vertexpositions[i].x, vertexpositions[i].y, vertexpositions[i].z);
-        if((ptr_to_terrain->getBlockAt(nextpositions[i].x,nextpositions[i].y,nextpositions[i].z) != EMPTY)&&(ptr_to_terrain->getBlockAt(nextpositions[i].x,nextpositions[i].y,nextpositions[i].z) != WATER)&&(ptr_to_terrain->getBlockAt(nextpositions[i].x,nextpositions[i].y,nextpositions[i].z) != LAVA))//check if nextposition has a non-empty block
+        if((nextblock != EMPTY)&&(nextblock != WATER)&&(nextblock != LAVA))//check if nextposition has a non-empty block
         {
             flag = 1;
             velocity.x = 0.f;

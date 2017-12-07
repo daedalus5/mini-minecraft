@@ -63,7 +63,7 @@ public:
     QMutex* mutex;
 
     TerrainType* terrainType;                           // pointer to terrain type set in initialzeGL
-    LSystem* lsys;                                      // pointer to LSystem we want to use for river generation
+    LSystem* lsys;                                      // pointer to LSystem for river generation
     void setTerrainType(TerrainType* t);
     void setLSystem(LSystem* l);
     Chunk* createScene(int x, int z);
@@ -78,11 +78,12 @@ public:
     // Array of keys for the Chunks that need to be added to map
     std::vector<uint64_t> keysGonnaDraw;
 
-    void traceRiverPath(const std::vector<int>& depths);// sets river cubes in scene
+    // river stuff
     void createRivers();                                // create the rivers in this terrain
+    // tree stuff
     void createForest();                                // populates the world with randomly distributed trees
-    void drawTree(glm::ivec2 pos);                      // draws a tree at position
-
+    // cave stuff
+    void excavateCave();
 
     glm::ivec3 dimensions;
     glm::ivec3 chunk_dimensions;
@@ -148,9 +149,14 @@ private:
     // Does not find which Chunk this position belongs to
     glm::ivec3 getChunkLocalPosition(int x, int y, int z) const;
 
+    // river stuff
+    void traceRiverPath(const std::vector<int>& depths);// sets river cubes in scene
+    // forest stuff
+    void drawTree(glm::ivec2 pos);                      // draws a tree at position
+    // cave stuff
+
     // gets height of terrain at (x, z) pos
     int getHeightAt(glm::ivec2 pos);
-
 };
 
 class TerrainType{
@@ -166,7 +172,12 @@ public:
     virtual float fbm(const float x,
               const float z,
               const float persistance,
-              const int octaves) const;             // returns a pseudorandom number between 0 and 1 for FBM noise
+              const int octaves) const;             // returns a pseudorandom number between 0 and 1 for 2D FBM noise
+    virtual float fbm3D(const float x,
+              const float y,
+              const float z,
+              const float persistance,
+              const int octaves) const;             // returns a pseudorandom number between 0 and 1 for 3D FBM noise
     virtual int mapToHeight(const float val) const; // maps [0, 1] -> [128, 255]
 
 protected:
@@ -176,10 +187,15 @@ protected:
     float dampen;
 
     // For procedural terrain
-    float rand(const glm::vec2 n) const;        // pseudorandom number generator for FBM noise
+    float rand(const glm::vec2 n) const;        // pseudorandom number generator for 2D FBM noise
+                                                // returns a pseudorandom value between -1 and 1
+    float rand3D(const glm::vec3 n) const;      // pseudorandom number generator for 3D FBM noise
                                                 // returns a pseudorandom value between -1 and 1
     float interpNoise2D(const float x,
                         const float z) const;   // 2D noise interpolation function for smooth FBM noise
+    float interpNoise3D(const float x,
+                        const float y,
+                        const float z) const;   // 3D noise interpolation function for smooth FBM noise
 };
 
 class Highland : public TerrainType{    // generates a "highland" terrain
@@ -192,6 +208,20 @@ class Foothills : public TerrainType{   // generates "foothill" terrain
 public:
     Foothills();
     virtual ~Foothills();
+};
+
+class Cave : public TerrainType{
+public:
+    Cave(glm::ivec3 pos);
+    virtual ~Cave();
+    glm::ivec3 pos;
+
+    void step();                        // moves the point around which the cave is excavated by one step
+
+private:
+    float mapToAngle(float num);        // maps [-1, 1] -> [0, 360]
+    glm::ivec2 mapToXZOffset(float angle);
+    int mapToYOffset(float angle);
 };
 
 

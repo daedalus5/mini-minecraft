@@ -835,9 +835,16 @@ void Terrain::createForest(){
 }
 
 void Terrain::drawTree(glm::ivec2 pos){
-    Tree* tr = new Tree(glm::vec2(0.5f, 0.5f), 1.0f);
     setBlockAt(pos[0], 255, pos[1], EMPTY); // temporary fix
+
     int h = getHeightAt(pos);
+    BlockType baseBlock = getBlockAt(pos[0], h, pos[1]);
+    if (baseBlock != GRASS){
+        return;
+    }
+
+    Tree tree = Tree(glm::vec2(0.5f, 0.5f), 1.0f);
+    Tree *tr = &tree;
 
     tr->generatePath(TREE_DEPTH, "FX");
     tr->populateOps();
@@ -850,7 +857,6 @@ void Terrain::drawTree(glm::ivec2 pos){
     }
 
     glm::vec2 turtlePos;
-    int xPos;
     int yPos;
 
     // loop over LSystem string path
@@ -874,7 +880,78 @@ void Terrain::drawTree(glm::ivec2 pos){
             }
         }
     }
-    delete tr;
+}
+
+void Terrain::excavateCave(){
+    drawTree(glm::ivec2(80, 0));
+
+    int numSteps = 300;
+    int excavateRadius = 4;
+    int h = getHeightAt(glm::ivec2(74, 0));
+    Cave cave = Cave(glm::ivec3(74, h, 74));
+
+    float r1;
+
+    int cavernSize = 32;
+
+    for(int n = 0; n < numSteps; ++n){
+        for(int i = -excavateRadius; i <= excavateRadius; ++i){
+            for(int j = -excavateRadius; j <= excavateRadius; ++j){
+                for(int k = -excavateRadius; k <= excavateRadius; ++k){
+                    r1 = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+                    // excavate sphere
+                    if (i*i + j*j + k*k < excavateRadius * excavateRadius){
+                        setBlockAt(cave.pos[0] + i, cave.pos[1] + j, cave.pos[2] + k, EMPTY);
+                    }
+                    // randomly place resources
+                    else{
+                        if (cave.pos[1] + j < 128 &&
+                            getBlockAt(cave.pos[0] + i, cave.pos[1] + j, cave.pos[2] + k) != EMPTY &&
+                            r1 < 0.01f){
+                            setBlockAt(cave.pos[0] + i, cave.pos[1] + j, cave.pos[2] + k, LAVA);
+                        }
+                    }
+                }
+            }
+        }
+        // move turtle
+        cave.step();
+    }
+    // excavate cavern
+    for(int i = -cavernSize; i <= cavernSize; ++i){
+        for(int k = -cavernSize; k <= cavernSize; ++k){
+            int q = glm::floor(cavernSize * cave.fbm(cave.pos[0] + i + 0.5f, cave.pos[2] + k + 0.5f, 0.25, 6));
+            r1 = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+            if (r1 < 0.95){
+                for(int j = -q; j <= q; ++j){
+                    if (i*i + j*j + k*k < cavernSize * cavernSize){
+                        setBlockAt(cave.pos[0] + i, cave.pos[1] + j, cave.pos[2] + k, EMPTY);
+                    }
+                }
+            }
+        }
+    }
+    // flood with lava
+    for(int i = -cavernSize; i <= cavernSize; ++i){
+        for(int k = -cavernSize; k <= cavernSize; ++k){
+            for(int j = -cavernSize; j < -cavernSize + (cavernSize / 2); ++j){
+                if (getBlockAt(cave.pos[0] + i, cave.pos[1] + j, cave.pos[2] + k) == EMPTY){
+                    setBlockAt(cave.pos[0] + i, cave.pos[1] + j, cave.pos[2] + k, LAVA);
+                }
+            }
+        }
+    }
+    // middle dais
+    int daisRadius = 5;
+    for(int i = -daisRadius; i <= daisRadius; ++i){
+        for(int k = -daisRadius; k <= daisRadius; ++k){
+            for(int j = -cavernSize; j < 1; ++j){
+                if (i*i + k*k < daisRadius * daisRadius){
+                    setBlockAt(cave.pos[0] + i, cave.pos[1] + j, cave.pos[2] + k, STONE);
+                }
+            }
+        }
+    }
 }
 
 int Terrain::getHeightAt(glm::ivec2 pos){
@@ -906,6 +983,11 @@ float TerrainType::rand(const glm::vec2 n) const{
     return (glm::fract(sin(glm::dot(n, glm::vec2(12.9898, 4.1414))) * 43758.5453));
 }
 
+float TerrainType::rand3D(const glm::vec3 n) const{
+    // return pseudorandom number between -1 and 1
+    return rand(glm::vec2(n[0], n[1]));
+}
+
 float TerrainType::interpNoise2D(const float x, const float z) const{
     float intX = glm::floor(x);
     float fractX = glm::fract(x);
@@ -923,6 +1005,39 @@ float TerrainType::interpNoise2D(const float x, const float z) const{
     return glm::mix(i1, i2, fractZ);
 }
 
+float TerrainType::interpNoise3D(const float x, const float y, const float z) const{
+    float intX = glm::floor(x);
+    float fractX = glm::fract(x);
+    float intY = glm::floor(y);
+    float fractY = glm::fract(y);
+    float intZ = glm::floor(z);
+    float fractZ = glm::fract(z);
+
+    float v1 = rand3D(glm::vec3(intX, intY, intZ));
+    float v2 = rand3D(glm::vec3(intX + 1, intY, intZ));
+
+    float v3 = rand3D(glm::vec3(intX, intY + 1, intZ));
+    float v4 = rand3D(glm::vec3(intX + 1, intY + 1, intZ));
+
+    float v5 = rand3D(glm::vec3(intX, intY, intZ + 1));
+    float v6 = rand3D(glm::vec3(intX + 1, intY, intZ + 1));
+
+    float v7 = rand3D(glm::vec3(intX, intY + 1, intZ + 1));
+    float v8 = rand3D(glm::vec3(intX + 1, intY + 1, intZ + 1));
+
+    // interpolate for smooth transitions
+    float i1 = glm::mix(v1, v2, fractX);
+    float i2 = glm::mix(v3, v4, fractX);
+
+    float i3 = glm::mix(v5, v6, fractX);
+    float i4 = glm::mix(v7, v8, fractX);
+
+    float ii1 = glm::mix(i1, i3, fractZ);
+    float ii2 = glm::mix(i2, i4, fractZ);
+
+    return glm::mix(ii1, ii2, fractY);
+}
+
 float TerrainType::fbm(const float x, const float z, const float persistance, const int octaves) const{
     float total = 0.0f;
 
@@ -935,6 +1050,21 @@ float TerrainType::fbm(const float x, const float z, const float persistance, co
     float a = 1 - persistance;  // normalization
 
     return a * (1.0f + total) / 2.0f;  // normalized, pseudorandom number between 0 and 1
+
+}
+
+float TerrainType::fbm3D(const float x, const float y, const float z, const float persistance, const int octaves) const{
+    float total = 0.0f;
+
+    for(int i = 0; i < octaves; i++){
+        float freq = pow(2.0f, i);
+        float amp = pow(persistance, i);
+
+        total += amp * interpNoise3D(x * freq * 16 / resolution, y * freq * 64 / resolution, z * freq * 32 / resolution);
+    }
+    //float a = 1 - persistance;  // normalization
+
+    return (1.0f + total) / 2.0f;  // pseudorandom number between 0 and 1
 
 }
 
@@ -977,3 +1107,88 @@ Foothills::Foothills() :
 {}
 
 Foothills::~Foothills(){}
+
+Cave::Cave(glm::ivec3 pos) :
+    TerrainType(4, 0.5f, 0.1f, 1.0f), pos(pos)
+{}
+
+Cave::~Cave(){}
+
+float Cave::mapToAngle(float num){
+    return num * 360.0f;
+}
+
+glm::ivec2 Cave::mapToXZOffset(float angle){
+    if (angle <= 22.5){
+        return glm::ivec2(1, 0);
+    }
+    else if (angle <= 67.5){
+        return glm::ivec2(-1, 0);
+    }
+    else if (angle <= 112.5){
+        return glm::ivec2(1, -1);
+    }
+    else if (angle <= 157.5){
+        return glm::ivec2(-1, 1);
+    }
+    else if (angle <= 202.5){
+        return glm::ivec2(1, 1);
+    }
+    else if (angle <= 247.5){
+        return glm::ivec2(-1, -1);
+    }
+    else if (angle <= 292.5){
+        return glm::ivec2(0, 1);
+    }
+    else if (angle <= 337.5){
+        return glm::ivec2(0, -1);
+    }
+    else{
+        return glm::ivec2(1, 0);
+    }
+}
+
+int Cave::mapToYOffset(float angle){
+    if (angle <= 50.0){
+        return 0;
+    }
+    else if (angle <= 145.0){
+        return 1;
+    }
+    else if (angle <= 195.0){
+        return 0;
+    }
+    else{
+        return -1;
+    }
+}
+
+void Cave::step(){
+    float theta = fbm3D(pos[0] + 0.5, pos[1] + 0.5, pos[2] + 0.5, persistance, octaves);
+    theta = mapToAngle(theta);
+    glm::ivec2 xzOffset = mapToXZOffset(theta);
+
+    float phi = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+    phi = mapToAngle(phi);
+    int yOffset = mapToYOffset(phi);
+
+    pos = glm::ivec3(pos[0] + xzOffset[0], pos[1] + yOffset, pos[2] + xzOffset[1]);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

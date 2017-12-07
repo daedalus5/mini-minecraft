@@ -104,8 +104,9 @@ void MyGL::initializeGL()
     glBindVertexArray(vao);
 
     mp_terrain->setTerrainType(new Highland);
-    mp_terrain->createForest();
     mp_terrain->createRivers();
+    //mp_terrain->createForest();
+    mp_terrain->excavateCave();
 
     QThreadPool::globalInstance()->start(scheduler);
 

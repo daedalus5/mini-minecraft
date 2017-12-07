@@ -1,4 +1,5 @@
 QT += core widgets
+QT += multimedia
 
 TARGET = 277
 TEMPLATE = app
@@ -49,4 +50,5 @@ SOURCES +=
 
 DISTFILES += \
     glsl/lavavision.frag.glsl \
-    glsl/lavavision.vert.glsl
+    glsl/lavavision.vert.glsl \
+    Sounds/Theme_Music.wav

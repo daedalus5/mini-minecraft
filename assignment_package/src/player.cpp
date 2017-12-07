@@ -2,7 +2,7 @@
 #include<QKeyEvent>
 #include<iostream>
 
-Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),isWpressed(false),isApressed(false),isSpressed(false),isDpressed(false),isSpacepressed(false),isQpressed(false),isEpressed(false),isLMBpressed(false),isRMBpressed(false),mouseOrientFlag(false),controllerState(false),mouseState(false),isSandbox(false){
+Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),isWpressed(false),isApressed(false),isSpressed(false),isDpressed(false),isSpacepressed(false),isShift(false),isQpressed(false),isEpressed(false),isLMBpressed(false),isRMBpressed(false),mouseOrientFlag(false),controllerState(false),mouseState(false),isSandbox(false){
 
     pos= ptr_to_cam->eye;
 
@@ -61,6 +61,10 @@ void Player::keyPressState(QKeyEvent *e) // invoked by keyPressEvent. sets key f
     {
         isEpressed = true;
     }
+    if(e->key()==Qt::Key_Shift)
+    {
+        isShift = true;
+    }
 }
 void Player::keyReleaseState(QKeyEvent *e)// invoked by keyReleaseEvent. sets key flags.
 {
@@ -84,7 +88,7 @@ void Player::keyReleaseState(QKeyEvent *e)// invoked by keyReleaseEvent. sets ke
     if(e->key()==Qt::Key_Space)
     {
         isSpacepressed = false;
-        keeptime = 5.f;
+        keeptime = 0.5f;
     }
     if(e->key()==Qt::Key_Q)
     {
@@ -93,6 +97,10 @@ void Player::keyReleaseState(QKeyEvent *e)// invoked by keyReleaseEvent. sets ke
     if(e->key()==Qt::Key_E)
     {
         isEpressed = false;
+    }
+    if(e->key() == Qt::Key_Shift)
+    {
+        isShift = false;
     }
 
 }
@@ -144,9 +152,9 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
     }
     for(int i=0;i<nextpositions.size();i++)
     {
-        BlockType nextblock = ptr_to_terrain->getBlockAt(nextpositions[i].x,nextpositions[i].y,nextpositions[i].z);
-        BlockType currentblock = ptr_to_terrain->getBlockAt(vertexpositions[i].x, vertexpositions[i].y, vertexpositions[i].z);
-        if((ptr_to_terrain->getBlockAt(nextpositions[i].x,nextpositions[i].y,nextpositions[i].z) != EMPTY)&&(ptr_to_terrain->getBlockAt(nextpositions[i].x,nextpositions[i].y,nextpositions[i].z) != WATER)&&(ptr_to_terrain->getBlockAt(nextpositions[i].x,nextpositions[i].y,nextpositions[i].z) != LAVA))//check if nextposition has a non-empty block
+        BlockType nextblock = ptr_to_terrain->getBlockAt(floor(nextpositions[i].x),floor(nextpositions[i].y),floor(nextpositions[i].z));
+        BlockType currentblock = ptr_to_terrain->getBlockAt(floor(vertexpositions[i].x), floor(vertexpositions[i].y), floor(vertexpositions[i].z));
+        if((nextblock != EMPTY)&&(nextblock != WATER)&&(nextblock != LAVA))//check if nextposition has a non-empty block
         {
             flag = 1;
             velocity.x = 0.f;
@@ -155,7 +163,7 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
                 velocity.y= 0.f;
             }
             return true;
-           /* glm::vec3 intersectBoxMin;
+           /*glm::vec3 intersectBoxMin;
             glm::vec3 intersectBoxMax;
             intersectBoxMin.x = floor(nextpositions[i].x);
             intersectBoxMin.y = floor(nextpositions[i].y);
@@ -172,11 +180,7 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
            velocityFlag = 1;
 
             }
-
-
-
-
-    }
+        }
     if(velocityFlag==1)
     {
         velocity = velocity*0.2323f;
@@ -198,10 +202,10 @@ void Player::gravityCheck() // implements gravity
          bottompositions.push_back(glm::vec3(vertexpositions[i] + velocity * 2.f * dt));
     }
 
-    BlockType a = ptr_to_terrain->getBlockAt(bottompositions[0].x,bottompositions[0].y,bottompositions[0].z); //checks below the bottom vertices of the player's bounding box for ground
-    BlockType b = ptr_to_terrain->getBlockAt(bottompositions[1].x,bottompositions[1].y,bottompositions[1].z);
-    BlockType c = ptr_to_terrain->getBlockAt(bottompositions[2].x,bottompositions[2].y,bottompositions[2].z);
-    BlockType d = ptr_to_terrain->getBlockAt(bottompositions[3].x,bottompositions[3].y,bottompositions[3].z);
+    BlockType a = ptr_to_terrain->getBlockAt(floor(bottompositions[0].x),floor(bottompositions[0].y),floor(bottompositions[0].z)); //checks below the bottom vertices of the player's bounding box for ground
+    BlockType b = ptr_to_terrain->getBlockAt(floor(bottompositions[1].x),floor(bottompositions[1].y),floor(bottompositions[1].z));
+    BlockType c = ptr_to_terrain->getBlockAt(floor(bottompositions[2].x),floor(bottompositions[2].y),floor(bottompositions[2].z));
+    BlockType d = ptr_to_terrain->getBlockAt(floor(bottompositions[3].x),floor(bottompositions[3].y),floor(bottompositions[3].z));
     if((a==EMPTY)&&(b==EMPTY)&&(c==EMPTY)&&(d==EMPTY))
     {
 
@@ -218,7 +222,7 @@ void Player::gravityCheck() // implements gravity
         bool cldetect = collisionDetect();
         if(cldetect==false)
          {
-            pos = pos + velocity*(float)dt;
+            pos.y = pos.y + velocity.y*(float)dt;
          }
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
@@ -237,7 +241,7 @@ void Player::gravityCheck() // implements gravity
         bool cldetect = collisionDetect();
         if(cldetect==false)
          {
-            pos = pos + velocity*(float)dt;
+            pos.y = pos.y + velocity.y*(float)dt;
          }
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
@@ -253,7 +257,7 @@ void Player::gravityCheck() // implements gravity
         bool cldetect = collisionDetect();
         if(cldetect==false)
          {
-            pos = pos + velocity*(float)dt;
+            pos.y = pos.y + velocity.y*(float)dt;
          }
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
@@ -270,7 +274,7 @@ void Player::gravityCheck() // implements gravity
         bool cldetect = collisionDetect();
         if(cldetect==false)
          {
-            pos = pos + velocity*(float)dt;
+            pos.y = pos.y + velocity.y*(float)dt;
          }
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
@@ -286,8 +290,20 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
     {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
-        velocity = 5.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->look,0))); //velocity along the camera's look vector
-        velocity.y=0; //prevents flight
+        glm::vec3 newvec = glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->look,0)));
+        newvec.y=0;
+        if(!isShift)
+        {
+            velocity = 5.f*glm::vec3(glm::normalize(glm::vec4(newvec,0))); //velocity along the camera's look vector
+
+        }
+        else
+        {
+              velocity = 20.f*glm::vec3(glm::normalize(glm::vec4(newvec,0))); //velocity along the camera's look vector
+        }
+
+
+        //velocity.y=0; //prevents flight
         bool cldetect = collisionDetect();
         if(cldetect==false) // check for collision detection. If there is a potential collision, don't move
         {
@@ -302,8 +318,16 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
     {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
-        velocity = -5.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->right,0)));
-        velocity.y=0;
+        if(!isShift)
+        {
+            velocity = -5.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->right,0)));
+        }
+        else
+        {
+            velocity = -20.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->right,0)));
+
+        }
+        //velocity.y=0;
         bool cldetect = collisionDetect();
         if(cldetect==false)
         {
@@ -319,8 +343,18 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
     {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
-        velocity = -5.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->look,0)));
-        velocity.y=0;
+        glm::vec3 newvec = ptr_to_cam->look;
+        newvec.y=0.f;
+        if(!isShift)
+        {
+        velocity = -5.f*glm::vec3(glm::normalize(glm::vec4(newvec,0)));
+        }
+        else
+        {
+             velocity = -20.f*glm::vec3(glm::normalize(glm::vec4(newvec,0)));
+
+        }
+        //velocity.y=0;
         bool cldetect = collisionDetect();
         if(cldetect==false)
         {
@@ -335,8 +369,18 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
     {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
-        velocity = 5.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->right,0)));
-        velocity.y=0;
+
+        if(!isShift)
+        {
+            velocity = 5.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->right,0)));
+        }
+        else
+        {
+            velocity = 20.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->right,0)));
+        }
+
+
+        //velocity.y=0;
          bool cldetect = collisionDetect();
          if(cldetect==false)
           {
@@ -349,7 +393,10 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
     }
     if(isSpacepressed)
     {
-        keeptime = keeptime - dt;
+        if((checkSubmerged()!= LAVA)&&(checkSubmerged()!=WATER))
+        {
+            keeptime = keeptime - dt;
+        }
         if(keeptime > 0.f)
         {
 
@@ -365,6 +412,21 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
         }
+        else if(keeptime=0.f)
+        {
+            isSpacepressed = false;
+            pos = ptr_to_cam->eye;
+            glm::vec3 prevpos = pos;
+            velocity = -10.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->world_up,0)));
+             bool cldetect = collisionDetect();
+             if(cldetect==false)
+             {
+                pos = pos + velocity*(float)dt;
+             }
+            glm::vec3 translation1 = pos-prevpos;
+            ptr_to_cam->eye = ptr_to_cam->eye+translation1;
+            ptr_to_cam->ref = ptr_to_cam->ref + translation1;
+        }
 
 
     }
@@ -375,7 +437,16 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
         {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
-        velocity = -5.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->world_up,0)));
+        if(!isShift)
+        {
+            velocity = -5.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->world_up,0)));
+
+        }
+        else
+        {
+            velocity = -20.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->world_up,0)));
+        }
+
         bool cldetect = collisionDetect();
         if(cldetect==false)
          {
@@ -393,7 +464,17 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
         {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
-        velocity = 5.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->world_up,0)));
+        if(!isShift)
+        {
+            velocity = 5.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->world_up,0)));
+
+        }
+        else
+        {
+            velocity = 20.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->world_up,0)));
+
+        }
+
         bool cldetect = collisionDetect();
         if(cldetect==false)
          {
@@ -489,17 +570,91 @@ void Player::playerGeometry() // constructs bounding box for player
 
 BlockType Player::checkSubmerged()
 {
-    if(ptr_to_terrain->getBlockAt(pos.x, pos.y, pos.z) == LAVA)
+    if(ptr_to_terrain->getBlockAt(floor(pos.x), floor(pos.y), floor(pos.z)) == LAVA)
     {
         return LAVA;
 
     }
-    else if(ptr_to_terrain->getBlockAt(pos.x, pos.y, pos.z) == WATER)
+    else if(ptr_to_terrain->getBlockAt(floor(pos.x), floor(pos.y), floor(pos.z)) == WATER)
     {
         return WATER;
     }
     else
         return EMPTY;
 }
+
+bool Player::altCollisions()
+{
+    ray look;
+        look.orig = pos;
+        look.dir = glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->look,1)));
+
+
+        // cube at eye position
+        glm::ivec3 eyeCube = glm::ivec3(floor(pos[0]), floor(pos[1]), floor(pos[2]));
+
+        // store all cubes look ray intersects
+        QMap<float, glm::ivec3> intersections;
+        // going to want to delete the cube that's nearest and intersects our look vector
+        float t_nearest = 1E6;
+
+        // consider surrounding 26 cubes
+        for(int i = -1; i < 2; ++i){
+            for(int j = -2; j < 2; ++j){
+                for(int k = -1; k < 2; ++k){
+                    if(i == 0 && j == 0 && k == 0){ // don't consider cube at eye position
+                        continue;
+                    }
+                    glm::ivec3 cube = glm::ivec3(eyeCube[0] + i, eyeCube[1] + j, eyeCube[2] + k);
+
+                    float t_near = rayBoxIntersect(cube, look);
+                    BlockType b = ptr_to_terrain->getBlockAt(cube[0], cube[1], cube[2]);
+                    if (t_near > 0.0f && b != EMPTY){
+                        intersections[t_near] = cube;
+                        if(t_near < t_nearest){
+                            t_nearest = t_near;
+                        }
+                    }
+                }
+            }
+        }
+        if (intersections.isEmpty() == false){
+            glm::ivec3 closestCube = intersections.value(t_nearest);
+            // destroys closestCube by setting to empty
+            ptr_to_terrain->addBlockAt(closestCube[0], closestCube[1], closestCube[2], EMPTY);
+        }
+    }
+
+    float Player::rayBoxIntersect(glm::ivec3 cubeMin, ray r) {
+        float t_near = -1E6;
+        float t_far = 1E6;
+        glm::ivec3 cubeMax = glm::ivec3(cubeMin[0] + 1, cubeMin[1] + 1, cubeMin[2] + 1);
+
+        for(int i = 0; i < 3; ++i){
+            int xl = cubeMin[i];
+            int xr = cubeMax[i];
+            float xd = r.dir[i];
+            float xo = r.orig[i];
+            float t1 = (xl - xo) / xd;
+            float t2 = (xr - xo) / xd;
+
+            if (t1 > t2){       // swap
+                const float t3 = t2;
+                t2 = t1;
+                t1 = t3;
+            }
+            if (t1 > t_near){
+                t_near = t1;    // want largest t_near
+            }
+            if (t2 < t_far){
+                t_far = t2;     // want smallest t_far
+            }
+            if (t_near > t_far){
+                return -1.0f;
+            }
+        }
+        return t_near;
+    }
+
 
 

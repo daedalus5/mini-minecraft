@@ -111,9 +111,12 @@ void MyGL::initializeGL()
     QThreadPool::globalInstance()->start(scheduler);
 
 
+
+
+
     // Tell the timer to redraw 60 times per second
     timer.start(16);
-    mp_player->keeptime = 5.f;
+    mp_player->keeptime = 0.5f;
 
 }
 

@@ -11,6 +11,11 @@
 class Player
 {
 private:
+    struct ray
+    {
+        glm::vec3 orig;
+        glm::vec3 dir;
+    };
     glm::vec3 pos;
     float dt;
 
@@ -36,6 +41,7 @@ private:
     bool isSpressed;
     bool isDpressed;
     bool isSpacepressed;
+    bool isShift;
 
 
 
@@ -73,6 +79,8 @@ public:
     bool collisionDetect(); //detects collisions
     bool boundingBoxcheck(glm::vec3, glm::vec3, glm::vec3, glm::vec3);
     void gravityCheck();//implements gravity
+    bool altCollisions();
+    float rayBoxIntersect(glm::ivec3 cubeMin, ray r);
 
 };
 

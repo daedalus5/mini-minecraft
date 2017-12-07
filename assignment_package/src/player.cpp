@@ -570,12 +570,12 @@ void Player::playerGeometry() // constructs bounding box for player
 
 BlockType Player::checkSubmerged()
 {
-    if(ptr_to_terrain->getBlockAt(pos.x, pos.y, pos.z) == LAVA)
+    if(ptr_to_terrain->getBlockAt(floor(pos.x), floor(pos.y), floor(pos.z)) == LAVA)
     {
         return LAVA;
 
     }
-    else if(ptr_to_terrain->getBlockAt(pos.x, pos.y, pos.z) == WATER)
+    else if(ptr_to_terrain->getBlockAt(floor(pos.x), floor(pos.y), floor(pos.z)) == WATER)
     {
         return WATER;
     }

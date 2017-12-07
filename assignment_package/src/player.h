@@ -41,6 +41,7 @@ private:
     bool isSpressed;
     bool isDpressed;
     bool isSpacepressed;
+    bool isShift;
 
 
 

@@ -145,7 +145,7 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
     for(int i=0;i<nextpositions.size();i++)
     {
         BlockType nextblock = ptr_to_terrain->getBlockAt(floor(nextpositions[i].x),floor(nextpositions[i].y),floor(nextpositions[i].z));
-        BlockType currentblock = ptr_to_terrain->getBlockAt(vertexpositions[i].x, vertexpositions[i].y, vertexpositions[i].z);
+        BlockType currentblock = ptr_to_terrain->getBlockAt(floor(vertexpositions[i].x), floor(vertexpositions[i].y), floor(vertexpositions[i].z));
         if((nextblock != EMPTY)&&(nextblock != WATER)&&(nextblock != LAVA))//check if nextposition has a non-empty block
         {
             flag = 1;
@@ -194,10 +194,10 @@ void Player::gravityCheck() // implements gravity
          bottompositions.push_back(glm::vec3(vertexpositions[i] + velocity * 2.f * dt));
     }
 
-    BlockType a = ptr_to_terrain->getBlockAt(bottompositions[0].x,bottompositions[0].y,bottompositions[0].z); //checks below the bottom vertices of the player's bounding box for ground
-    BlockType b = ptr_to_terrain->getBlockAt(bottompositions[1].x,bottompositions[1].y,bottompositions[1].z);
-    BlockType c = ptr_to_terrain->getBlockAt(bottompositions[2].x,bottompositions[2].y,bottompositions[2].z);
-    BlockType d = ptr_to_terrain->getBlockAt(bottompositions[3].x,bottompositions[3].y,bottompositions[3].z);
+    BlockType a = ptr_to_terrain->getBlockAt(floor(bottompositions[0].x),floor(bottompositions[0].y),floor(bottompositions[0].z)); //checks below the bottom vertices of the player's bounding box for ground
+    BlockType b = ptr_to_terrain->getBlockAt(floor(bottompositions[1].x),floor(bottompositions[1].y),floor(bottompositions[1].z));
+    BlockType c = ptr_to_terrain->getBlockAt(floor(bottompositions[2].x),floor(bottompositions[2].y),floor(bottompositions[2].z));
+    BlockType d = ptr_to_terrain->getBlockAt(floor(bottompositions[3].x),floor(bottompositions[3].y),floor(bottompositions[3].z));
     if((a==EMPTY)&&(b==EMPTY)&&(c==EMPTY)&&(d==EMPTY))
     {
 

@@ -214,7 +214,7 @@ void Player::gravityCheck() // implements gravity
         bool cldetect = collisionDetect();
         if(cldetect==false)
          {
-            pos = pos + velocity*(float)dt;
+            pos.y = pos.y + velocity.y*(float)dt;
          }
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
@@ -233,7 +233,7 @@ void Player::gravityCheck() // implements gravity
         bool cldetect = collisionDetect();
         if(cldetect==false)
          {
-            pos = pos + velocity*(float)dt;
+            pos.y = pos.y + velocity.y*(float)dt;
          }
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
@@ -249,7 +249,7 @@ void Player::gravityCheck() // implements gravity
         bool cldetect = collisionDetect();
         if(cldetect==false)
          {
-            pos = pos + velocity*(float)dt;
+            pos.y = pos.y + velocity.y*(float)dt;
          }
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
@@ -266,7 +266,7 @@ void Player::gravityCheck() // implements gravity
         bool cldetect = collisionDetect();
         if(cldetect==false)
          {
-            pos = pos + velocity*(float)dt;
+            pos.y = pos.y + velocity.y*(float)dt;
          }
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
@@ -345,7 +345,7 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
     }
     if(isSpacepressed)
     {
-        if((checkSubmerged()!=LAVA)&&(checkSubmerged()!=WATER))
+        if((checkSubmerged()!= LAVA)&&(checkSubmerged()!=WATER))
         {
             keeptime = keeptime - dt;
         }
@@ -504,5 +504,79 @@ BlockType Player::checkSubmerged()
     else
         return EMPTY;
 }
+
+bool Player::altCollisions()
+{
+    ray look;
+        look.orig = pos;
+        look.dir = glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->look,1)));
+
+
+        // cube at eye position
+        glm::ivec3 eyeCube = glm::ivec3(floor(pos[0]), floor(pos[1]), floor(pos[2]));
+
+        // store all cubes look ray intersects
+        QMap<float, glm::ivec3> intersections;
+        // going to want to delete the cube that's nearest and intersects our look vector
+        float t_nearest = 1E6;
+
+        // consider surrounding 26 cubes
+        for(int i = -1; i < 2; ++i){
+            for(int j = -2; j < 2; ++j){
+                for(int k = -1; k < 2; ++k){
+                    if(i == 0 && j == 0 && k == 0){ // don't consider cube at eye position
+                        continue;
+                    }
+                    glm::ivec3 cube = glm::ivec3(eyeCube[0] + i, eyeCube[1] + j, eyeCube[2] + k);
+
+                    float t_near = rayBoxIntersect(cube, look);
+                    BlockType b = ptr_to_terrain->getBlockAt(cube[0], cube[1], cube[2]);
+                    if (t_near > 0.0f && b != EMPTY){
+                        intersections[t_near] = cube;
+                        if(t_near < t_nearest){
+                            t_nearest = t_near;
+                        }
+                    }
+                }
+            }
+        }
+        if (intersections.isEmpty() == false){
+            glm::ivec3 closestCube = intersections.value(t_nearest);
+            // destroys closestCube by setting to empty
+            ptr_to_terrain->addBlockAt(closestCube[0], closestCube[1], closestCube[2], EMPTY);
+        }
+    }
+
+    float Player::rayBoxIntersect(glm::ivec3 cubeMin, ray r) {
+        float t_near = -1E6;
+        float t_far = 1E6;
+        glm::ivec3 cubeMax = glm::ivec3(cubeMin[0] + 1, cubeMin[1] + 1, cubeMin[2] + 1);
+
+        for(int i = 0; i < 3; ++i){
+            int xl = cubeMin[i];
+            int xr = cubeMax[i];
+            float xd = r.dir[i];
+            float xo = r.orig[i];
+            float t1 = (xl - xo) / xd;
+            float t2 = (xr - xo) / xd;
+
+            if (t1 > t2){       // swap
+                const float t3 = t2;
+                t2 = t1;
+                t1 = t3;
+            }
+            if (t1 > t_near){
+                t_near = t1;    // want largest t_near
+            }
+            if (t2 < t_far){
+                t_far = t2;     // want smallest t_far
+            }
+            if (t_near > t_far){
+                return -1.0f;
+            }
+        }
+        return t_near;
+    }
+
 
 

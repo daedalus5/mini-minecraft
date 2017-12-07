@@ -16,7 +16,7 @@ MyGL::MyGL(QWidget *parent)
       mp_geomCube(new Cube(this)), mp_worldAxes(new WorldAxes(this)),
       mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),
       mp_camera(new Camera()), mp_terrain(new Terrain(this,mp_camera,&mutex)), mp_crosshairs(new CrossHairs(this)),
-       mp_player(new Player(mp_camera, mp_terrain)),underwater(false),underlava(false),start_time(QDateTime::currentMSecsSinceEpoch()),
+       mp_player(new Player(mp_camera, mp_terrain)),underwater(false),underlava(false),underground(false),start_time(QDateTime::currentMSecsSinceEpoch()),
       isSandbox(false),m_geomQuad(new Quad(this)),skyColor(glm::vec4(0.37f, 0.74f, 1.0f, 1)),scheduler(new Scheduler(mp_terrain,&mutex))
 
 {
@@ -178,6 +178,13 @@ void MyGL::timerUpdate()
         underwater = false;
     }
 
+    if (mp_camera->eye[1] < 128){
+        underground = true;
+    }
+    else{
+        underground = false;
+    }
+
     time = QDateTime::currentMSecsSinceEpoch();
     for(int i=0;i<mp_terrain->chunksGonnaDraw.size();i++)
     {
@@ -245,6 +252,12 @@ void MyGL::paintGL()
         mp_progLambert->setSubmerged(r);
 
 
+    }
+    if (underground == true){
+        mp_progLambert->setUnderground(1);
+    }
+    else{
+        mp_progLambert->setUnderground(0);
     }
 }
 

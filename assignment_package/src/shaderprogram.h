@@ -24,9 +24,7 @@ public:
     int underwater;
     int underlava;
 
-
-
-
+    int unifUnderground;
     int unifModel; // A handle for the "uniform" mat4 representing model matrix in the vertex shader
     int unifModelInvTr; // A handle for the "uniform" mat4 representing inverse transpose of the model matrix in the vertex shader
     int unifViewProj; // A handle for the "uniform" mat4 representing combined projection and view matrices in the vertex shader
@@ -64,6 +62,7 @@ public:
     void setTime(float t);
     void setEyePos(glm::vec4 p);
     void setSubmerged(glm::vec2);
+    void setUnderground(int);
 
 private:
     OpenGLContext* context;   // Since Qt's OpenGL support is done through classes like QOpenGLFunctions_3_2_Core,

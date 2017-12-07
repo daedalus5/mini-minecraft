@@ -364,9 +364,20 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
         }
-        else if(keeptime<0.f)
+        else if(keeptime=0.f)
         {
             isSpacepressed = false;
+            pos = ptr_to_cam->eye;
+            glm::vec3 prevpos = pos;
+            velocity = -10.f*glm::vec3(glm::normalize(glm::vec4(ptr_to_cam->world_up,0)));
+             bool cldetect = collisionDetect();
+             if(cldetect==false)
+             {
+                pos = pos + velocity*(float)dt;
+             }
+            glm::vec3 translation1 = pos-prevpos;
+            ptr_to_cam->eye = ptr_to_cam->eye+translation1;
+            ptr_to_cam->ref = ptr_to_cam->ref + translation1;
         }
 
 

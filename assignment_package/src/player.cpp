@@ -84,7 +84,7 @@ void Player::keyReleaseState(QKeyEvent *e)// invoked by keyReleaseEvent. sets ke
     if(e->key()==Qt::Key_Space)
     {
         isSpacepressed = false;
-        keeptime = 5.f;
+        keeptime = 0.5f;
     }
     if(e->key()==Qt::Key_Q)
     {
@@ -155,7 +155,7 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
                 velocity.y= 0.f;
             }
             return true;
-           /* glm::vec3 intersectBoxMin;
+           /*glm::vec3 intersectBoxMin;
             glm::vec3 intersectBoxMax;
             intersectBoxMin.x = floor(nextpositions[i].x);
             intersectBoxMin.y = floor(nextpositions[i].y);
@@ -172,11 +172,7 @@ bool Player::collisionDetect() // returns true if any of the player vertices fac
            velocityFlag = 1;
 
             }
-
-
-
-
-    }
+        }
     if(velocityFlag==1)
     {
         velocity = velocity*0.2323f;
@@ -349,7 +345,10 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
     }
     if(isSpacepressed)
     {
-        keeptime = keeptime - dt;
+        if((checkSubmerged()!=LAVA)&&(checkSubmerged()!=WATER))
+        {
+            keeptime = keeptime - dt;
+        }
         if(keeptime > 0.f)
         {
 
@@ -364,6 +363,10 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
         glm::vec3 translation1 = pos-prevpos;
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
+        }
+        else if(keeptime<0.f)
+        {
+            isSpacepressed = false;
         }
 
 

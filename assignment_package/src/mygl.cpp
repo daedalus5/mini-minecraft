@@ -160,23 +160,32 @@ void MyGL::musicCheck()
         music->stop();
         water->stop();
     }
-    else if((music->state() == 0)&&(musicflag != false))
+    else if((music->state() == 0)&&(musicflag != false)&&(underwater==false))
     {
         music->play();
     }
-    else if((underwater==true)&&(musicflag != false))
+
+    else if((water->state() == 0)&&(musicflag != false))
+    {
+        if(underwater== true)
+        {
+        music->stop();
+        water->play();
+        }
+    }
+    else if((water->state()==1))
     {
         music->stop();
-        if(water->state()==0)
+        if(!underwater)
         {
-             water->play();
+            water->stop();
+
         }
 
-
     }
-    else if((underwater!=true))
+   else if(water->state()==1)
     {
-        water->stop();
+        music->stop();
     }
 
 }
@@ -222,8 +231,7 @@ void MyGL::timerUpdate()
     {
         underlava = false;
         underwater = true;
-
-    }
+       }
     else
     {
         underlava= false;

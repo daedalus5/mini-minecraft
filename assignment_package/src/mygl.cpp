@@ -115,8 +115,15 @@ void MyGL::initializeGL()
 
     mp_player->keeptime = 0.5f;
     QMediaPlayer* music = new QMediaPlayer();
-    music->setMedia(QUrl("qrc:/sounds/music/Minecraft_theme.mp3"));
+
+   // music->setPlaylist(playlist);
+    music->setMedia(QUrl("qrc:/music/Minecraft_theme.mp3"));
+    music->setVolume(15);
     music->play();
+
+    /*QSound music("qrc:/music/Minecraft_theme.mp3");
+    music.setLoops(20);
+    music.play(); */
 
 
 

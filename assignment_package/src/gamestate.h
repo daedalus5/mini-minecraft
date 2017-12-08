@@ -89,6 +89,7 @@ private:
 
     QMediaPlayer* music;
     QMediaPlayer* water;
+
     bool musicflag;
 
     void musicCheck();
@@ -114,6 +115,7 @@ private:
     MyGL* mygl;
     ShaderProgram* mp_progMenu;
     Quad* mp_quad;
+    QMediaPlayer* title_theme;
 };
 
 #endif // GAMESTATE_H

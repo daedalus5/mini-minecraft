@@ -466,13 +466,18 @@ void PlayState::musicStop()
 MenuState::MenuState(MyGL* in_mygl)
     : GameState(in_mygl), mygl(in_mygl),
       mp_quad(new Quad(in_mygl)),
-      mp_progMenu(new ShaderProgram(in_mygl))
+      mp_progMenu(new ShaderProgram(in_mygl)),title_theme(new QMediaPlayer())
 {
     mp_progMenu->create(":/glsl/menu.vert.glsl", ":/glsl/menu.frag.glsl");
     mp_progMenu->addTexture(":/textures/title.png");
     mp_progMenu->addTexture(":/textures/minecraft_textures_all.png");
     mp_progMenu->bindTexture(0);
     mp_quad->create();
+    title_theme->setMedia(QUrl("qrc:/music/Title_Track.mp3"));
+    title_theme->setVolume(5);
+    title_theme->play();
+
+
 }
 
 MenuState::~MenuState() {
@@ -493,7 +498,9 @@ void MenuState::paint() {
 
 void MenuState::keyPress(QKeyEvent *e) {
     mp_progMenu->bindTexture(1);
+    title_theme->stop();
     mygl->set2PlayState();
+
 }
 
 void MenuState::keyRelease(QKeyEvent *r) {

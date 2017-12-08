@@ -918,7 +918,7 @@ void Terrain::excavateCave(){
         for(int i = -excavateRadius; i <= excavateRadius; ++i){
             for(int j = -excavateRadius; j <= excavateRadius; ++j){
                 for(int k = -excavateRadius; k <= excavateRadius; ++k){
-                    r1 = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+                    r1 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
                     // excavate sphere
                     if (i*i + j*j + k*k < excavateRadius * excavateRadius){
                         setBlockAt(cave.pos[0] + i, cave.pos[1] + j, cave.pos[2] + k, EMPTY);
@@ -941,7 +941,7 @@ void Terrain::excavateCave(){
     for(int i = -cavernSize; i <= cavernSize; ++i){
         for(int k = -cavernSize; k <= cavernSize; ++k){
             int q = glm::floor(cavernSize * cave.fbm(cave.pos[0] + i + 0.5f, cave.pos[2] + k + 0.5f, 0.25, 6));
-            r1 = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+            r1 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
             if (r1 < 0.95){
                 for(int j = -q; j <= q; ++j){
                     if (i*i + j*j + k*k < cavernSize * cavernSize){
@@ -1227,8 +1227,7 @@ void Cave::step(){
     float theta = fbm3D(pos[0] + 0.5, pos[1] + 0.5, pos[2] + 0.5, persistance, octaves);
     theta = mapToAngle(theta);
     glm::ivec2 xzOffset = mapToXZOffset(theta);
-
-    float phi = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+    float phi = static_cast <float> (::rand()) / static_cast <float> (RAND_MAX);
     phi = mapToAngle(phi);
     int yOffset = mapToYOffset(phi);
 

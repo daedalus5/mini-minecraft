@@ -8,5 +8,7 @@
         <file>glsl/menu.vert.glsl</file>
 	<file>glsl/lavavision.frag.glsl</file>
         <file>glsl/lavavision.vert.glsl</file>
+	<file>glsl/shadow.frag.glsl</file>
+        <file>glsl/shadow.vert.glsl</file>
     </qresource>
 </RCC>

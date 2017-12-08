@@ -918,7 +918,7 @@ void Terrain::excavateCave(){
         for(int i = -excavateRadius; i <= excavateRadius; ++i){
             for(int j = -excavateRadius; j <= excavateRadius; ++j){
                 for(int k = -excavateRadius; k <= excavateRadius; ++k){
-                    r1 = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+                    r1 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
                     // excavate sphere
                     if (i*i + j*j + k*k < excavateRadius * excavateRadius){
                         setBlockAt(cave.pos[0] + i, cave.pos[1] + j, cave.pos[2] + k, EMPTY);

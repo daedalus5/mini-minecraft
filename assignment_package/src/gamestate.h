@@ -66,8 +66,10 @@ private:
     ShaderProgram* mp_progLambert;// A shader program that uses lambertian reflection
     ShaderProgram* mp_progFlat;// A shader program that uses "flat" reflection (no shadowing at all)
     ShaderProgram* mp_lavavision; // Red overlay for under Lava
+    ShaderProgram* mp_shadowmap; // Shader that generates the shadow map
 
     Camera* mp_camera;
+    Camera* mp_lightcamera;
     Terrain* mp_terrain;
     CrossHairs* mp_crosshairs;
     Player* mp_player; // Instance of Player
@@ -85,7 +87,7 @@ private:
     float rayBoxIntersect(const glm::ivec3 cubeMin, const ray r) const;   // tests for intersection between a box and a ray
                                                                           // returns t_near, -1 if no intersection
                                                                           // Kay and Kayjia algorithm
-    void GLDrawScene();
+    void GLDrawScene(bool shadow);
 
     QMediaPlayer* music;
     QMediaPlayer* water;
@@ -98,6 +100,21 @@ private:
     QMutex mutex;
     Scheduler* scheduler;
     Quad* mp_quad;
+
+    // A collection of handles to the five frame buffers we've given
+    // ourselves to perform render passes. The 0th frame buffer is always
+    // written to by the render pass that uses the currently bound surface shader.
+    GLuint m_frameBuffer;
+    // A collection of handles to the textures used by the frame buffers.
+    // m_frameBuffers[i] writes to m_renderedTextures[i].
+    GLuint m_renderedTexture;
+    // A collection of handles to the depth buffers used by our frame buffers.
+    // m_frameBuffers[i] writes to m_depthRenderBuffers[i].
+    GLuint m_depthRenderBuffer;
+
+    void createRenderBuffers();
+    void renderLightCamera();
+    void renderFinalScene();
 };
 
 class MenuState : public GameState {

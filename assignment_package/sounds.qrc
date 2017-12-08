@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/music">
         <file>Minecraft_theme.mp3</file>
+        <file>Minecraft_Loop.mp3</file>
     </qresource>
 </RCC>

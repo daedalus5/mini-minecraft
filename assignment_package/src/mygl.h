@@ -64,6 +64,8 @@ private:
     Scheduler* scheduler;
      /// Timer linked to timerUpdate(). Fires approx. 60 times per second
     QTimer timer;
+    QMediaPlayer* music;
+    bool musicflag;
 
 
     void MoveMouseToCenter(); // Forces the mouse position to the screen's center. You should call this
@@ -97,6 +99,8 @@ protected:
     float rayBoxIntersect(const glm::ivec3 cubeMin, const ray r) const;   // tests for intersection between a box and a ray
                                                                           // returns t_near, -1 if no intersection
                                                                           // Kay and Kayjia algorithm
+    void musicCheck();
+    void musicStop();
 private slots:
     /// Slot that gets called ~60 times per second
     void timerUpdate();

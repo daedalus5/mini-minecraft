@@ -16,7 +16,7 @@ MyGL::MyGL(QWidget *parent)
       mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),
       mp_camera(new Camera()), mp_terrain(new Terrain(this,mp_camera,&mutex)), mp_crosshairs(new CrossHairs(this)),
        mp_player(new Player(mp_camera, mp_terrain)),underwater(false),underlava(false),start_time(QDateTime::currentMSecsSinceEpoch()),
-      isSandbox(false),m_geomQuad(new Quad(this)),skyColor(glm::vec4(0.37f, 0.74f, 1.0f, 1)),scheduler(new Scheduler(mp_terrain,&mutex))
+      isSandbox(false),m_geomQuad(new Quad(this)),skyColor(glm::vec4(0.37f, 0.74f, 1.0f, 1)),scheduler(new Scheduler(mp_terrain,&mutex)),music(new QMediaPlayer())
 
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
@@ -114,14 +114,15 @@ void MyGL::initializeGL()
 
 
     mp_player->keeptime = 0.5f;
-    QMediaPlayer* music = new QMediaPlayer();
+
 
    // music->setPlaylist(playlist);
-    music->setMedia(QUrl("qrc:/music/Minecraft_theme.mp3"));
+    music->setMedia(QUrl("qrc:/music/Minecraft_Loop.mp3"));
     music->setVolume(15);
     music->play();
+    musicflag = true;
 
-    /*QSound music("qrc:/music/Minecraft_theme.mp3");
+    /*QSound music("qrc:/music/Minecraft_Loop.mp3");
     music.setLoops(20);
     music.play(); */
 
@@ -150,11 +151,29 @@ void MyGL::resizeGL(int w, int h)
     printGLErrorLog();
 }
 
+void MyGL::musicCheck()
+{
+    if((music->state() == 0)&&(musicflag != false))
+    {
+        music->play();
+    }
+
+}
+
+void MyGL::musicStop()
+{
+    music->stop();
+    musicflag = false;
+}
+
+
+
 
 // MyGL's constructor links timerUpdate() to a timer that fires 60 times per second.
 // We're treating MyGL as our game engine class, so we're going to use timerUpdate
 void MyGL::timerUpdate()
 {
+    musicCheck();
 
     mp_player->isSandbox = isSandbox;
     //obtains number of milliseconds elapsed since January 1, 1970
@@ -304,6 +323,10 @@ void MyGL::keyPressEvent(QKeyEvent *e) // triggered when key is pressed
     {
         QApplication::quit();
     }
+    if(e->key()==Qt::Key_K)
+    {
+        musicStop();
+    }
 
     if(e->key()==Qt::Key_F)
     {
@@ -319,10 +342,6 @@ void MyGL::keyPressEvent(QKeyEvent *e) // triggered when key is pressed
     }
     mp_player->keyPressState(e);
 
-    //float amount = 1.0f;
-    if(e->modifiers() & Qt::ShiftModifier){
-        //amount = 10.0f;
-    }
 
 }
 

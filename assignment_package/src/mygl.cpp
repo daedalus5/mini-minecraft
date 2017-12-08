@@ -16,7 +16,7 @@ MyGL::MyGL(QWidget *parent)
       mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),
       mp_camera(new Camera()), mp_terrain(new Terrain(this,mp_camera,&mutex)), mp_crosshairs(new CrossHairs(this)),
        mp_player(new Player(mp_camera, mp_terrain)),underwater(false),underlava(false),start_time(QDateTime::currentMSecsSinceEpoch()),
-      isSandbox(false),m_geomQuad(new Quad(this)),skyColor(glm::vec4(0.37f, 0.74f, 1.0f, 1)),scheduler(new Scheduler(mp_terrain,&mutex)),music(new QMediaPlayer())
+      isSandbox(false),m_geomQuad(new Quad(this)),skyColor(glm::vec4(0.37f, 0.74f, 1.0f, 1)),scheduler(new Scheduler(mp_terrain,&mutex)),music(new QMediaPlayer()),water(new QMediaPlayer())
 
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
@@ -118,7 +118,9 @@ void MyGL::initializeGL()
 
    // music->setPlaylist(playlist);
     music->setMedia(QUrl("qrc:/music/Minecraft_Loop.mp3"));
+    water->setMedia(QUrl("qrc:/music/Water_scapes.mp3"));
     music->setVolume(15);
+    water->setVolume(1);
     music->play();
     musicflag = true;
 
@@ -153,16 +155,34 @@ void MyGL::resizeGL(int w, int h)
 
 void MyGL::musicCheck()
 {
-    if((music->state() == 0)&&(musicflag != false))
+    if(musicflag==false)
+    {
+        music->stop();
+        water->stop();
+    }
+    else if((music->state() == 0)&&(musicflag != false))
     {
         music->play();
+    }
+    else if((underwater==true)&&(musicflag != false))
+    {
+        music->stop();
+        if(water->state()==0)
+        {
+             water->play();
+        }
+
+
+    }
+    else if((underwater!=true))
+    {
+        water->stop();
     }
 
 }
 
 void MyGL::musicStop()
 {
-    music->stop();
     musicflag = false;
 }
 

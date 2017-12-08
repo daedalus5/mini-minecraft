@@ -19,7 +19,8 @@ SOURCES += \
     $$PWD/scene/lsystem.cpp \
     $$PWD/scene/quad.cpp \
     $$PWD/texture.cpp \
-    $$PWD/scene/scheduler.cpp
+    $$PWD/scene/scheduler.cpp \
+    $$PWD/enemy.cpp
 
 
 HEADERS += \
@@ -40,7 +41,8 @@ HEADERS += \
     $$PWD/texture.h \
     $$PWD/scene/lsystem.h \
     $$PWD/scene/scheduler.h \
-    $$PWD/scene/quad.h
+    $$PWD/scene/quad.h \
+    $$PWD/enemy.h
 
 DISTFILES += \
     $$PWD/lavavision.frag \

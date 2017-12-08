@@ -107,13 +107,19 @@ void MyGL::initializeGL()
 
     QThreadPool::globalInstance()->start(scheduler);
 
-
-
-
-
     // Tell the timer to redraw 60 times per second
     timer.start(16);
+
+
+
+
     mp_player->keeptime = 0.5f;
+    QMediaPlayer* music = new QMediaPlayer();
+    music->setMedia(QUrl("qrc:/sounds/music/Minecraft_theme.mp3"));
+    music->play();
+
+
+
 
 }
 
@@ -186,9 +192,6 @@ void MyGL::timerUpdate()
     }
     mp_terrain->keysGonnaDraw.clear();
     mp_terrain->chunksGonnaDraw.clear();
-
-
-
 
     update();
 

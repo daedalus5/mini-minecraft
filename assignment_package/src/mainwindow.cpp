@@ -9,11 +9,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->mygl->setFocus();
-    QMediaPlayer* player = new QMediaPlayer;
-    player->setMedia(QUrl::fromLocalFile("Users/sagartetali/Themey.mp3"));
-    player->setVolume(70);
 
-    player->play();
 
 }
 

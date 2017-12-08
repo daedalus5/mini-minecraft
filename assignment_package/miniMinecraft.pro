@@ -1,5 +1,7 @@
-QT += core widgets
-QT += multimedia
+QT += core widgets \
+      multimedia
+
+
 
 TARGET = 277
 TEMPLATE = app
@@ -16,7 +18,8 @@ FORMS += forms/mainwindow.ui \
     forms/cameracontrolshelp.ui
 
 RESOURCES += glsl.qrc \
-    textures.qrc
+    textures.qrc \
+    sounds.qrc
 
 *-clang*|*-g++* {
     message("Enabling additional warnings")
@@ -50,5 +53,4 @@ SOURCES +=
 
 DISTFILES += \
     glsl/lavavision.frag.glsl \
-    glsl/lavavision.vert.glsl \
-    Sounds/Theme_Music.wav
+    glsl/lavavision.vert.glsl

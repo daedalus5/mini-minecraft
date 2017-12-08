@@ -20,7 +20,8 @@ SOURCES += \
     $$PWD/scene/quad.cpp \
     $$PWD/texture.cpp \
     $$PWD/scene/scheduler.cpp \
-    $$PWD/enemy.cpp
+    $$PWD/enemy.cpp \
+    $$PWD/gamestate.cpp
 
 
 HEADERS += \
@@ -39,13 +40,10 @@ HEADERS += \
     $$PWD/scene/worldaxes.h \
     $$PWD/player.h \
     $$PWD/texture.h \
+    $$PWD/gamestate.h \
     $$PWD/scene/lsystem.h \
     $$PWD/scene/scheduler.h \
     $$PWD/scene/quad.h \
-    $$PWD/enemy.h
+    $$PWD/enemy.h \
 
-DISTFILES += \
-    $$PWD/lavavision.frag \
-    $$PWD/texture.h \
-    $$PWD/scene/lsystem.h
-
+DISTFILES +=

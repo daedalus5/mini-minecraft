@@ -1,7 +1,5 @@
 #include <scene/terrain.h>
 
-#include <iostream>
-
 Chunk::Chunk(OpenGLContext* context)
 
     : Drawable(context),isCreated(false), hasData(false)
@@ -30,7 +28,7 @@ BlockType& Chunk::getBlockType(int x, int y, int z) {
 // Only runs if Chunk has data
 void Chunk::createVBO()
 {
-    if (!hasData) {
+    if (!hasData || everything.size() == 0 || indices.size() == 0) {
         return;
     }
 
@@ -75,7 +73,8 @@ Terrain::Terrain(OpenGLContext* in_context,Camera* camera,QMutex* mutexref) :
     block_uv_map(std::unordered_map<char, std::vector<glm::vec4>>()),
 
 
-    offset(glm::vec3(0.5, 0.5, 0.5))
+    offset(glm::vec3(0.5, 0.5, 0.5)),
+    chunks2Add(std::vector<chunkMapData>())
 {
     // Map BlockType to colors
     // Not currently used because we have textures
@@ -234,7 +233,7 @@ Terrain::~Terrain() {
 BlockType Terrain::getBlockAt(int x, int y, int z) const
 {
     if (y < 0 || y > 255) {
-        return EMPTY;
+        return NOTHING;
     }
 
     auto index = chunk_map.find(convertToInt(getChunkPosition1D(x), getChunkPosition1D(z)));
@@ -242,7 +241,7 @@ BlockType Terrain::getBlockAt(int x, int y, int z) const
         Chunk* ch = index->second;
         return ch->getBlockType(getChunkLocalPosition1D(x), y, getChunkLocalPosition1D(z));
     }
-    return EMPTY;
+    return NOTHING;
 }
 
 // Given world coordinates, sets the block at that position
@@ -267,7 +266,7 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
         ch = createScene(getChunkPosition1D(x), getChunkPosition1D(z));
         chunk_map[chunk_pos] = ch;
     } else {
-        ch = chunk_map[chunk_pos];
+        ch = index->second;
     }
     ch->getBlockType(getChunkLocalPosition1D(x), y, getChunkLocalPosition1D(z)) = t;
     ch->hasData = false; // Need to update VBO
@@ -372,9 +371,9 @@ void Terrain::updateChunkVBO(int x, int z) {
 
     // Clear out the Chunk's current data
     Chunk* ch = index->second;
+    ch->hasData = false; // VBO data has been cleared.
     ch->everything.clear();
     ch->indices.clear();
-    ch->hasData = false; // VBO data has been cleared.
 
     // Variables that are reused in loop
     BlockType block, neighbor; // Current BlockType and neighbor BlockType
@@ -393,7 +392,7 @@ void Terrain::updateChunkVBO(int x, int z) {
 
                 block = ch->getBlockType(i, j, k);
 
-                if (block != EMPTY) {
+                if (block != EMPTY && block != NOTHING) {
 
                     world_pos = glm::vec3(i, j, k)
                             + glm::vec3(x * chunk_dimensions[0], 0, z * chunk_dimensions[2]);
@@ -776,13 +775,8 @@ void Terrain::drawScene()
     int chunkX = getChunkPosition1D(mp_camera->eye[0]);
     int chunkZ = getChunkPosition1D(mp_camera->eye[2]);
 
-    // Create collection of Chunks to update/draw
-    // Because we want to update VBO after all new Chunks are created
-
-    // List of Chunks to draw
-    chunksGonnaDraw = std::vector<Chunk*>();
-    keysGonnaDraw = std::vector<uint64_t>();
     // List of Chunks that need VBO updated
+    // Save this until end, after all new Chunks have been made
     std::set<uint64_t> chunks2Update = std::set<uint64_t>();
 
     int num = 10;
@@ -798,7 +792,7 @@ void Terrain::drawScene()
 
                 if(!ch->hasData)
                 {
-                    chunks2Update.insert(convertToInt(x,z));
+                    chunks2Update.insert(convertToInt(x, z));
                     // Update neighboring Chunks
                     chunks2Update.insert(convertToInt(x + 1, z));
                     chunks2Update.insert(convertToInt(x - 1, z));
@@ -807,13 +801,19 @@ void Terrain::drawScene()
                 }
             } else {
 
-                mutex->lock();
+                //mutex->lock();
                 ch = createScene(x, z);
-                mutex->unlock();
+                //mutex->unlock();
                 if (ch != nullptr) {
 
-                    chunksGonnaDraw.push_back(ch);
-                    keysGonnaDraw.push_back(convertToInt(x, z));
+                    // Add new Chunk to list, so it can be
+                    // added to map by PlayState
+                    chunkMapData data;
+                    data.ch = ch;
+                    data.key = convertToInt(x, z);
+                    chunks2Add.push_back(data);
+
+                    //chunk_map[convertToInt(x, z)] = ch;
                     chunks2Update.insert(convertToInt(x, z));
 
                     // Update neighboring Chunks

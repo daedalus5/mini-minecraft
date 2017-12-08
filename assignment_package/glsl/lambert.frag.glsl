@@ -15,8 +15,7 @@ uniform vec4 u_Color; // The color with which to render this instance of geometr
 uniform sampler2D u_Texture; // The texture to be read from by this shader
 uniform vec4 u_Eye; // Camera position. Used for Blinn-Phong
 uniform float u_Time; // Elapsed time since start of game
-uniform int underwater;
-uniform int underlava;
+
 uniform int u_Underground;
 
 // These are the interpolated values out of the rasterizer, so you can't know
@@ -73,15 +72,6 @@ void main()
         fog = clamp(fog, 0, 1);
     }
 
-
-    // Compute final shaded color
-
-   vec4 c1 = vec4(0.0,0.0,1.0,1.0);// color for underwater
-   vec4 c2 = vec4(1.0,0.0,0.0,1.0);//color for under lava
-
-
-
-
     // Compute final shaded color
     if (u_Underground == 0){
         out_Col = mix(color, vec4(0.8, 0.8, 0.8, 1), fog);
@@ -89,20 +79,5 @@ void main()
     else{
         out_Col = mix(color, vec4(0, 0, 0, 1), fog);
     }
-    if(underwater == 1)
-    {
-        //if player is under water, add overlay
-        out_Col = mix(out_Col,c1,0.3);
-    }
-    else if(underlava==1)
-    {
-        // if player is under lava, add overlay
-        out_Col = mix(out_Col, c2,0.3);
-
-
-    }
-
-
-
 
 }

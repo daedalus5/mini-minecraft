@@ -16,7 +16,10 @@ public:
 
     void run() override;
     void generateTerrain();
+    void setRunMode(bool b);
 
+private:
+    bool shouldIRun;
 
 };
 

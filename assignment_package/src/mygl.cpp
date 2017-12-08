@@ -105,8 +105,8 @@ void MyGL::initializeGL()
 
     mp_terrain->setTerrainType(new Highland);
     mp_terrain->createRivers();
-    //mp_terrain->createForest();
     mp_terrain->excavateCave();
+    mp_terrain->createForest();
 
     QThreadPool::globalInstance()->start(scheduler);
 

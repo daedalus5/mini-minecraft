@@ -193,6 +193,13 @@ Terrain::Terrain(OpenGLContext* in_context,Camera* camera,QMutex* mutexref) :
     block_uv_map[LEAF] = uv;
 
     uv.clear();
+    uv.push_back(glm::vec4(0.f, 14.f/16.f, 12.f, 0));
+    uv.push_back(glm::vec4(0.f, 13.f/16.f, 12.f, 0));
+    uv.push_back(glm::vec4(1.f/16.f, 13.f/16.f, 12.f, 0));
+    uv.push_back(glm::vec4(1.f/16.f, 14.f/16.f, 12.f, 0));
+    block_uv_map[GOLDORE] = uv;
+
+    uv.clear();
     uv.push_back(glm::vec4(5.f/16.f, 15.f/16.f, 2.f, 0));
     uv.push_back(glm::vec4(5.f/16.f, 14.f/16.f, 2.f, 0));
     uv.push_back(glm::vec4(6.f/16.f, 14.f/16.f, 2.f, 0));
@@ -830,8 +837,21 @@ void Terrain::drawScene()
 }
 
 void Terrain::createForest(){
-    srand(time(NULL));
-    drawTree(glm::ivec2(54, 54));
+    Forest forest = Forest();
+    int size = 16;
+    float r;
+    float prob;
+    for(int i = 0; i < 16*size; ++i){
+        for(int j = 0; j < 16*size; ++j){
+            if (i*i + j*j < 16*size*16*size){
+                r = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX));
+                prob = forest.worley(i, j);
+                if (prob > 0.5){
+                    drawTree(glm::ivec2(i, j));
+                }
+            }
+        }
+    }
 }
 
 void Terrain::drawTree(glm::ivec2 pos){
@@ -883,7 +903,7 @@ void Terrain::drawTree(glm::ivec2 pos){
 }
 
 void Terrain::excavateCave(){
-    drawTree(glm::ivec2(80, 0));
+    setBlockAt(74, 255, 0, EMPTY); // temporary fix
 
     int numSteps = 300;
     int excavateRadius = 4;
@@ -908,7 +928,7 @@ void Terrain::excavateCave(){
                         if (cave.pos[1] + j < 128 &&
                             getBlockAt(cave.pos[0] + i, cave.pos[1] + j, cave.pos[2] + k) != EMPTY &&
                             r1 < 0.01f){
-                            setBlockAt(cave.pos[0] + i, cave.pos[1] + j, cave.pos[2] + k, LAVA);
+                            setBlockAt(cave.pos[0] + i, cave.pos[1] + j, cave.pos[2] + k, GOLDORE);
                         }
                     }
                 }
@@ -1068,6 +1088,46 @@ float TerrainType::fbm3D(const float x, const float y, const float z, const floa
 
 }
 
+// returns random vec2
+glm::vec2 TerrainType::random2(glm::vec2 p) const{
+    float first = glm::fract(sinf(15.3 * glm::dot(p, glm::vec2(62.1, 311.7))) * 4375.545243);
+
+    float second = glm::fract(sinf(1234.9 * glm::dot(p, glm::vec2(269.5, 183.3))) * 4375.545243);
+    return glm::vec2(first, second);
+}
+
+float TerrainType::distance(glm::vec2 p1, glm::vec2 p2) const{
+    glm::vec2 l = p1 - p2;
+    return glm::sqrt(glm::dot(l, l));
+}
+
+float TerrainType::worley(const int x, const int z){
+    glm::vec2 cell_ID = glm::vec2(x / 16, z / 16);
+    glm::vec2 cell_fract = glm::vec2((float)(x % 16) / 16.f, (float)(z % 16) / 16.f);
+    glm::vec2 cell_uv = cell_ID + cell_fract;
+
+    float minDistance = 64.f;
+    glm::vec2 currCell_ID;
+    glm::vec2 randPoint;
+
+    for(int j = -1; j <= 1; j++){
+        for(int i = -1; i <= 1; i++){
+            currCell_ID = glm::vec2(cell_ID[0] + i, cell_ID[1] + j);
+            randPoint = glm::vec2(currCell_ID + rand(currCell_ID));
+            float dist = distance(randPoint, cell_uv);
+            if (dist < minDistance){
+                minDistance = dist;
+            }
+        }
+    }
+
+    //float cellProb = fbm(cell_ID[0], cell_ID[1], persistance, octaves);
+    if(1.0 - minDistance > 1.0){
+        return 1.0;
+    }
+    return 1.0 - minDistance;
+}
+
 int TerrainType::mapToHeight(const float val) const{
     // dampen noise amplitude for flatter terrain
     // begin noisey terrain at middle map height
@@ -1175,7 +1235,11 @@ void Cave::step(){
     pos = glm::ivec3(pos[0] + xzOffset[0], pos[1] + yOffset, pos[2] + xzOffset[1]);
 }
 
+Forest::Forest() :
+    TerrainType(4, 0.4f, 20.0f, 0.2f)
+{}
 
+Forest::~Forest(){}
 
 
 

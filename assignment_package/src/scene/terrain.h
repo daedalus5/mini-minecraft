@@ -22,7 +22,7 @@ class TerrainType;
 
 enum BlockType : unsigned char
 {
-    EMPTY, GRASS, DIRT, STONE, LAVA, WATER, WOOD, LEAF, BEDROCK, ICE, SAND
+    EMPTY, GRASS, DIRT, STONE, LAVA, WATER, WOOD, LEAF, BEDROCK, ICE, SAND, GOLDORE
 };
 
 class Chunk : public Drawable
@@ -178,6 +178,8 @@ public:
               const float z,
               const float persistance,
               const int octaves) const;             // returns a pseudorandom number between 0 and 1 for 3D FBM noise
+    virtual float worley(const int x,               // returns a pseudorandom number between 0 and 1 based on worley noise
+                         const int z);
     virtual int mapToHeight(const float val) const; // maps [0, 1] -> [128, 255]
 
 protected:
@@ -196,6 +198,8 @@ protected:
     float interpNoise3D(const float x,
                         const float y,
                         const float z) const;   // 3D noise interpolation function for smooth FBM noise
+    glm::vec2 random2(glm::vec2 p) const;       // returns random vec2
+    float distance(glm::vec2 p1, glm::vec2 p2) const;
 };
 
 class Highland : public TerrainType{    // generates a "highland" terrain
@@ -222,6 +226,12 @@ private:
     float mapToAngle(float num);        // maps [-1, 1] -> [0, 360]
     glm::ivec2 mapToXZOffset(float angle);
     int mapToYOffset(float angle);
+};
+
+class Forest : public TerrainType{
+public:
+    Forest();
+    virtual ~Forest();
 };
 
 

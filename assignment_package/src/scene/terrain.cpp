@@ -839,12 +839,12 @@ void Terrain::drawScene()
 void Terrain::createForest(){
     Forest forest = Forest();
     int size = 16;
-    float r;
+    //float r = 0.0f;
     float prob;
-    for(int i = 0; i < 16*size; ++i){
-        for(int j = 0; j < 16*size; ++j){
-            if (i*i + j*j < 16*size*16*size){
-                r = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX));
+    for(int i = -8*size; i < 8*size; ++i){
+        for(int j = -8*size; j < 8*size; ++j){
+            if (i*i + j*j < 8*size*8*size){
+                //r = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX));
                 prob = forest.worley(i, j);
                 if (prob > 0.5){
                     drawTree(glm::ivec2(i, j));

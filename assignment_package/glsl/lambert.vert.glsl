@@ -20,6 +20,8 @@ uniform mat4 u_ViewProj;    // The matrix that defines the camera's transformati
                             // We've written a static matrix for you to use for HW2,
                             // but in HW3 you'll have to generate one yourself
 
+uniform mat4 u_ShadowViewProj;
+
 uniform vec4 u_Color;       // When drawing the cube instance, we'll set our uniform color to represent different block types.
 
 in vec4 vs_Pos;             // The array of vertex positions passed to the shader
@@ -35,6 +37,7 @@ out vec4 fs_LightVec;       // The direction in which our virtual light lies, re
 out vec4 fs_Col;            // The color of each vertex. This is implicitly passed to the fragment shader.
 out vec4 fs_UV;
 out vec4 fs_Pos;
+out vec4 fs_shadowPos;
 
 const vec4 lightDir = vec4(1,1,0,0);  // The direction of our virtual light, which is used to compute the shading of
                                         // the geometry in the fragment shader.
@@ -59,4 +62,5 @@ void main()
 
     gl_Position = u_ViewProj * modelposition;// gl_Position is a built-in variable of OpenGL which is
                                              // used to render the final positions of the geometry's vertices
+    fs_shadowPos = u_ShadowViewProj * modelposition;
 }

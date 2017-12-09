@@ -108,8 +108,7 @@ PlayState::PlayState(OpenGLContext* in_context)
 
     context->glClearColor(skyColor.r,skyColor.g,skyColor.b,skyColor.a);
 
-    //time = 1;
-    //createRenderBuffers();
+    createRenderBuffers();
 }
 
 PlayState::~PlayState() {
@@ -248,8 +247,6 @@ void PlayState::paint() {
 
 void PlayState::GLDrawScene(bool shadow)
 {
-    mp_progLambert->setModelMatrix(glm::mat4());
-
     int chunkX = mp_terrain->getChunkPosition1D(mp_camera->eye[0]);
     int chunkZ = mp_terrain->getChunkPosition1D(mp_camera->eye[2]);
 
@@ -289,15 +286,14 @@ void PlayState::GLDrawScene(bool shadow)
 // Copied from hw 05
 void PlayState::renderLightCamera()
 {
-    // Render the 3D scene to our frame buffer
+    // Render to our framebuffer rather than the viewport
+    //context->glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
+    context->glBindFramebuffer(GL_FRAMEBUFFER, context->defaultFramebufferObject());
+    // Render on the whole framebuffer, complete from the lower left corner to the upper right
+    context->glViewport(0,0,context->width(),context->height());
+    // Clear the screen so that we only see newly drawn images
+    context->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-//    // Render to our framebuffer rather than the viewport
-//    context->glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
-//    // Render on the whole framebuffer, complete from the lower left corner to the upper right
-//    context->glViewport(0,0,context->width(),context->height());
-//    // Clear the screen so that we only see newly drawn images
-//    context->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//    //mp_lavavision->draw(*mp_quad);
     mp_lightcamera->ref = mp_camera->eye;
     mp_lightcamera->eye = mp_lightcamera->ref + glm::vec3(50, 50, 0);
     mp_lightcamera->RecomputeAttributes();
@@ -312,21 +308,27 @@ void PlayState::renderLightCamera()
 void PlayState::renderFinalScene()
 {
     // Render the frame buffer as a texture on a screen-size quad
+    if (m_frameBuffer == -1) {
+        return;
+    }
 
     // Tell OpenGL to render to the viewport's frame buffer
     context->glBindFramebuffer(GL_FRAMEBUFFER, context->defaultFramebufferObject());
     // Render on the whole framebuffer, complete from the lower left corner to the upper right
     context->glViewport(0,0,context->width(),context->height());
-//    // Clear the screen
-//    context->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // Clear the screen
+    context->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // Bind our texture in Texture Unit 0
-    //context->glActiveTexture(GL_TEXTURE0);
-    //context->glBindTexture(GL_TEXTURE_2D, m_renderedTexture);
+    context->glActiveTexture(GL_TEXTURE0 + 1);
+    context->glBindTexture(GL_TEXTURE_2D, m_renderedTexture);
+    mp_progLambert->bindShadowTexture(1);
 
     mp_progFlat->setViewProjMatrix(mp_camera->getViewProj());
     mp_progLambert->setViewProjMatrix(mp_camera->getViewProj());
     mp_progLambert->setEyePos(glm::vec4(mp_camera->eye, 1.f));
     mp_progLambert->setTime((time - start_time) /1000.f); // convert time to seconds
+    mp_progLambert->setShadowViewProjMatrix(mp_lightcamera->getViewProj());
+    mp_progLambert->setModelMatrix(glm::mat4());
 
     GLDrawScene(false);
 
@@ -518,66 +520,44 @@ void PlayState::musicStop()
 
 void PlayState::createRenderBuffers()
 {
-//    // Initialize the frame buffers and render textures
-//    context->glGenFramebuffers(1, &m_frameBuffer);
-//    context->glGenTextures(1, &m_renderedTexture);
-//    context->glGenRenderbuffers(1, &m_depthRenderBuffer);
-
-//    context->glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
-//    // Bind our texture so that all functions that deal with textures will interact with this one
-//    context->glBindTexture(GL_TEXTURE_2D, m_renderedTexture);
-//    // Give an empty image to OpenGL ( the last "0" )
-//    context->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, context->width(), context->height(), 0, GL_RGB, GL_UNSIGNED_BYTE, (void*)0);
-
-//    // Set the render settings for the texture we've just created.
-//    // Essentially zero filtering on the "texture" so it appears exactly as rendered
-//    context->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//    context->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//    // Clamp the colors at the edge of our texture
-//    context->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//    context->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-//    // Initialize our depth buffer
-//    context->glBindRenderbuffer(GL_RENDERBUFFER, m_depthRenderBuffer);
-//    context->glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, context->width(), context->height());
-//    context->glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthRenderBuffer);
-
-//    // Set m_renderedTexture as the color output of our frame buffer
-//    context->glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_renderedTexture, 0);
-
-//    // Sets the color output of the fragment shader to be stored in GL_COLOR_ATTACHMENT0, which we previously set to m_renderedTextures[i]
-//    GLenum drawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-//    context->glDrawBuffers(1, drawBuffers); // "1" is the size of drawBuffers
-
-//    if(context->glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-//    {
-//        std::cout << "Frame buffer did not initialize correctly..." << std::endl;
-//        context->printGLErrorLog();
-//    }
-
-    // Copied from http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#basic-shadowmap
+    // Initialize the frame buffers and render textures
     context->glGenFramebuffers(1, &m_frameBuffer);
-    context->glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
+    //context->glGenTextures(1, &m_renderedTexture);
+    context->glGenRenderbuffers(1, &m_depthRenderBuffer);
 
-    // Depth texture. Slower than a depth buffer, but you can sample it later in your shader
-    context->glGenTextures(1, &m_renderedTexture);
+    context->glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
+    // Bind our texture so that all functions that deal with textures will interact with this one
     context->glBindTexture(GL_TEXTURE_2D, m_renderedTexture);
-    context->glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT16, 1024, 1024, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+    // Give an empty image to OpenGL ( the last "0" )
+    context->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, context->width(), context->height(), 0, GL_RGB, GL_UNSIGNED_BYTE, (void*)0);
+
+    // Set the render settings for the texture we've just created.
+    // Essentially zero filtering on the "texture" so it appears exactly as rendered
     context->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     context->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    // Clamp the colors at the edge of our texture
     context->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     context->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    context->glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, m_renderedTexture, 0);
+    // Initialize our depth buffer
+    context->glBindRenderbuffer(GL_RENDERBUFFER, m_depthRenderBuffer);
+    context->glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, context->width(), context->height());
+    context->glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthRenderBuffer);
 
-    context->glDrawBuffer(GL_NONE); // No color buffer is drawn to.
+    // Set m_renderedTexture as the color output of our frame buffer
+    context->glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_renderedTexture, 0);
 
-    // Always check that our framebuffer is ok
+    // Sets the color output of the fragment shader to be stored in GL_COLOR_ATTACHMENT0, which we previously set to m_renderedTextures[i]
+    GLenum drawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+    context->glDrawBuffers(1, drawBuffers); // "1" is the size of drawBuffers
+    //context->glDrawBuffer(GL_NONE);
+
     if(context->glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
         std::cout << "Frame buffer did not initialize correctly..." << std::endl;
         context->printGLErrorLog();
     }
+
 }
 
 

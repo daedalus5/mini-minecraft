@@ -50,7 +50,7 @@ struct ray{
 
 class PlayState : public GameState {
 public:
-    PlayState(OpenGLContext* in_context);
+    PlayState(MyGL* in_context);
     ~PlayState();
     void update() override;
     void resizeWindow(int w, int h) override;
@@ -100,6 +100,8 @@ private:
     QMutex mutex;
     Scheduler* scheduler;
     Quad* mp_quad;
+
+    MyGL* mygl;
 
     // A collection of handles to the five frame buffers we've given
     // ourselves to perform render passes. The 0th frame buffer is always

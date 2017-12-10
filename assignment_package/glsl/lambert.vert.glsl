@@ -60,7 +60,15 @@ void main()
 
     fs_LightVec = (lightDir);  // Compute the direction in which the light source lies
 
-    gl_Position = u_ViewProj * modelposition;// gl_Position is a built-in variable of OpenGL which is
-                                             // used to render the final positions of the geometry's vertices
+    mat4 biasMatrix = mat4(
+    0.5, 0.0, 0.0, 0.0,
+    0.0, 0.5, 0.0, 0.0,
+    0.0, 0.0, 0.5, 0.0,
+    0.5, 0.5, 0.5, 1.0
+    );
+
     fs_shadowPos = u_ShadowViewProj * modelposition;
+    //gl_Position = u_ViewProj * modelposition;// gl_Position is a built-in variable of OpenGL which is
+                                             // used to render the final positions of the geometry's vertices
+    gl_Position = fs_shadowPos;
 }

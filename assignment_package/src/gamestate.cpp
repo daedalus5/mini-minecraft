@@ -35,7 +35,7 @@ void GameState::mousePress(QMouseEvent *e) {
     // default no-op
 }
 
-PlayState::PlayState(OpenGLContext* in_context)
+PlayState::PlayState(MyGL* in_context)
     : GameState(in_context),
       mp_worldAxes(new WorldAxes(in_context)),
       mp_progLambert(new ShaderProgram(in_context)), mp_progFlat(new ShaderProgram(in_context)), mp_lavavision(new ShaderProgram(in_context)),
@@ -47,7 +47,7 @@ PlayState::PlayState(OpenGLContext* in_context)
       skyColor(glm::vec4(0.37f, 0.74f, 1.0f, 1)),
       scheduler(new Scheduler(mp_terrain, &mutex)), mp_quad(new Quad(in_context)),
       music(new QMediaPlayer()),water(new QMediaPlayer()), m_frameBuffer(-1), m_renderedTexture(-1),
-      m_depthRenderBuffer(-1)
+      m_depthRenderBuffer(-1), mygl(in_context)
 {
 
     //Create the instance of Cube
@@ -61,20 +61,22 @@ PlayState::PlayState(OpenGLContext* in_context)
     mp_progLambert->bindTexture(0);
     // Create and set up the flat lighting shader
     mp_progFlat->create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
-    mp_lavavision->create(":/glsl/lavavision.vert.glsl", ":/glsl/lavavision.frag.glsl");
-    mp_lavavision->addTexture(":/textures/fire1.png");
-    mp_lavavision->addTexture(":/textures/water_overlay.png");
-    mp_lavavision->bindTexture(0);
+//    mp_lavavision->create(":/glsl/lavavision.vert.glsl", ":/glsl/lavavision.frag.glsl");
+//    mp_lavavision->addTexture(":/textures/fire1.png");
+//    mp_lavavision->addTexture(":/textures/water_overlay.png");
+//    mp_lavavision->bindTexture(0);
+
+    mp_lavavision->create(":/glsl/menu.vert.glsl", ":/glsl/menu.frag.glsl");
 
     mp_shadowmap->create(":/glsl/shadow.vert.glsl", ":/glsl/shadow.frag.glsl");
 
     mp_camera->eye = glm::vec3(mp_terrain->dimensions.x-10.f, mp_terrain->dimensions.y * 0.60, mp_terrain->dimensions.z-10.f);
     resizeWindow(context->width(), context->height());
-    mp_lightcamera->ref = glm::vec3(0, 0, 0);
-    mp_lightcamera->eye = glm::vec3(1, 1, 1);
-    mp_lightcamera->near_clip = 30;
-    mp_lightcamera->far_clip = 100;
-    mp_lightcamera->RecomputeAttributes();
+    //mp_lightcamera->far_clip = 500;
+    //mp_lightcamera->near_clip = 30;
+    //mp_lightcamera->ref = glm::vec3(0, 0, 0);
+    //mp_lightcamera->eye = glm::vec3(1, 1, 1);
+    //mp_lightcamera->RecomputeAttributes();
 
     mp_terrain->setTerrainType(new Highland);
 
@@ -107,8 +109,6 @@ PlayState::PlayState(OpenGLContext* in_context)
      music.play(); */
 
     context->glClearColor(skyColor.r,skyColor.g,skyColor.b,skyColor.a);
-
-    createRenderBuffers();
 }
 
 PlayState::~PlayState() {
@@ -242,7 +242,7 @@ void PlayState::resizeWindow(int w, int h) {
 
 void PlayState::paint() {
     renderLightCamera();
-    //renderFinalScene();
+    renderFinalScene();
 }
 
 void PlayState::GLDrawScene(bool shadow)
@@ -286,41 +286,29 @@ void PlayState::GLDrawScene(bool shadow)
 // Copied from hw 05
 void PlayState::renderLightCamera()
 {
-    // Render to our framebuffer rather than the viewport
-    //context->glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
-    context->glBindFramebuffer(GL_FRAMEBUFFER, context->defaultFramebufferObject());
-    // Render on the whole framebuffer, complete from the lower left corner to the upper right
-    context->glViewport(0,0,context->width(),context->height());
-    // Clear the screen so that we only see newly drawn images
-    context->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    mygl->bindFrameBufferBeforeShadow();
+    //mygl->bindDefaultFrameBufferAfterShadow();
 
     mp_lightcamera->ref = mp_camera->eye;
-    mp_lightcamera->eye = mp_lightcamera->ref + glm::vec3(50, 50, 0);
+    mp_lightcamera->eye = mp_lightcamera->ref + glm::vec3(20, 20, 0);
     mp_lightcamera->RecomputeAttributes();
 
     mp_shadowmap->setModelMatrix(glm::mat4());
-    mp_shadowmap->setViewProjMatrix(mp_lightcamera->getViewProj());
+    mp_shadowmap->setShadowViewProjMatrix(mp_lightcamera->getViewProj());
 
     GLDrawScene(true);
+
+    // testing
+//    mygl->bindDefaultFrameBufferAfterShadow();
+//    mp_lavavision->bindShadowTexture(1);
+//    mp_lavavision->draw(*mp_quad);
 }
 
-// Copied from hw 05
 void PlayState::renderFinalScene()
 {
-    // Render the frame buffer as a texture on a screen-size quad
-    if (m_frameBuffer == -1) {
-        return;
-    }
 
-    // Tell OpenGL to render to the viewport's frame buffer
-    context->glBindFramebuffer(GL_FRAMEBUFFER, context->defaultFramebufferObject());
-    // Render on the whole framebuffer, complete from the lower left corner to the upper right
-    context->glViewport(0,0,context->width(),context->height());
-    // Clear the screen
-    context->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // Bind our texture in Texture Unit 0
-    context->glActiveTexture(GL_TEXTURE0 + 1);
-    context->glBindTexture(GL_TEXTURE_2D, m_renderedTexture);
+    mygl->bindDefaultFrameBufferAfterShadow();
     mp_progLambert->bindShadowTexture(1);
 
     mp_progFlat->setViewProjMatrix(mp_camera->getViewProj());
@@ -334,7 +322,7 @@ void PlayState::renderFinalScene()
 
     glDisable(GL_DEPTH_TEST);
     mp_progFlat->setModelMatrix(glm::mat4());
-    //mp_progFlat->draw(*mp_worldAxes);
+    mp_progFlat->draw(*mp_worldAxes);
 
     mp_progFlat->setViewProjMatrix(glm::mat4());
     mp_progFlat->draw(*mp_crosshairs);
@@ -558,6 +546,7 @@ void PlayState::createRenderBuffers()
         context->printGLErrorLog();
     }
 
+    context->glBindFramebuffer(GL_FRAMEBUFFER, context->defaultFramebufferObject());
 }
 
 

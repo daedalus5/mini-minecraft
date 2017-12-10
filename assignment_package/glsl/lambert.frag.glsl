@@ -85,12 +85,18 @@ void main()
         out_Col = mix(color, vec4(0, 0, 0, 1), fog);
     }
 
-    //out_Col = texture(u_ShadowTexture, uv);
     // Compute shadows
-    vec2 shadowUV = (vec2(fs_shadowPos.x, fs_shadowPos.y) + vec2(1, 1)) / 2.f;
+    //vec4 shadowNDC = fs_shadowPos / fs_shadowPos.w;
+    vec4 shadowNDC = fs_shadowPos;
+    vec2 shadowUV = (shadowNDC.xy + vec2(1, 1)) / 2.f;
     vec4 shadowTextureColor = texture(u_ShadowTexture, shadowUV);
-    if (fs_shadowPos.z > shadowTextureColor.z) {
-        out_Col = 0.5f * out_Col;
+//    if ( texture(u_ShadowTexture, shadowUV).z  <  shadowNDC.z){
+//        out_Col = vec4(out_Col[0] * 0.5f, out_Col[1] * 0.5f, out_Col[2] * 0.5f, out_Col[3]);
+//    }
+    if (fs_shadowPos[2] > shadowTextureColor.z) {
+        out_Col = vec4(out_Col[0] * 0.5f, out_Col[1] * 0.5f, out_Col[2] * 0.5f, out_Col[3]);
     }
-
+    //out_Col = vec4(shadowNDC[2], shadowNDC[2], shadowNDC[2], 1);
+    //out_Col[3] = 1;
+    //out_Col = vec4(shadowNDC.xy, 0, 1);
 }

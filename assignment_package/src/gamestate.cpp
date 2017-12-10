@@ -44,7 +44,7 @@ PlayState::PlayState(OpenGLContext* in_context)
       start_time(QDateTime::currentMSecsSinceEpoch()),
       skyColor(glm::vec4(0.37f, 0.74f, 1.0f, 1)),
       scheduler(new Scheduler(mp_terrain, &mutex)), mp_quad(new Quad(in_context)),
-      music(new QMediaPlayer()),water(new QMediaPlayer())
+      music(new QMediaPlayer()),water(new QMediaPlayer()),caverns(new QMediaPlayer())
 {
 
     //Create the instance of Cube
@@ -84,6 +84,7 @@ PlayState::PlayState(OpenGLContext* in_context)
     // music->setPlaylist(playlist);
      music->setMedia(QUrl("qrc:/music/Minecraft_Loop.mp3"));
      water->setMedia(QUrl("qrc:/music/Water_scapes.mp3"));
+     caverns->setMedia(QUrl("qrc:/music/Caverns.mp3"));
      music->setVolume(50);
      water->setVolume(50);
      music->play();
@@ -446,6 +447,16 @@ void PlayState::musicCheck()
         }
         else if((!underwater)&&(water->state()==0))
         {
+            music->play();
+        }
+        else if(underground)
+        {
+            music->stop();
+            caverns->play();
+        }
+        else if(!underground)
+        {
+            caverns->stop();
             music->play();
         }
     }

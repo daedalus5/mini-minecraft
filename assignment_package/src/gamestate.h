@@ -89,6 +89,7 @@ private:
 
     QMediaPlayer* music;
     QMediaPlayer* water;
+    QMediaPlayer* caverns;
 
     bool musicflag;
 

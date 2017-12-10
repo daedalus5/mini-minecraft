@@ -8,5 +8,4 @@ void main()
 {
     fs_UV = vs_UV;
     gl_Position = vs_Pos;
-    gl_Position[2] = 0.000001;
 }

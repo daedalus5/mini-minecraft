@@ -9,8 +9,8 @@ ShaderProgram::ShaderProgram(OpenGLContext *context)
     : vertShader(), fragShader(), prog(),
       attrPos(-1), attrNor(-1), attrCol(-1), attrUV(-1),
       unifModel(-1), unifModelInvTr(-1), unifViewProj(-1), unifColor(-1), unifEyePos(-1),
-      unifSampler2D(-1), unifTime(-1), underlava(-1), underwater(-1), unifUnderground(-1), mp_texture(nullptr),
-      context(context)
+      unifSampler2D(-1), unifTime(-1), underlava(-1), underwater(-1), unifUnderground(-1),
+      texture_list(std::vector<Texture*>()), context(context), texture_index(-1)
 {}
 
 void ShaderProgram::create(const char *vertfile, const char *fragfile)
@@ -65,6 +65,7 @@ void ShaderProgram::create(const char *vertfile, const char *fragfile)
     attrNor = context->glGetAttribLocation(prog, "vs_Nor");
     attrCol = context->glGetAttribLocation(prog, "vs_Col");
     attrUV = context->glGetAttribLocation(prog, "vs_UV");
+
     underwater = context->glGetUniformLocation(prog, "underwater");
     underlava = context->glGetUniformLocation(prog, "underlava");
 
@@ -77,17 +78,6 @@ void ShaderProgram::create(const char *vertfile, const char *fragfile)
 
     unifSampler2D  = context->glGetUniformLocation(prog, "u_Texture");
     unifTime = context->glGetUniformLocation(prog, "u_Time");
-
-
-    if (unifSampler2D != -1) {
-        // Code that sets up texture data on the GPU
-        mp_texture = new Texture(context);
-        mp_texture->create(":/textures/minecraft_textures_all.png");
-        mp_texture->load(0);
-        mp_texture->bind(0);
-        useMe();
-        context->glUniform1i(unifSampler2D, /*GL_TEXTURE*/0);
-    }
 
 }
 
@@ -170,8 +160,8 @@ void ShaderProgram::draw(Drawable &d)
     // (referred to by attrPos) with that VBO
 
     // Must be called every frame
-    if(mp_texture != nullptr) {
-        mp_texture->bind(0);
+    if(texture_list.size() > 0 && texture_list[texture_index] != nullptr) {
+        texture_list[texture_index]->bind(texture_index);
     }
 
     if (d.bindEve()) {
@@ -317,25 +307,42 @@ void ShaderProgram::setEyePos(glm::vec4 p) {
     }
 }
 
-
-void ShaderProgram::setSubmerged(glm::vec2 r)
-{
-    useMe();
-    if(r.x==1)
-    {
-        context->glUniform1i(underwater,1 );
-
+void ShaderProgram::setTexture(const char * filepath) {
+    if (unifSampler2D != -1) {
+        // Code that sets up texture data on the GPU
+        mp_texture = new Texture(context);
+        mp_texture->create(filepath);
+        mp_texture->load(0);
+        mp_texture->bind(0);
+        useMe();
+        context->glUniform1i(unifSampler2D, /*GL_TEXTURE*/0);
     }
-    else if(r.y == 1)
-    {
-        context->glUniform1i(underlava,1);
-    }
-    else if((r.x==0)&&(r.y==0))
-    {
-        context->glUniform1i(underwater,0);
-        context->glUniform1i(underlava,0);
-    }
+}
 
+void ShaderProgram::addTexture(const char * filepath) {
+    if (unifSampler2D != -1) {
+        // Code that sets up texture data on the GPU
+        Texture* temp = new Texture(context);
+        temp->create(filepath);
+        int slot = texture_list.size();
+        texture_list.push_back(temp);
+        temp->load(slot);
+        //mp_texture->bind(0);
+        //useMe();
+        //context->glUniform1i(unifSampler2D, /*GL_TEXTURE*/slot);
+    }
+}
+
+void ShaderProgram::bindTexture(int index) {
+    if (unifSampler2D != -1) {
+        if (texture_index == index) {
+            return;
+        }
+        texture_list[index]->bind(index);
+        useMe();
+        context->glUniform1i(unifSampler2D, index);
+        texture_index = index;
+    }
 }
 
 void ShaderProgram::setUnderground(int i)

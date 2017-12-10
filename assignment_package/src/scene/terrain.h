@@ -22,7 +22,9 @@ class TerrainType;
 
 enum BlockType : unsigned char
 {
-    EMPTY, GRASS, DIRT, STONE, LAVA, WATER, WOOD, LEAF, BEDROCK, ICE, SAND, GOLDORE, SNOW
+    EMPTY, GRASS, DIRT, STONE, LAVA, WATER, WOOD, LEAF, BEDROCK, ICE, SAND, GOLDORE, SNOW, NOTHING
+    // NOTHING means that this block does not exist
+    // Used in GetBlockAt, which returns nothing if block does not exist
 };
 
 class Chunk : public Drawable
@@ -55,6 +57,15 @@ private:
     BlockType block_array[65536]; // 16 x 256 x 16 (x by y by z)
 };
 
+// Used to pass chunk's key and value to PlayState
+// Because of multithreading, we do not want Terrain
+// to update chunk_map from different threads simultaneously.
+// So we pass it to PlayState to update all Chunks at once.
+struct chunkMapData {
+    Chunk* ch;
+    uint64_t key;
+};
+
 class Terrain
 {
 public:
@@ -68,11 +79,9 @@ public:
 
     // Data of Chunks that need to be added to map
     // They are added in MyGL's timerUpdate
-    // Need to make more robust so multiple threads work with it
-    // Array of Chunks that need to be added to map
-    std::vector<Chunk*> chunksGonnaDraw;
-    // Array of keys for the Chunks that need to be added to map
-    std::vector<uint64_t> keysGonnaDraw;
+    // More robust so multiple threads can work with it
+    // Array of keys and values that need to be added to map
+    std::vector<chunkMapData> chunks2Add;
 
     glm::ivec3 dimensions;
     glm::ivec3 chunk_dimensions;

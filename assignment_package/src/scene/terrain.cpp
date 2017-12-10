@@ -1,7 +1,5 @@
 #include <scene/terrain.h>
 
-#include <iostream>
-
 Chunk::Chunk(OpenGLContext* context)
 
     : Drawable(context),isCreated(false), hasData(false)
@@ -30,7 +28,7 @@ BlockType& Chunk::getBlockType(int x, int y, int z) {
 // Only runs if Chunk has data
 void Chunk::createVBO()
 {
-    if (!hasData) {
+    if (!hasData || everything.size() == 0 || indices.size() == 0) {
         return;
     }
 
@@ -73,7 +71,8 @@ Terrain::Terrain(OpenGLContext* in_context,Camera* camera,QMutex* mutexref) :
     block_uv_map(std::unordered_map<char, std::vector<glm::vec4>>()),
 
 
-    offset(glm::vec3(0.5, 0.5, 0.5))
+    offset(glm::vec3(0.5, 0.5, 0.5)),
+    chunks2Add(std::vector<chunkMapData>())
 {
     // Map BlockType to colors
     // Not currently used because we have textures
@@ -238,7 +237,7 @@ Terrain::~Terrain() {
 BlockType Terrain::getBlockAt(int x, int y, int z) const
 {
     if (y < 0 || y > 255) {
-        return EMPTY;
+        return NOTHING;
     }
 
     auto index = chunk_map.find(convertToInt(getChunkPosition1D(x), getChunkPosition1D(z)));
@@ -246,7 +245,7 @@ BlockType Terrain::getBlockAt(int x, int y, int z) const
         Chunk* ch = index->second;
         return ch->getBlockType(getChunkLocalPosition1D(x), y, getChunkLocalPosition1D(z));
     }
-    return EMPTY;
+    return NOTHING;
 }
 
 // Given world coordinates, sets the block at that position
@@ -271,7 +270,7 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
         ch = createScene(getChunkPosition1D(x), getChunkPosition1D(z));
         chunk_map[chunk_pos] = ch;
     } else {
-        ch = chunk_map[chunk_pos];
+        ch = index->second;
     }
     ch->getBlockType(getChunkLocalPosition1D(x), y, getChunkLocalPosition1D(z)) = t;
     ch->hasData = false; // Need to update VBO
@@ -376,9 +375,9 @@ void Terrain::updateChunkVBO(int x, int z) {
 
     // Clear out the Chunk's current data
     Chunk* ch = index->second;
+    ch->hasData = false; // VBO data has been cleared.
     ch->everything.clear();
     ch->indices.clear();
-    ch->hasData = false; // VBO data has been cleared.
 
     // Variables that are reused in loop
     BlockType block, neighbor; // Current BlockType and neighbor BlockType
@@ -397,7 +396,7 @@ void Terrain::updateChunkVBO(int x, int z) {
 
                 block = ch->getBlockType(i, j, k);
 
-                if (block != EMPTY) {
+                if (block != EMPTY && block != NOTHING) {
 
                     world_pos = glm::vec3(i, j, k)
                             + glm::vec3(x * chunk_dimensions[0], 0, z * chunk_dimensions[2]);
@@ -569,74 +568,6 @@ uint64_t Terrain::convertToInt(int x, int z)  const {
 void Terrain::splitInt(uint64_t in, int *x, int *z) const {
     *x = (int) (in>>32);
     *z = (int) in;
-}
-
-// Loops through Chunks surrounding the camera
-// Creates Chunk data if it does not have data
-// Invoked by thread
-void Terrain::drawScene()
-{
-
-    int chunkX = getChunkPosition1D(mp_camera->eye[0]);
-    int chunkZ = getChunkPosition1D(mp_camera->eye[2]);
-
-    // Create collection of Chunks to update/draw
-    // Because we want to update VBO after all new Chunks are created
-
-    // List of Chunks to draw
-    chunksGonnaDraw = std::vector<Chunk*>();
-    keysGonnaDraw = std::vector<uint64_t>();
-    // List of Chunks that need VBO updated
-    std::set<uint64_t> chunks2Update = std::set<uint64_t>();
-
-    int num = 10;
-    int x, z;
-
-    Chunk* ch;
-    for (int i = -num; i < num; i++) {
-        for (int k = -num; k < num; k++) {
-            x = chunkX + i;
-            z = chunkZ + k;
-            ch = getChunk(x, z);
-            if (ch != nullptr) {
-
-                if(!ch->hasData)
-                {
-                    chunks2Update.insert(convertToInt(x,z));
-                    // Update neighboring Chunks
-                    chunks2Update.insert(convertToInt(x + 1, z));
-                    chunks2Update.insert(convertToInt(x - 1, z));
-                    chunks2Update.insert(convertToInt(x, z + 1));
-                    chunks2Update.insert(convertToInt(x, z - 1));
-                }
-            } else {
-
-                mutex->lock();
-                ch = createScene(x, z);
-                mutex->unlock();
-                if (ch != nullptr) {
-
-                    chunksGonnaDraw.push_back(ch);
-                    keysGonnaDraw.push_back(convertToInt(x, z));
-                    chunks2Update.insert(convertToInt(x, z));
-
-                    // Update neighboring Chunks
-                    chunks2Update.insert(convertToInt(x + 1, z));
-                    chunks2Update.insert(convertToInt(x - 1, z));
-                    chunks2Update.insert(convertToInt(x, z + 1));
-                    chunks2Update.insert(convertToInt(x, z - 1));
-
-                }
-
-            }
-        }
-    }
-
-    int tempX, tempZ;
-    for (uint64_t i : chunks2Update) {
-        splitInt(i, &tempX, &tempZ);
-        updateChunkVBO(tempX, tempZ);
-    }
 }
 
 // Given which Chunk to create
@@ -837,6 +768,76 @@ void Terrain::traceRiverPath(LSystem* lsys, const std::vector<int>& offsets){
     }
 }
 
+// Loops through Chunks surrounding the camera
+// Creates Chunk data if it does not have data
+// Invoked by thread
+void Terrain::drawScene()
+{
+
+    int chunkX = getChunkPosition1D(mp_camera->eye[0]);
+    int chunkZ = getChunkPosition1D(mp_camera->eye[2]);
+
+    // List of Chunks that need VBO updated
+    // Save this until end, after all new Chunks have been made
+    std::set<uint64_t> chunks2Update = std::set<uint64_t>();
+
+    int num = 10;
+    int x, z;
+
+    Chunk* ch;
+    for (int i = -num; i < num; i++) {
+        for (int k = -num; k < num; k++) {
+            x = chunkX + i;
+            z = chunkZ + k;
+            ch = getChunk(x, z);
+            if (ch != nullptr) {
+
+                if(!ch->hasData)
+                {
+                    chunks2Update.insert(convertToInt(x, z));
+                    // Update neighboring Chunks
+                    chunks2Update.insert(convertToInt(x + 1, z));
+                    chunks2Update.insert(convertToInt(x - 1, z));
+                    chunks2Update.insert(convertToInt(x, z + 1));
+                    chunks2Update.insert(convertToInt(x, z - 1));
+                }
+            } else {
+
+                //mutex->lock();
+                ch = createScene(x, z);
+                //mutex->unlock();
+                if (ch != nullptr) {
+
+                    // Add new Chunk to list, so it can be
+                    // added to map by PlayState
+                    chunkMapData data;
+                    data.ch = ch;
+                    data.key = convertToInt(x, z);
+                    chunks2Add.push_back(data);
+
+                    //chunk_map[convertToInt(x, z)] = ch;
+                    chunks2Update.insert(convertToInt(x, z));
+
+                    // Update neighboring Chunks
+                    chunks2Update.insert(convertToInt(x + 1, z));
+                    chunks2Update.insert(convertToInt(x - 1, z));
+                    chunks2Update.insert(convertToInt(x, z + 1));
+                    chunks2Update.insert(convertToInt(x, z - 1));
+
+                }
+
+            }
+        }
+    }
+
+    int tempX, tempZ;
+    for (uint64_t i : chunks2Update) {
+        splitInt(i, &tempX, &tempZ);
+        updateChunkVBO(tempX, tempZ);
+    }
+
+}
+
 void Terrain::createForest(){
     Forest forest = Forest();
     int size = 16;
@@ -918,7 +919,7 @@ void Terrain::excavateCave(){
         for(int i = -excavateRadius; i <= excavateRadius; ++i){
             for(int j = -excavateRadius; j <= excavateRadius; ++j){
                 for(int k = -excavateRadius; k <= excavateRadius; ++k){
-                    r1 = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+                    r1 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
                     // excavate sphere
                     if (i*i + j*j + k*k < excavateRadius * excavateRadius){
                         setBlockAt(cave.pos[0] + i, cave.pos[1] + j, cave.pos[2] + k, EMPTY);
@@ -941,7 +942,7 @@ void Terrain::excavateCave(){
     for(int i = -cavernSize; i <= cavernSize; ++i){
         for(int k = -cavernSize; k <= cavernSize; ++k){
             int q = glm::floor(cavernSize * cave.fbm(cave.pos[0] + i + 0.5f, cave.pos[2] + k + 0.5f, 0.25, 6));
-            r1 = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+            r1 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
             if (r1 < 0.95){
                 for(int j = -q; j <= q; ++j){
                     if (i*i + j*j + k*k < cavernSize * cavernSize){
@@ -989,11 +990,11 @@ int Terrain::getHeightAt(const glm::ivec2 pos) const{
 void Terrain::interpolateTerrain(TerrainType* tA, TerrainType* tB, BlockType b,  // interpolates between two terrain types in the x-direction
                                  const int chunkWorldX, const int chunkWorldZ, Chunk *const chunk)
 {
-    // 0 -> 127 is STONE
+    // 0 -> 127 is BEDROCK
     for(int x = 0; x < 16; ++x){
         for(int z = 0; z < 16; ++z){
             for(int y = 0; y < 128; ++y){
-                chunk->getBlockType(x, y, z) = STONE;
+                chunk->getBlockType(x, y, z) = BEDROCK;
             }
         }
     }
@@ -1348,8 +1349,7 @@ void Cave::step(){
     float theta = fbm3D(pos[0] + 0.5, pos[1] + 0.5, pos[2] + 0.5, persistance, octaves);
     theta = mapToAngle(theta);
     glm::ivec2 xzOffset = mapToXZOffset(theta);
-
-    float phi = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+    float phi = static_cast <float> (::rand()) / static_cast <float> (RAND_MAX);
     phi = mapToAngle(phi);
     int yOffset = mapToYOffset(phi);
 

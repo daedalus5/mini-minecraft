@@ -105,7 +105,6 @@ void MyGL::initializeGL()
 //    vao.bind();
     glBindVertexArray(vao);
 
-    mp_terrain->setTerrainType(new Highland);
     mp_terrain->createRivers();
     mp_terrain->excavateCave();
     mp_terrain->createForest();

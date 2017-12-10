@@ -14,7 +14,7 @@ const float PI_6 = 0.52359877;
 const float PI_8 = 0.39269908;
 const int MAX_DEPTH_DELTA = 60; // number of steps to generate river delta
 const int MAX_DEPTH_RIVER = 60; // number of steps to generate main river
-const int TREE_DEPTH = 5 ;      // how far to move for tree branching
+const int TREE_DEPTH = 5 ;      // number of steps to generate tree
 
 class LSystem;
 
@@ -23,10 +23,10 @@ typedef void (LSystem::*Rule)(void);
 class Turtle
 {
 public:
-    glm::vec2 position;     // starting position of river
-    glm::vec2 orientation;  // staring orientation of river
+    glm::vec2 position;     // starting position of turtle
+    glm::vec2 orientation;  // staring orientation of turtle
     int depth;              // recursion depth
-    float fDistance;        // distance turtle moves on F command
+    float fDistance;        // distance turtle moves on 'F'
 
     Turtle();
     Turtle(glm::vec2 pos, glm::vec2 heading, float fDistance);
@@ -73,7 +73,9 @@ protected:
     virtual void X();
 };
 
-class River : public LSystem{
+class River : public LSystem{                       // An LSystem River
+                                                    // FX -> [-FY]+--+FX
+                                                    // FY -> [-FX]+--+FY
 public:
     River(glm::vec2 pos, glm::vec2 heading, float fDistance);
     virtual ~River();
@@ -84,7 +86,8 @@ public:
     void plusSign() override;
 };
 
-class RiverDelta : public LSystem{
+class RiverDelta : public LSystem{                  // An LSystem River Delta
+                                                    // FX -> [-FX]+FX
 public:
     RiverDelta(glm::vec2 pos, glm::vec2 heading, float fDistance);
     virtual ~RiverDelta();
@@ -103,10 +106,10 @@ public:
     LineSegment2D(glm::vec2& start, glm::vec2& end);
     ~LineSegment2D();
 
-    bool intersectAt(const int row, float* xIntersect); // line row intersection test
+    bool intersectAt(const int row, float* xIntersect); // line-row intersection test
 };
 
-class Tree : public LSystem{
+class Tree : public LSystem{                        // An LSystem Tree
 public:
     Tree(glm::vec2 pos, float fDistance);
     virtual ~Tree();

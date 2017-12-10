@@ -64,8 +64,6 @@ GLenum Chunk::drawMode()
 // TERRAIN START
 
 Terrain::Terrain(OpenGLContext* in_context,Camera* camera,QMutex* mutexref) :
-    terrainType(nullptr),
-    lsys(nullptr),
     context(in_context),mp_camera(camera),mutex(mutexref),
     dimensions(64, 256, 64),
     chunk_dimensions(16, 256, 16),
@@ -179,6 +177,13 @@ Terrain::Terrain(OpenGLContext* in_context,Camera* camera,QMutex* mutexref) :
     block_uv_map[ICE] = uv;
 
     uv.clear();
+    uv.push_back(glm::vec4(2.f/16.f, 12.f/16.f, 64.f, 0));
+    uv.push_back(glm::vec4(2.f/16.f, 11.f/16.f, 64.f, 0));
+    uv.push_back(glm::vec4(3.f/16.f, 11.f/16.f, 64.f, 0));
+    uv.push_back(glm::vec4(3.f/16.f, 12.f/16.f, 64.f, 0));
+    block_uv_map[SNOW] = uv;
+
+    uv.clear();
     uv.push_back(glm::vec4(2.f/16.f, 15.f/16.f, 10.f, 0));
     uv.push_back(glm::vec4(2.f/16.f, 14.f/16.f, 10.f, 0));
     uv.push_back(glm::vec4(3.f/16.f, 14.f/16.f, 10.f, 0));
@@ -226,7 +231,6 @@ Terrain::~Terrain() {
         it->second->destroy();
         delete it->second;
     }
-    delete terrainType;
 }
 
 // Given world coordinates, return BlockType
@@ -567,6 +571,74 @@ void Terrain::splitInt(uint64_t in, int *x, int *z) const {
     *z = (int) in;
 }
 
+// Loops through Chunks surrounding the camera
+// Creates Chunk data if it does not have data
+// Invoked by thread
+void Terrain::drawScene()
+{
+
+    int chunkX = getChunkPosition1D(mp_camera->eye[0]);
+    int chunkZ = getChunkPosition1D(mp_camera->eye[2]);
+
+    // Create collection of Chunks to update/draw
+    // Because we want to update VBO after all new Chunks are created
+
+    // List of Chunks to draw
+    chunksGonnaDraw = std::vector<Chunk*>();
+    keysGonnaDraw = std::vector<uint64_t>();
+    // List of Chunks that need VBO updated
+    std::set<uint64_t> chunks2Update = std::set<uint64_t>();
+
+    int num = 10;
+    int x, z;
+
+    Chunk* ch;
+    for (int i = -num; i < num; i++) {
+        for (int k = -num; k < num; k++) {
+            x = chunkX + i;
+            z = chunkZ + k;
+            ch = getChunk(x, z);
+            if (ch != nullptr) {
+
+                if(!ch->hasData)
+                {
+                    chunks2Update.insert(convertToInt(x,z));
+                    // Update neighboring Chunks
+                    chunks2Update.insert(convertToInt(x + 1, z));
+                    chunks2Update.insert(convertToInt(x - 1, z));
+                    chunks2Update.insert(convertToInt(x, z + 1));
+                    chunks2Update.insert(convertToInt(x, z - 1));
+                }
+            } else {
+
+                mutex->lock();
+                ch = createScene(x, z);
+                mutex->unlock();
+                if (ch != nullptr) {
+
+                    chunksGonnaDraw.push_back(ch);
+                    keysGonnaDraw.push_back(convertToInt(x, z));
+                    chunks2Update.insert(convertToInt(x, z));
+
+                    // Update neighboring Chunks
+                    chunks2Update.insert(convertToInt(x + 1, z));
+                    chunks2Update.insert(convertToInt(x - 1, z));
+                    chunks2Update.insert(convertToInt(x, z + 1));
+                    chunks2Update.insert(convertToInt(x, z - 1));
+
+                }
+
+            }
+        }
+    }
+
+    int tempX, tempZ;
+    for (uint64_t i : chunks2Update) {
+        splitInt(i, &tempX, &tempZ);
+        updateChunkVBO(tempX, tempZ);
+    }
+}
+
 // Given which Chunk to create
 // Make the terrain for that Chunk
 Chunk* Terrain::createScene(int chunkX, int chunkZ) {
@@ -583,68 +655,66 @@ Chunk* Terrain::createScene(int chunkX, int chunkZ) {
     int chunkWorldX = chunkX * chunk_dimensions[0];
     int chunkWorldZ = chunkZ * chunk_dimensions[2];
 
-    // 0 -> 127 is STONE
-    for(int x = 0; x < chunk_dimensions[0]; ++x){
-        for(int z = 0; z < chunk_dimensions[2]; ++z){
-            for(int y = 0; y < 128; ++y){
-                //setBlockAt(x, y, z, STONE);
-                chunk->getBlockType(x, y, z) = STONE;
-            }
-        }
+    Highland highland = Highland();
+    Foothills foothills = Foothills();
+    SnowMountains snowyMountains = SnowMountains();
+
+    // river lands
+    if (chunkWorldX >= -4 * 16 && chunkWorldX <= 4 * 16){
+        highland.drawMe(chunkWorldX, chunkWorldZ, chunk);
     }
-    // 128 -> height - 1 is DIRT, height is GRASS
-    float persistance = terrainType->getPersistance();
-    int octaves = terrainType->getOctaves();
-    float greyscale;
-    int height;
-    for(int x = 0; x < chunk_dimensions[0]; ++x){
-        for(int z = 0; z < chunk_dimensions[2]; ++z){
-            greyscale = terrainType->fbm(x + chunkWorldX + 0.5f, z + chunkWorldZ + 0.5f, persistance, octaves);
-            height = terrainType->mapToHeight(greyscale);
-            for(int y = 128; y < height; ++y){
-                chunk->getBlockType(x, y, z) = DIRT;
-            }
-            chunk->getBlockType(x, height, z) = GRASS;
-        }
+    // foothills
+    else if (chunkWorldX >= -5 * 16 && chunkWorldX < -4 * 16){
+        interpolateTerrain(&foothills, &highland, GRASS, chunkWorldX, chunkWorldZ, chunk);
+    }
+    else if (chunkWorldX <= 5 * 16 && chunkWorldX > 4 * 16){
+        interpolateTerrain(&highland, &foothills, GRASS, chunkWorldX, chunkWorldZ, chunk);
+    }
+    else if ((chunkWorldX >= -10 * 16 && chunkWorldX < -5 * 16) || (chunkWorldX <= 10 * 16 && chunkWorldX > 5 * 16)){
+        foothills.drawMe(chunkWorldX, chunkWorldZ, chunk);
+    }
+    // snowy mountains
+    else if (chunkWorldX >= -11 * 16 && chunkWorldX < -10 * 16){
+        interpolateTerrain(&snowyMountains, &foothills, SNOW, chunkWorldX, chunkWorldZ, chunk);
+    }
+    else if (chunkWorldX <= 11 * 16 && chunkWorldX > 10 * 16){
+        interpolateTerrain(&foothills, &snowyMountains, SNOW, chunkWorldX, chunkWorldZ, chunk);
+    }
+    else{
+        snowyMountains.drawMe(chunkWorldX, chunkWorldZ, chunk);
     }
 
     return chunk;
 }
 
-void Terrain::setTerrainType(TerrainType *t){
-    delete terrainType;
-    this->terrainType = t;
-}
-
-void Terrain::setLSystem(LSystem *l){
-    delete lsys;
-    this->lsys = l;
-}
+//////////////////////// PROCEDURAL TERRAIN FUNCTIONS ///////////////////////////
 
 void Terrain::createRivers()
 {
 
     srand(time(NULL));
     // pass river desired start position and general heading (x, z)
-    setLSystem(new RiverDelta(glm::vec2(0,0), glm::vec2(0.0,1.0f), 4.0f));
+    RiverDelta riverDelta = RiverDelta(glm::vec2(0,0), glm::vec2(0.0,1.0f), 4.0f);
+    RiverDelta* deltaPtr = &riverDelta;
     // set number of turtle steps and pass intial path seed
-    lsys->generatePath(MAX_DEPTH_DELTA, "F+-F+-FX");
+    deltaPtr->generatePath(MAX_DEPTH_DELTA, "F+-F+-FX");
     // populate LSystems set of operations passed to turtle
-    lsys->populateOps();
+    deltaPtr->populateOps();
 
     // offsets are used to draw rivers with some thickness according to turtle recursion depth
     std::vector<int> offsets = {4, 2, 1, 0};
-    traceRiverPath(offsets);
+    traceRiverPath(deltaPtr, offsets);
 
-    setLSystem(new River(glm::vec2(0,0), glm::vec2(0.0,-1.0f), 4.0f));
-    lsys->generatePath(MAX_DEPTH_RIVER, "F+-F+-FX");
-    lsys->populateOps();
+    River river = River(glm::vec2(0,0), glm::vec2(0.0,-1.0f), 4.0f);
+    River* riverPtr = &river;
+    riverPtr->generatePath(MAX_DEPTH_RIVER, "F+-F+-FX");
+    riverPtr->populateOps();
     offsets.clear();
     offsets = {4, 0, 0, 0};
-    traceRiverPath(offsets);
+    traceRiverPath(riverPtr, offsets);
 }
 
-void Terrain::traceRiverPath(const std::vector<int>& offsets){
+void Terrain::traceRiverPath(LSystem* lsys, const std::vector<int>& offsets){
     glm::vec2 start;
     glm::vec2 end;
     int zMin;
@@ -767,86 +837,16 @@ void Terrain::traceRiverPath(const std::vector<int>& offsets){
     }
 }
 
-// Loops through Chunks surrounding the camera
-// Creates Chunk data if it does not have data
-// Invoked by thread
-void Terrain::drawScene()
-{
-
-    int chunkX = getChunkPosition1D(mp_camera->eye[0]);
-    int chunkZ = getChunkPosition1D(mp_camera->eye[2]);
-
-    // Create collection of Chunks to update/draw
-    // Because we want to update VBO after all new Chunks are created
-
-    // List of Chunks to draw
-    chunksGonnaDraw = std::vector<Chunk*>();
-    keysGonnaDraw = std::vector<uint64_t>();
-    // List of Chunks that need VBO updated
-    std::set<uint64_t> chunks2Update = std::set<uint64_t>();
-
-    int num = 10;
-    int x, z;
-
-    Chunk* ch;
-    for (int i = -num; i < num; i++) {
-        for (int k = -num; k < num; k++) {
-            x = chunkX + i;
-            z = chunkZ + k;
-            ch = getChunk(x, z);
-            if (ch != nullptr) {
-
-                if(!ch->hasData)
-                {
-                    chunks2Update.insert(convertToInt(x,z));
-                    // Update neighboring Chunks
-                    chunks2Update.insert(convertToInt(x + 1, z));
-                    chunks2Update.insert(convertToInt(x - 1, z));
-                    chunks2Update.insert(convertToInt(x, z + 1));
-                    chunks2Update.insert(convertToInt(x, z - 1));
-                }
-            } else {
-
-                mutex->lock();
-                ch = createScene(x, z);
-                mutex->unlock();
-                if (ch != nullptr) {
-
-                    chunksGonnaDraw.push_back(ch);
-                    keysGonnaDraw.push_back(convertToInt(x, z));
-                    chunks2Update.insert(convertToInt(x, z));
-
-                    // Update neighboring Chunks
-                    chunks2Update.insert(convertToInt(x + 1, z));
-                    chunks2Update.insert(convertToInt(x - 1, z));
-                    chunks2Update.insert(convertToInt(x, z + 1));
-                    chunks2Update.insert(convertToInt(x, z - 1));
-
-                }
-
-            }
-        }
-    }
-
-    int tempX, tempZ;
-    for (uint64_t i : chunks2Update) {
-        splitInt(i, &tempX, &tempZ);
-        updateChunkVBO(tempX, tempZ);
-    }
-
-}
-
 void Terrain::createForest(){
     Forest forest = Forest();
     int size = 16;
-    //float r = 0.0f;
+    int plotWidth_2 = 12;
     float prob;
-    for(int i = -8*size; i < 8*size; ++i){
-        for(int j = -8*size; j < 8*size; ++j){
-            if (i*i + j*j < 8*size*8*size){
-                //r = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX));
+    for(int i = -plotWidth_2 * size; i < plotWidth_2 * size; ++i){
+        for(int j = -plotWidth_2 * size; j < plotWidth_2 * size; ++j){
+            if (i*i + j*j < plotWidth_2 * size * plotWidth_2 * size){
                 prob = forest.worley(i, j);
-                if (prob > 0.5){
+                if (prob > 0.6){
                     drawTree(glm::ivec2(i, j));
                 }
             }
@@ -854,7 +854,7 @@ void Terrain::createForest(){
     }
 }
 
-void Terrain::drawTree(glm::ivec2 pos){
+void Terrain::drawTree(const glm::ivec2 pos){
     setBlockAt(pos[0], 255, pos[1], EMPTY); // temporary fix
 
     int h = getHeightAt(pos);
@@ -974,7 +974,7 @@ void Terrain::excavateCave(){
     }
 }
 
-int Terrain::getHeightAt(glm::ivec2 pos){
+int Terrain::getHeightAt(const glm::ivec2 pos) const{
     int x = pos[0];
     int z = pos[1];
     BlockType t = getBlockAt(x, 255, z);
@@ -986,6 +986,37 @@ int Terrain::getHeightAt(glm::ivec2 pos){
     return yMin;
 }
 
+void Terrain::interpolateTerrain(TerrainType* tA, TerrainType* tB, BlockType b,  // interpolates between two terrain types in the x-direction
+                                 const int chunkWorldX, const int chunkWorldZ, Chunk *const chunk)
+{
+    // 0 -> 127 is STONE
+    for(int x = 0; x < 16; ++x){
+        for(int z = 0; z < 16; ++z){
+            for(int y = 0; y < 128; ++y){
+                chunk->getBlockType(x, y, z) = STONE;
+            }
+        }
+    }
+    // 128 -> height - 1 is DIRT, height is BlockType b
+    float greyscaleA;
+    float greyscaleB;
+    int heightA;    // height terrain A would draw with
+    int heightB;    // height terrain B would draw with
+    int height;     // height to draw with
+    for(int x = 0; x < 16; ++x){
+        for(int z = 0; z < 16; ++z){
+            greyscaleA = tA->fbm(x + chunkWorldX + 0.5f, z + chunkWorldZ + 0.5f, tA->getPersistance(), tA->getOctaves());
+            heightA = tA->mapToHeight(greyscaleA);
+            greyscaleB = tB->fbm(x + chunkWorldX + 0.5f, z + chunkWorldZ + 0.5f, tB->getPersistance(), tB->getOctaves());
+            heightB = tB->mapToHeight(greyscaleB);
+            height = glm::mix(heightA, heightB, (float)(x) / 16.f);
+            for(int y = 128; y < height; ++y){
+                chunk->getBlockType(x, y, z) = DIRT;
+            }
+            chunk->getBlockType(x, height, z) = b;
+        }
+    }
+}
 // TERRAIN END
 // **********************************************************************************************
 // **********************************************************************************************
@@ -1082,26 +1113,25 @@ float TerrainType::fbm3D(const float x, const float y, const float z, const floa
 
         total += amp * interpNoise3D(x * freq * 16 / resolution, y * freq * 64 / resolution, z * freq * 32 / resolution);
     }
-    //float a = 1 - persistance;  // normalization
 
     return (1.0f + total) / 2.0f;  // pseudorandom number between 0 and 1
 
 }
 
 // returns random vec2
-glm::vec2 TerrainType::random2(glm::vec2 p) const{
+glm::vec2 TerrainType::random2(const glm::vec2 p) const{
     float first = glm::fract(sinf(15.3 * glm::dot(p, glm::vec2(62.1, 311.7))) * 4375.545243);
 
     float second = glm::fract(sinf(1234.9 * glm::dot(p, glm::vec2(269.5, 183.3))) * 4375.545243);
     return glm::vec2(first, second);
 }
 
-float TerrainType::distance(glm::vec2 p1, glm::vec2 p2) const{
+float TerrainType::distance(const glm::vec2 p1, const glm::vec2 p2) const{
     glm::vec2 l = p1 - p2;
     return glm::sqrt(glm::dot(l, l));
 }
 
-float TerrainType::worley(const int x, const int z){
+float TerrainType::worley(const int x, const int z) const{
     glm::vec2 cell_ID = glm::vec2(x / 16, z / 16);
     glm::vec2 cell_fract = glm::vec2((float)(x % 16) / 16.f, (float)(z % 16) / 16.f);
     glm::vec2 cell_uv = cell_ID + cell_fract;
@@ -1162,11 +1192,102 @@ Highland::Highland() :
 
 Highland::~Highland(){}
 
+void Highland::drawMe(const int chunkWorldX, const int chunkWorldZ, Chunk *const chunk) const{
+
+    // 0 -> 127 is BEDROCK
+    for(int x = 0; x < 16; ++x){
+        for(int z = 0; z < 16; ++z){
+            for(int y = 0; y < 128; ++y){
+                chunk->getBlockType(x, y, z) = BEDROCK;
+            }
+        }
+    }
+    // 128 -> height - 1 is DIRT, height is GRASS
+    float greyscale;
+    int height;
+    for(int x = 0; x < 16; ++x){
+        for(int z = 0; z < 16; ++z){
+            greyscale = fbm(x + chunkWorldX + 0.5f, z + chunkWorldZ + 0.5f, persistance, octaves);
+            height = mapToHeight(greyscale);
+            for(int y = 128; y < height; ++y){
+                chunk->getBlockType(x, y, z) = DIRT;
+            }
+            chunk->getBlockType(x, height, z) = GRASS;
+        }
+    }
+}
+
 Foothills::Foothills() :
-    TerrainType(4, 0.4f, 25.0f, 0.5f)
+    TerrainType(4, 0.4f, 25.0f, 0.4f)
 {}
 
 Foothills::~Foothills(){}
+
+void Foothills::drawMe(const int chunkWorldX, const int chunkWorldZ, Chunk *const chunk) const{
+
+    // 0 -> 127 is BEDROCK
+    for(int x = 0; x < 16; ++x){
+        for(int z = 0; z < 16; ++z){
+            for(int y = 0; y < 128; ++y){
+                chunk->getBlockType(x, y, z) = BEDROCK;
+            }
+        }
+    }
+    // 128 -> height - 1 is DIRT, height is GRASS or SNOW
+    float greyscale;
+    int height;
+    for(int x = 0; x < 16; ++x){
+        for(int z = 0; z < 16; ++z){
+            greyscale = fbm(x + chunkWorldX + 0.5f, z + chunkWorldZ + 0.5f, persistance, octaves);
+            height = mapToHeight(greyscale);
+            for(int y = 128; y < height; ++y){
+                chunk->getBlockType(x, y, z) = DIRT;
+            }
+            if (height < 154){
+                chunk->getBlockType(x, height, z) = SNOW;
+            }
+            else{
+                chunk->getBlockType(x, height, z) = GRASS;
+            }
+        }
+    }
+}
+
+SnowMountains::SnowMountains() :
+    TerrainType(4, 0.4f, 20.0f, 0.65f)
+{}
+
+SnowMountains::~SnowMountains(){}
+
+void SnowMountains::drawMe(const int chunkWorldX, const int chunkWorldZ, Chunk *const chunk) const{
+
+    // 0 -> 127 is BEDROCK
+    for(int x = 0; x < 16; ++x){
+        for(int z = 0; z < 16; ++z){
+            for(int y = 0; y < 128; ++y){
+                chunk->getBlockType(x, y, z) = BEDROCK;
+            }
+        }
+    }
+    // 128 -> height - 1 is DIRT, height is STONE or SNOW
+    float greyscale;
+    int height;
+    for(int x = 0; x < 16; ++x){
+        for(int z = 0; z < 16; ++z){
+            greyscale = fbm(x + chunkWorldX + 0.5f, z + chunkWorldZ + 0.5f, persistance, octaves);
+            height = mapToHeight(greyscale);
+            for(int y = 128; y < height; ++y){
+                chunk->getBlockType(x, y, z) = STONE;
+            }
+            if (height < 168){
+                chunk->getBlockType(x, height, z) = STONE;
+            }
+            else{
+                chunk->getBlockType(x, height, z) = SNOW;
+            }
+        }
+    }
+}
 
 Cave::Cave(glm::ivec3 pos) :
     TerrainType(4, 0.5f, 0.1f, 1.0f), pos(pos)
@@ -1174,11 +1295,11 @@ Cave::Cave(glm::ivec3 pos) :
 
 Cave::~Cave(){}
 
-float Cave::mapToAngle(float num){
+float Cave::mapToAngle(const float num) const{
     return num * 360.0f;
 }
 
-glm::ivec2 Cave::mapToXZOffset(float angle){
+glm::ivec2 Cave::mapToXZOffset(const float angle) const{
     if (angle <= 22.5){
         return glm::ivec2(1, 0);
     }
@@ -1208,7 +1329,7 @@ glm::ivec2 Cave::mapToXZOffset(float angle){
     }
 }
 
-int Cave::mapToYOffset(float angle){
+int Cave::mapToYOffset(const float angle) const{
     if (angle <= 50.0){
         return 0;
     }

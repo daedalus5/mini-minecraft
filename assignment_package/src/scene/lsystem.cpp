@@ -117,6 +117,7 @@ void RiverDelta::generatePath(int n, QString seed){
             int multiplierB = 0;
             for (unsigned int k = 0; k < indices.size(); ++k){
                 r = rand01();
+                // include branching probability
                 if (r < this->branchProb){
                     s.replace(indices[k] + multiplierA*(deltaA - 1) + multiplierB*(deltaB - 1), 1, j.value());
                     multiplierA++;
@@ -183,6 +184,7 @@ void River::generatePath(int n, QString seed){
             int multiplierB = 0;
             for (unsigned int k = 0; k < indices.size(); ++k){
                 r = rand01();
+                // include branching probability
                 if (r < this->branchProb){
                     s.replace(indices[k] + multiplierA*(deltaA - 1) + multiplierB*(deltaB - 1), 1, j.value());
                     multiplierA++;

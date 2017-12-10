@@ -72,11 +72,13 @@ PlayState::PlayState(MyGL* in_context)
 
     mp_camera->eye = glm::vec3(mp_terrain->dimensions.x-10.f, mp_terrain->dimensions.y * 0.60, mp_terrain->dimensions.z-10.f);
     resizeWindow(context->width(), context->height());
-    //mp_lightcamera->far_clip = 500;
+    //mp_lightcamera->far_clip = 100;
     //mp_lightcamera->near_clip = 30;
     //mp_lightcamera->ref = glm::vec3(0, 0, 0);
     //mp_lightcamera->eye = glm::vec3(1, 1, 1);
     //mp_lightcamera->RecomputeAttributes();
+    //mp_lightcamera->width = 1024;
+    //mp_lightcamera->height = 1024;
 
     mp_terrain->setTerrainType(new Highland);
 

@@ -50,7 +50,7 @@ struct ray{
 
 class PlayState : public GameState {
 public:
-    PlayState(OpenGLContext* in_context);
+    PlayState(MyGL* in_context);
     ~PlayState();
     void update() override;
     void resizeWindow(int w, int h) override;
@@ -66,8 +66,10 @@ private:
     ShaderProgram* mp_progLambert;// A shader program that uses lambertian reflection
     ShaderProgram* mp_progFlat;// A shader program that uses "flat" reflection (no shadowing at all)
     ShaderProgram* mp_lavavision; // Red overlay for under Lava
+    ShaderProgram* mp_shadowmap; // Shader that generates the shadow map
 
     Camera* mp_camera;
+    Camera* mp_lightcamera;
     Terrain* mp_terrain;
     CrossHairs* mp_crosshairs;
     Player* mp_player; // Instance of Player
@@ -85,7 +87,7 @@ private:
     float rayBoxIntersect(const glm::ivec3 cubeMin, const ray r) const;   // tests for intersection between a box and a ray
                                                                           // returns t_near, -1 if no intersection
                                                                           // Kay and Kayjia algorithm
-    void GLDrawScene();
+    void GLDrawScene(bool shadow);
 
     QMediaPlayer* music;
     QMediaPlayer* water;
@@ -100,6 +102,11 @@ private:
     QMutex mutex;
     Scheduler* scheduler;
     Quad* mp_quad;
+
+    MyGL* mygl;
+
+    void renderLightCamera();
+    void renderFinalScene();
 };
 
 class MenuState : public GameState {

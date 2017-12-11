@@ -35,16 +35,19 @@ void GameState::mousePress(QMouseEvent *e) {
     // default no-op
 }
 
-PlayState::PlayState(OpenGLContext* in_context)
+PlayState::PlayState(MyGL* in_context)
     : GameState(in_context),
       mp_worldAxes(new WorldAxes(in_context)),
       mp_progLambert(new ShaderProgram(in_context)), mp_progFlat(new ShaderProgram(in_context)), mp_lavavision(new ShaderProgram(in_context)),
-      mp_camera(new Camera()), mp_terrain(new Terrain(in_context, mp_camera, &mutex)), mp_crosshairs(new CrossHairs(in_context)),
+      mp_shadowmap(new ShaderProgram(in_context)),
+      mp_camera(new Camera()), mp_lightcamera(new Camera()),
+      mp_terrain(new Terrain(in_context, mp_camera, &mutex)), mp_crosshairs(new CrossHairs(in_context)),
       mp_player(new Player(mp_camera, mp_terrain)), underwater(false), underlava(false), underground(false), time(0), dt(0),
       start_time(QDateTime::currentMSecsSinceEpoch()),
       skyColor(glm::vec4(0.37f, 0.74f, 1.0f, 1)),
       scheduler(new Scheduler(mp_terrain, &mutex)), mp_quad(new Quad(in_context)),
-      music(new QMediaPlayer()),water(new QMediaPlayer()),caverns(new QMediaPlayer())
+      music(new QMediaPlayer()),water(new QMediaPlayer()),caverns(new QMediaPlayer()),
+      mygl(in_context)
 {
 
     //Create the instance of Cube
@@ -62,6 +65,8 @@ PlayState::PlayState(OpenGLContext* in_context)
     mp_lavavision->addTexture(":/textures/fire1.png");
     mp_lavavision->addTexture(":/textures/water_overlay.png");
     mp_lavavision->bindTexture(0);
+
+    mp_shadowmap->create(":/glsl/shadow.vert.glsl", ":/glsl/shadow.frag.glsl");
 
     mp_camera->eye = glm::vec3(mp_terrain->dimensions.x-10.f, mp_terrain->dimensions.y * 0.60, mp_terrain->dimensions.z-10.f);
     resizeWindow(context->width(), context->height());
@@ -96,8 +101,6 @@ PlayState::PlayState(OpenGLContext* in_context)
      music.play(); */
 
     context->glClearColor(skyColor.r,skyColor.g,skyColor.b,skyColor.a);
-
-    //time = 1;
 }
 
 PlayState::~PlayState() {
@@ -230,12 +233,85 @@ void PlayState::resizeWindow(int w, int h) {
 }
 
 void PlayState::paint() {
+    renderLightCamera();
+    renderFinalScene();
+}
+
+void PlayState::GLDrawScene(bool shadow)
+{
+    int chunkX = mp_terrain->getChunkPosition1D(mp_camera->eye[0]);
+    int chunkZ = mp_terrain->getChunkPosition1D(mp_camera->eye[2]);
+
+    int num = 10;
+    int x, z;
+
+    Chunk* ch;
+
+    for (int i = -num; i < num; i++) {
+        for (int k = -num; k < num; k++) {
+            x = chunkX + i;
+            z = chunkZ + k;
+            ch = mp_terrain->getChunk(x, z);
+            if (ch != nullptr) {
+                // If Chunk data has not been passed to the GPU
+                // But it has VBO data ready to be passed
+                // Then pass the data
+                if (!ch->isCreated && ch->hasData) {
+                    ch->createVBO();
+                }
+
+                // If Chunk has VBO data in GPU,
+                // draw it
+                if (ch->isCreated) {
+                    if (shadow) {
+                        mp_shadowmap->draw(*ch);
+                    } else {
+                        mp_progLambert->draw(*ch);
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+// Copied from hw 05
+void PlayState::renderLightCamera()
+{
+
+    mygl->bindFrameBufferBeforeShadow();
+    //mygl->bindDefaultFrameBufferAfterShadow();
+
+    mp_lightcamera->ref = mp_camera->eye;
+    //mp_lightcamera->eye = mp_lightcamera->ref + glm::vec3(50, 125, 0);
+    mp_lightcamera->eye = mp_lightcamera->ref + glm::vec3(40, 100, 40);
+    mp_lightcamera->RecomputeAttributes();
+
+    mp_shadowmap->setModelMatrix(glm::mat4());
+    mp_shadowmap->setShadowViewProjMatrix(mp_lightcamera->getViewProjOrtho());
+
+    GLDrawScene(true);
+
+    // testing
+//    mygl->bindDefaultFrameBufferAfterShadow();
+//    mp_lavavision->bindShadowTexture(1);
+//    mp_lavavision->draw(*mp_quad);
+}
+
+void PlayState::renderFinalScene()
+{
+
+    mygl->bindDefaultFrameBufferAfterShadow();
+    mp_progLambert->bindShadowTexture(1);
+
     mp_progFlat->setViewProjMatrix(mp_camera->getViewProj());
     mp_progLambert->setViewProjMatrix(mp_camera->getViewProj());
     mp_progLambert->setEyePos(glm::vec4(mp_camera->eye, 1.f));
     mp_progLambert->setTime((time - start_time) /1000.f); // convert time to seconds
+    mp_progLambert->setShadowViewProjMatrix(mp_lightcamera->getViewProjOrtho());
+    mp_progLambert->setModelMatrix(glm::mat4());
 
-    GLDrawScene();
+    GLDrawScene(false);
 
     glDisable(GL_DEPTH_TEST);
     mp_progFlat->setModelMatrix(glm::mat4());
@@ -265,42 +341,6 @@ void PlayState::paint() {
     else{
         mp_progLambert->setUnderground(0);
     }
-}
-
-void PlayState::GLDrawScene()
-{
-    mp_progLambert->setModelMatrix(glm::mat4());
-
-    int chunkX = mp_terrain->getChunkPosition1D(mp_camera->eye[0]);
-    int chunkZ = mp_terrain->getChunkPosition1D(mp_camera->eye[2]);
-
-    int num = 10;
-    int x, z;
-
-    Chunk* ch;
-
-    for (int i = -num; i < num; i++) {
-        for (int k = -num; k < num; k++) {
-            x = chunkX + i;
-            z = chunkZ + k;
-            ch = mp_terrain->getChunk(x, z);
-            if (ch != nullptr) {
-                // If Chunk data has not been passed to the GPU
-                // But it has VBO data ready to be passed
-                // Then pass the data
-                if (!ch->isCreated && ch->hasData) {
-                    ch->createVBO();
-                }
-
-                // If Chunk has VBO data in GPU,
-                // draw it
-                if (ch->isCreated) {
-                    mp_progLambert->draw(*ch);
-                }
-            }
-        }
-    }
-
 }
 
 void PlayState::destroyBlock(){
@@ -468,7 +508,6 @@ void PlayState::musicStop()
 {
     musicflag = false;
 }
-
 
 
 MenuState::MenuState(MyGL* in_mygl)

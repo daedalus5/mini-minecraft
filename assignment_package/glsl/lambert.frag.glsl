@@ -26,8 +26,13 @@ in vec4 fs_Col;
 in vec4 fs_UV; // [u, v, blinn-phong exponent, flag for animation]
 in vec4 fs_Pos;
 
+in vec4 fs_shadowCoord;
+
+uniform sampler2D u_ShadowTexture;
+
 out vec4 out_Col; // This is the final output color that you will see on your
                   // screen for the pixel that is currently being processed.
+
 
 void main()
 {
@@ -80,4 +85,19 @@ void main()
         out_Col = mix(color, vec4(0, 0, 0, 1), fog);
     }
 
+    // Compute shadows
+    if (texture(u_ShadowTexture, fs_shadowCoord.xy ).r <  (fs_shadowCoord.z - 0.00035)) {
+        out_Col = vec4(out_Col[0] * 0.5f, out_Col[1] * 0.5f, out_Col[2] * 0.5f, out_Col[3]);
+    }
+
+    //out_Col = texture(u_ShadowTexture, fs_shadowCoord.xy );
+    //out_Col = vec4(fs_shadowCoord.z, 0, 0, 1);
+    //out_Col = vec4(shadowNDC.z, shadowNDC.z, shadowNDC.z, 1);
+    //out_Col = vec4(shadowNDC.z, 0, 0, 1);
+    //out_Col[3] = 1;
+    //out_Col = vec4(shadowUV, 0, 1);
+    //out_Col = vec4(gl_FragCoord.z, gl_FragCoord.z, gl_FragCoord.z, 1);
+    //out_Col = shadowTextureColor;
+    //out_Col = vec4(shadowTextureColor.r, shadowTextureColor.r, shadowTextureColor.r, 1);
+    //out_Col = vec4(fs_shadowCoord.xy, 0.0f, 1.0f);
 }

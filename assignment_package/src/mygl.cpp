@@ -12,7 +12,10 @@
 
 
 MyGL::MyGL(QWidget *parent)
-    : OpenGLContext(parent), mp_gamestate(nullptr)
+    : OpenGLContext(parent), mp_gamestate(nullptr),
+      m_frameBuffer(-1),
+      m_renderedTexture(-1),
+      m_depthRenderBuffer(-1)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
@@ -65,6 +68,7 @@ void MyGL::initializeGL()
 
     // Create a Vertex Attribute Object
     glGenVertexArrays(1, &vao);
+    createRenderBuffers();
 
     // Set a color with which to draw geometry since you won't have one
     // defined until you implement the Node classes.
@@ -185,4 +189,55 @@ void MyGL::set2PlayState() {
     mp_gamestate = temp_new;
     delete temp_old;
     //timer.start(16);
+}
+
+void MyGL::createRenderBuffers()
+{
+
+    // Copied from http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/
+
+     glGenFramebuffers(1, &m_frameBuffer);
+     glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
+
+     // Depth texture. Slower than a depth buffer, but you can sample it later in your shader
+     glGenTextures(1, &m_renderedTexture);
+     glBindTexture(GL_TEXTURE_2D, m_renderedTexture);
+     glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT16, 1024, 1024, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, m_renderedTexture, 0);
+
+     glDrawBuffer(GL_NONE); // No color buffer is drawn to.
+
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        std::cout << "Frame buffer did not initialize correctly..." << std::endl;
+        printGLErrorLog();
+    }
+}
+
+void MyGL::bindDefaultFrameBufferAfterShadow() {
+    // Tell OpenGL to render to the viewport's frame buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
+    // Render on the whole framebuffer, complete from the lower left corner to the upper right
+    glViewport(0,0,this->width(),this->height());
+    // Clear the screen
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // Bind our texture in Texture Unit 0
+    glActiveTexture(GL_TEXTURE0 + 1);
+    glBindTexture(GL_TEXTURE_2D, m_renderedTexture);
+}
+
+void MyGL::bindFrameBufferBeforeShadow() {
+    // Render the 3D scene to our frame buffer
+
+    // Render to our framebuffer rather than the viewport
+    glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
+    // Render on the whole framebuffer, complete from the lower left corner to the upper right
+    glViewport(0, 0, 1024, 1024);
+    // Clear the screen so that we only see newly drawn images
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }

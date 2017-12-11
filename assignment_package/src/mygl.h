@@ -27,6 +27,17 @@ private:
                               // from within a mouse move event after reading the mouse movement so that
                               // your mouse stays within the screen bounds and is always read.
 
+    // A collection of handles to the five frame buffers we've given
+    // ourselves to perform render passes. The 0th frame buffer is always
+    // written to by the render pass that uses the currently bound surface shader.
+    GLuint m_frameBuffer;
+    // A collection of handles to the textures used by the frame buffers.
+    // m_frameBuffers[i] writes to m_renderedTextures[i].
+    GLuint m_renderedTexture;
+    // A collection of handles to the depth buffers used by our frame buffers.
+    // m_frameBuffers[i] writes to m_depthRenderBuffers[i].
+    GLuint m_depthRenderBuffer;
+
 public:
     explicit MyGL(QWidget *parent = 0);
     ~MyGL();
@@ -36,6 +47,9 @@ public:
     void paintGL();
 
     void set2PlayState();
+    void createRenderBuffers();
+    void bindDefaultFrameBufferAfterShadow();
+    void bindFrameBufferBeforeShadow();
 
 
 protected:

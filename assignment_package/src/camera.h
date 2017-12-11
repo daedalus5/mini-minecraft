@@ -34,6 +34,7 @@ public:
               H;        //Represents the horizontal component of the plane of the viewing frustum that passes through the camera's reference point. Used in Camera::Raycast.
 
     glm::mat4 getViewProj();
+    glm::mat4 getViewProjOrtho();
     glm::vec3 straight;
 
     void RecomputeAttributes();

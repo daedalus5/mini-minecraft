@@ -31,6 +31,8 @@ public:
     int unifViewProj; // A handle for the "uniform" mat4 representing combined projection and view matrices in the vertex shader
     int unifColor; // A handle for the "uniform" vec4 representing color of geometry in the vertex shader
     int unifEyePos;
+    int unifShadowViewProj;
+    int unifShadowSampler2D;
 
     int unifSampler2D; // A handle to the "uniform" sampler2D that will be used to read the texture containing the scene render
     int unifTime; // A handle for the "uniform" float representing time in the shader
@@ -69,6 +71,9 @@ public:
     void setTexture(const char * filepath);
     void addTexture(const char * filepath);
     void bindTexture(int index);
+
+    void setShadowViewProjMatrix(const glm::mat4 &vp);
+    void bindShadowTexture(int index);
 
 private:
     OpenGLContext* context;   // Since Qt's OpenGL support is done through classes like QOpenGLFunctions_3_2_Core,

@@ -10,6 +10,7 @@ ShaderProgram::ShaderProgram(OpenGLContext *context)
       attrPos(-1), attrNor(-1), attrCol(-1), attrUV(-1),
       unifModel(-1), unifModelInvTr(-1), unifViewProj(-1), unifColor(-1), unifEyePos(-1),
       unifSampler2D(-1), unifTime(-1), underlava(-1), underwater(-1), unifUnderground(-1),
+      unifShadowViewProj(-1), unifShadowSampler2D(-1),
       texture_list(std::vector<Texture*>()), context(context), texture_index(-1)
 {}
 
@@ -75,6 +76,8 @@ void ShaderProgram::create(const char *vertfile, const char *fragfile)
     unifViewProj   = context->glGetUniformLocation(prog, "u_ViewProj");
     unifColor      = context->glGetUniformLocation(prog, "u_Color");
     unifEyePos = context->glGetUniformLocation(prog, "u_Eye");
+    unifShadowViewProj = context->glGetUniformLocation(prog, "u_ShadowViewProj");
+    unifShadowSampler2D = context->glGetUniformLocation(prog, "u_ShadowTexture");
 
     unifSampler2D  = context->glGetUniformLocation(prog, "u_Texture");
     unifTime = context->glGetUniformLocation(prog, "u_Time");
@@ -134,6 +137,25 @@ void ShaderProgram::setViewProjMatrix(const glm::mat4 &vp)
     }
 }
 
+void ShaderProgram::setShadowViewProjMatrix(const glm::mat4 &vp)
+{
+    // Tell OpenGL to use this shader program for subsequent function calls
+    useMe();
+
+    if(unifShadowViewProj != -1) {
+    // Pass a 4x4 matrix into a uniform variable in our shader
+                    // Handle to the matrix variable on the GPU
+    context->glUniformMatrix4fv(unifShadowViewProj,
+                    // How many matrices to pass
+                       1,
+                    // Transpose the matrix? OpenGL uses column-major, so no.
+                       GL_FALSE,
+                    // Pointer to the first element of the matrix
+                       &vp[0][0]);
+    }
+}
+
+
 void ShaderProgram::setGeometryColor(glm::vec4 color)
 {
     useMe();
@@ -161,7 +183,7 @@ void ShaderProgram::draw(Drawable &d)
 
     // Must be called every frame
     if(texture_list.size() > 0 && texture_list[texture_index] != nullptr) {
-        texture_list[texture_index]->bind(texture_index);
+        texture_list[texture_index]->bind(0);
     }
 
     if (d.bindEve()) {
@@ -324,12 +346,12 @@ void ShaderProgram::addTexture(const char * filepath) {
         // Code that sets up texture data on the GPU
         Texture* temp = new Texture(context);
         temp->create(filepath);
-        int slot = texture_list.size();
+        //int slot = texture_list.size();
         texture_list.push_back(temp);
-        temp->load(slot);
-        //mp_texture->bind(0);
-        //useMe();
-        //context->glUniform1i(unifSampler2D, /*GL_TEXTURE*/slot);
+        temp->load(0);
+//        mp_texture->bind(0);
+//        useMe();
+//        context->glUniform1i(unifSampler2D, /*GL_TEXTURE*/0);
     }
 }
 
@@ -340,8 +362,15 @@ void ShaderProgram::bindTexture(int index) {
         }
         texture_list[index]->bind(index);
         useMe();
-        context->glUniform1i(unifSampler2D, index);
+        context->glUniform1i(unifSampler2D, 0);
         texture_index = index;
+    }
+}
+
+void ShaderProgram::bindShadowTexture(int index) {
+    if (unifShadowSampler2D != -1) {
+        useMe();
+        context->glUniform1i(unifShadowSampler2D, index);
     }
 }
 

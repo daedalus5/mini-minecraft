@@ -86,7 +86,8 @@ PlayState::PlayState(OpenGLContext* in_context)
      water->setMedia(QUrl("qrc:/music/Water_scapes.mp3"));
      caverns->setMedia(QUrl("qrc:/music/Caverns.mp3"));
      music->setVolume(50);
-     water->setVolume(50);
+     water->setVolume(40);
+     caverns->setVolume(40);
      music->play();
      musicflag = true;
 
@@ -449,7 +450,7 @@ void PlayState::musicCheck()
         {
             music->play();
         }
-        else if(underground)
+        if(underground)
         {
             music->stop();
             caverns->play();
@@ -481,7 +482,7 @@ MenuState::MenuState(MyGL* in_mygl)
     mp_progMenu->bindTexture(0);
     mp_quad->create();
     title_theme->setMedia(QUrl("qrc:/music/Title_Track.mp3"));
-    title_theme->setVolume(5);
+    title_theme->setVolume(50);
     title_theme->play();
 
 
@@ -504,9 +505,11 @@ void MenuState::paint() {
 }
 
 void MenuState::keyPress(QKeyEvent *e) {
-    mp_progMenu->bindTexture(1);
-    title_theme->stop();
-    mygl->set2PlayState();
+    if (e->key() == Qt::Key_Space) {
+        mp_progMenu->bindTexture(1);
+        title_theme->stop();
+        mygl->set2PlayState();
+    }
 
 }
 

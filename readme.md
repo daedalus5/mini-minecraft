@@ -10,6 +10,21 @@ Sandbox mode was straightforward given what we implemented in Milestone 1. I dis
 
 To improve the efficiency of rendering and terrain generation, I have a thread (apart from the main thread)which invokes the terrain height field generation, and the adding of new chunks in a new class which subclasses from QRunnable. I start this thread in the InitializeGL function. 
 
+#Sounds
+
+To improve the aesthetic of the game, I used the QMediaPlayer class to play themes for different areas and states of the game. Currently, there is a theme for the title screen, a theme for when the player is under water, in a cavern, and when the player is traversing the world. These themes were composed on Garageband and imported into the resources folder of the project.
+
+#PlayerDeath
+
+The player has health which deprecates when the player comes in contact with LAVA. If the player stays in contact with a LAVA block for a long period of time, he dies and the game enters sandbox mode.
+
+# Procedural Sky - 
+
+I tried implementing the Procedural Sky based on Adam's demo in class. This crashes and so I did not merge it with the main milestone code. As of now, it pretty much follows the demo code almost exactly as i'm trying to get the base implementation working', though I have tried to comment as scrupulously as I can. 
+The code for this is on my branch which I will include in my commit link textfile.
+
+
+
 
 
 ##### Connie Chang - Shadow Map, Title Screen, Distance Fog

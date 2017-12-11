@@ -27,6 +27,8 @@ Previous milestones: L-System Rivers, 2D FBM Terrain Generation, Block Creation 
 
 The branches (leaf blocks) of each tree were individually shaped using a standard L-System grammar "X -> [-FX]+FX". Branching probability was not incorporated, but each branch was given a random orientation at each branching event. This gives each tree a unique appearance while maintaining the fullness of its appearance. The leaves/branches were perched atop a tree trunk given a random height between 5 and 9 blocks high.
 
+Each tree begins with a 2D L-System. The blocks this L-System intersects in the world are drawn as leaf blocks. The 2D L-System is then rotated by 180 degrees to sweep out the full three-dimensional tree.
+
 --- Worley Noise Forests ---
 
 Trees were distributed within a forest using Worley noise. A cell grid was layered atop the terrain, with a single cell occupying the width and length of a terrain chunk. The function was written such that trees closest to the random point distributed within a cell had a higher probability of being drawn. This left realistic-looking gaps, or small clearings, in the forest, as though a space had opened in the canopy because a couple of trees fell.

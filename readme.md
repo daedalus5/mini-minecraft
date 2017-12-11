@@ -21,7 +21,7 @@ Last, I implemented shadow mapping. I have a light camera with a orthographic pr
 
 
 ##### Zach Corse - MS3: L-System Trees, Worley Noise Forests, 3D FBM Random Walk Caves & Cavern, Biomes, and Biome Interpolation
-Previous milestones: L-System Rivers, 2D FBM Terrain Generation, Block Creation and Destruction
+Previous milestones: L-System Rivers, 2D FBM Terrain Generation, Block Creation and Destruction, Crosshairs
 
 --- L-System Trees --- 
 
@@ -35,7 +35,7 @@ Trees were distributed within a forest using Worley noise. A cell grid was layer
 
 I wrote a 3D FBM function to generate a cave "worm" that eats into the terrain in the (generally speaking) downward direction. The worm moves in one block intervals. It uses the 3D FBM function to generate a random angle between 0 and 360 degrees at each step. These angles are mapped to block steps to be carried out when the worm steps next. There are 8 blocks in the xz plane the worm can step to next, so the range [0, 360] is subdivided evenly between these options. I found that this map gives reasonable stretches of linear movement while still having a sufficient amount of path deviation to make the player's descent interesting. The same idea is applied to movement in the y-direction, however, more bias is given to movement in the downward direction, because we want our caves to tunnel in that general direction while still allowing for some upward deviations.
 
-The cave is excavated by hollowing out a sphere from the earth centered at the worm's position. The worm is directed to begin at the terrain surface, so the player can "discover" this cave while traversing the terrain. Additionally, gold ore blocks are randomly distributed along the walls of the cave.
+The cave is excavated by hollowing out a sphere from the earth centered at the worm's position. The worm is directed to begin at the terrain surface, so the player can "discover" this cave while traversing the terrain. Additionally, gold ore blocks are randomly distributed along the walls of the cave. Also, I used Connie's distance fog when the player moves underground. The fog instead interpolates using black, and appears much closer to the player than the world fog to give the impression the player is descending into a dark cave carrying only a lantern.
 
 The cavern is excavated using 2D FBM noise. By choosing the right noise function sampling interval, the cavern can be excavated identically upwards and downwards in such a way that it looks as though stalactites are hanging from the ceiling and stalagmites are growing from the ground. Some of these meet to form "columns", a typical feature found in caves. The bottom of the cavern is flooded with lava, and a circular stone dais is placed in the center of the cavern as a point of interest for the player. To visit this dais, the player must risk the pit of lava.
 
@@ -50,6 +50,10 @@ There is a third, intermediary biome in this scene, that is meant to act as a tr
 Additionally, there is a function that can interpolate between two chunks of different biomes. It interpolates the height map of the two chunks over the span of a single chunk, and is passed the BlockType that should be placed at the top of this interpolated height.
 
 Using an intermediatry biome and biome interpolation, we were able to craft the scene in our commit. It is a forested river valley situated between two mountain ranges. At the bottom is the river, which originates as a "linear" river to the south and ends in a delta river to the north. Moving either east or west, perpendicular to the river's direction of travel, the player will move up a hill interpolating between riverlands and foothills, cross the foothills (passing over smaller patches of forest and snowy basins), move up another hill interpolating between foothills and snowy mountains, and then be in the cold, forbidding snowy mountains themselves.
+
+--- Crosshairs ---
+
+Added crosshairs to the center of the screen so the player knows where he/she is looking/aiming.
 
 Previous Milestones:
 
@@ -79,3 +83,6 @@ Each terrain height field is generated using 2D FBM noise. I had to adjust the r
 
 --- Block Creation and Destruction ---
 
+Block Destruction: A ray is cast down the player's look vector. The Kay & Kayjia ray-box intersection algorithm is used to determine whether the player's look ray intersects with one or more of the cubes surrounding the player. We currently test against 3 x 4 x 3 - 1 = 35 cubes (we test two cubes beneath the player's eye because the player is two cubes tall). This test produces the shortest ray intersection distance, and uses that value to destroy the cube associated with the intersection point at that distance along the look ray.
+
+Block Creation: A ray is cast down the player's look vector. It looks for a box intersection two look vectors away. If there is a box intersection, it detects the closest face of the box. If that face is adjacent to an EMPTY cube, a new box is constructed in that cube of space.

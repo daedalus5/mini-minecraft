@@ -1,8 +1,6 @@
 # Mini Minecraft
-## Milestone 2
+## Milestone 3
 ### Team: Merge Conflict
-
-**_We noticed that collisions are sometimes offset by one. We could not figure out why as it does not always happen._**
 
 ##### Sagar- Sandbox Mode, Lava and Water Collisions, Multithreading
 
@@ -14,8 +12,13 @@ To improve the efficiency of rendering and terrain generation, I have a thread (
 
 
 
-##### Connie Chang - Textures and Animation
-I created a Texture from the provided image, which the lambert shader samples from. I also added some Blinn-Phong specular light to the shader. For animation, I shifted the UVs based on time to give the illusion of movement. To send all this data to the shader, I passed all of this in a vec4. The first two indices represent the UV. The third is the cosine exponent for Blinn-Phong. The fourth is a flag for animation. Finally, I enabled alpha blending for transparency.
+##### Connie Chang - Shadow Map, Title Screen, Distance Fog
+I implemented distance fog in milestone 2. The weight of the fog depends on the distance of the object, so the weight is larger as the object gets farther. I shifted the function out by about 100, so there would be a radius around the player without no fog at all.
+
+I also made the title screen. It's just a texture on a quad overlay. I did a lot of refactoring for this, creating GameState classes. I moved all of the game logic to PlayState. The title screen is drawn in MenuState. MyGL has a pointer to GameState, which can be switched between PlayState and MenuState, and calls its update and paint functions.
+
+Last, I implemented shadow mapping. I have a light camera with a orthographic projection matrix that is above the player. I render a first pass using the light camera, writing to a depth texture. On the second pass, I render the final scene, and use the depth texture to determine if there is a shadow. If the current fragment is farther away than the depth in the depth texture, then a shadow is drawn. I had to add a little bias to get rid of shadow acne, but now there is Peter Panning. The depth texture resolution is also not too high, so the shadows come out jagged and blocky.
+
 
 ##### Zach Corse - L-System Rivers
 

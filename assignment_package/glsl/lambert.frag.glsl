@@ -26,7 +26,7 @@ in vec4 fs_Col;
 in vec4 fs_UV; // [u, v, blinn-phong exponent, flag for animation]
 in vec4 fs_Pos;
 
-in vec4 fs_shadowPos;
+in vec4 fs_shadowCoord;
 
 uniform sampler2D u_ShadowTexture;
 
@@ -86,20 +86,18 @@ void main()
     }
 
     // Compute shadows
-    vec4 shadowNDC = fs_shadowPos / fs_shadowPos.w;
-    shadowNDC = (shadowNDC + vec4(1, 1, 1, 1)) / 2.f;
-    vec2 shadowUV = shadowNDC.xy;
-    vec4 shadowTextureColor = texture(u_ShadowTexture, shadowUV);
-
-    if (shadowNDC.z > shadowTextureColor.r) {
+    if (texture(u_ShadowTexture, fs_shadowCoord.xy ).r <  (fs_shadowCoord.z - 0.00035)) {
         out_Col = vec4(out_Col[0] * 0.5f, out_Col[1] * 0.5f, out_Col[2] * 0.5f, out_Col[3]);
     }
 
-    //out_Col = vec4(fs_shadowPos.z, fs_shadowPos.z, fs_shadowPos.z, 1);
+    //out_Col = texture(u_ShadowTexture, fs_shadowCoord.xy );
+    //out_Col = vec4(fs_shadowCoord.z, 0, 0, 1);
     //out_Col = vec4(shadowNDC.z, shadowNDC.z, shadowNDC.z, 1);
+    //out_Col = vec4(shadowNDC.z, 0, 0, 1);
     //out_Col[3] = 1;
     //out_Col = vec4(shadowUV, 0, 1);
     //out_Col = vec4(gl_FragCoord.z, gl_FragCoord.z, gl_FragCoord.z, 1);
     //out_Col = shadowTextureColor;
     //out_Col = vec4(shadowTextureColor.r, shadowTextureColor.r, shadowTextureColor.r, 1);
+    //out_Col = vec4(fs_shadowCoord.xy, 0.0f, 1.0f);
 }

@@ -79,7 +79,8 @@ glm::mat4 Camera::getViewProj()
 
 glm::mat4 Camera::getViewProjOrtho()
 {
-    return glm::ortho(-50.f, 50.f, -50.f, 50.f, near_clip, far_clip) * glm::lookAt(eye, ref, up);
+    //return glm::ortho(-180.f, 180.f, -170.f, 170.f, near_clip, far_clip) * glm::lookAt(eye, ref, up);
+    return glm::ortho(-100.f, 100.f, -100.f, 100.f, 0.f, 512.f) * glm::lookAt(eye, ref, up);
 }
 
 void Camera::RotateAboutUp(float deg)

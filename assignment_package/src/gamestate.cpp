@@ -292,7 +292,8 @@ void PlayState::renderLightCamera()
     //mygl->bindDefaultFrameBufferAfterShadow();
 
     mp_lightcamera->ref = mp_camera->eye;
-    mp_lightcamera->eye = mp_lightcamera->ref + glm::vec3(30, 30, 0);
+    //mp_lightcamera->eye = mp_lightcamera->ref + glm::vec3(50, 125, 0);
+    mp_lightcamera->eye = mp_lightcamera->ref + glm::vec3(40, 100, 40);
     mp_lightcamera->RecomputeAttributes();
 
     mp_shadowmap->setModelMatrix(glm::mat4());
@@ -323,7 +324,7 @@ void PlayState::renderFinalScene()
 
     glDisable(GL_DEPTH_TEST);
     mp_progFlat->setModelMatrix(glm::mat4());
-    mp_progFlat->draw(*mp_worldAxes);
+    //mp_progFlat->draw(*mp_worldAxes);
 
     mp_progFlat->setViewProjMatrix(glm::mat4());
     mp_progFlat->draw(*mp_crosshairs);

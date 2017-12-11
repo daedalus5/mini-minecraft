@@ -46,8 +46,7 @@ PlayState::PlayState(MyGL* in_context)
       start_time(QDateTime::currentMSecsSinceEpoch()),
       skyColor(glm::vec4(0.37f, 0.74f, 1.0f, 1)),
       scheduler(new Scheduler(mp_terrain, &mutex)), mp_quad(new Quad(in_context)),
-      music(new QMediaPlayer()),water(new QMediaPlayer()), m_frameBuffer(-1), m_renderedTexture(-1),
-      m_depthRenderBuffer(-1), mygl(in_context)
+      music(new QMediaPlayer()),water(new QMediaPlayer()), mygl(in_context)
 {
 
     //Create the instance of Cube
@@ -293,11 +292,11 @@ void PlayState::renderLightCamera()
     //mygl->bindDefaultFrameBufferAfterShadow();
 
     mp_lightcamera->ref = mp_camera->eye;
-    mp_lightcamera->eye = mp_lightcamera->ref + glm::vec3(20, 20, 0);
+    mp_lightcamera->eye = mp_lightcamera->ref + glm::vec3(30, 30, 0);
     mp_lightcamera->RecomputeAttributes();
 
     mp_shadowmap->setModelMatrix(glm::mat4());
-    mp_shadowmap->setShadowViewProjMatrix(mp_lightcamera->getViewProj());
+    mp_shadowmap->setShadowViewProjMatrix(mp_lightcamera->getViewProjOrtho());
 
     GLDrawScene(true);
 
@@ -317,7 +316,7 @@ void PlayState::renderFinalScene()
     mp_progLambert->setViewProjMatrix(mp_camera->getViewProj());
     mp_progLambert->setEyePos(glm::vec4(mp_camera->eye, 1.f));
     mp_progLambert->setTime((time - start_time) /1000.f); // convert time to seconds
-    mp_progLambert->setShadowViewProjMatrix(mp_lightcamera->getViewProj());
+    mp_progLambert->setShadowViewProjMatrix(mp_lightcamera->getViewProjOrtho());
     mp_progLambert->setModelMatrix(glm::mat4());
 
     GLDrawScene(false);
@@ -507,50 +506,6 @@ void PlayState::musicStop()
 {
     musicflag = false;
 }
-
-void PlayState::createRenderBuffers()
-{
-    // Initialize the frame buffers and render textures
-    context->glGenFramebuffers(1, &m_frameBuffer);
-    //context->glGenTextures(1, &m_renderedTexture);
-    context->glGenRenderbuffers(1, &m_depthRenderBuffer);
-
-    context->glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
-    // Bind our texture so that all functions that deal with textures will interact with this one
-    context->glBindTexture(GL_TEXTURE_2D, m_renderedTexture);
-    // Give an empty image to OpenGL ( the last "0" )
-    context->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, context->width(), context->height(), 0, GL_RGB, GL_UNSIGNED_BYTE, (void*)0);
-
-    // Set the render settings for the texture we've just created.
-    // Essentially zero filtering on the "texture" so it appears exactly as rendered
-    context->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    context->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    // Clamp the colors at the edge of our texture
-    context->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    context->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    // Initialize our depth buffer
-    context->glBindRenderbuffer(GL_RENDERBUFFER, m_depthRenderBuffer);
-    context->glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, context->width(), context->height());
-    context->glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthRenderBuffer);
-
-    // Set m_renderedTexture as the color output of our frame buffer
-    context->glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_renderedTexture, 0);
-
-    // Sets the color output of the fragment shader to be stored in GL_COLOR_ATTACHMENT0, which we previously set to m_renderedTextures[i]
-    GLenum drawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-    context->glDrawBuffers(1, drawBuffers); // "1" is the size of drawBuffers
-    //context->glDrawBuffer(GL_NONE);
-
-    if(context->glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    {
-        std::cout << "Frame buffer did not initialize correctly..." << std::endl;
-        context->printGLErrorLog();
-    }
-
-    context->glBindFramebuffer(GL_FRAMEBUFFER, context->defaultFramebufferObject());
-}
-
 
 
 MenuState::MenuState(MyGL* in_mygl)

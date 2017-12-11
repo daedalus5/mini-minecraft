@@ -103,18 +103,6 @@ private:
 
     MyGL* mygl;
 
-    // A collection of handles to the five frame buffers we've given
-    // ourselves to perform render passes. The 0th frame buffer is always
-    // written to by the render pass that uses the currently bound surface shader.
-    GLuint m_frameBuffer;
-    // A collection of handles to the textures used by the frame buffers.
-    // m_frameBuffers[i] writes to m_renderedTextures[i].
-    GLuint m_renderedTexture;
-    // A collection of handles to the depth buffers used by our frame buffers.
-    // m_frameBuffers[i] writes to m_depthRenderBuffers[i].
-    GLuint m_depthRenderBuffer;
-
-    void createRenderBuffers();
     void renderLightCamera();
     void renderFinalScene();
 };

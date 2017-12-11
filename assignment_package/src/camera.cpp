@@ -77,6 +77,11 @@ glm::mat4 Camera::getViewProj()
     return glm::perspective(glm::radians(fovy), width / (float)height, near_clip, far_clip) * glm::lookAt(eye, ref, up);
 }
 
+glm::mat4 Camera::getViewProjOrtho()
+{
+    return glm::ortho(-50.f, 50.f, -50.f, 50.f, near_clip, far_clip) * glm::lookAt(eye, ref, up);
+}
+
 void Camera::RotateAboutUp(float deg)
 {
     glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(deg), world_up);

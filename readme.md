@@ -20,7 +20,40 @@ I also made the title screen. It's just a texture on a quad overlay. I did a lot
 Last, I implemented shadow mapping. I have a light camera with a orthographic projection matrix that is above the player. I render a first pass using the light camera, writing to a depth texture. On the second pass, I render the final scene, and use the depth texture to determine if there is a shadow. If the current fragment is farther away than the depth in the depth texture, then a shadow is drawn. I had to add a little bias to get rid of shadow acne, but now there is Peter Panning. The depth texture resolution is also not too high, so the shadows come out jagged and blocky.
 
 
-##### Zach Corse - L-System Rivers
+##### Zach Corse - MS3: L-System Trees, Worley Noise Forests, 3D FBM Random Walk Caves & Cavern, Biomes, and Biome Interpolation
+Previous milestones: L-System Rivers, 2D FBM Terrain Generation, Block Creation and Destruction
+
+--- L-System Trees --- 
+
+The branches (leaf blocks) of each tree were individually shaped using a standard L-System grammar "X -> [-FX]+FX". Branching probability was not incorporated, but each branch was given a random orientation at each branching event. This gives each tree a unique appearance while maintaining the fullness of its appearance. The leaves/branches were perched atop a tree trunk given a random height between 5 and 9 blocks high.
+
+--- Worley Noise Forests ---
+
+Trees were distributed within a forest using Worley noise. A cell grid was layered atop the terrain, with a single cell occupying the width and length of a terrain chunk. The function was written such that trees closest to the random point distributed within a cell had a higher probability of being drawn. This left realistic-looking gaps, or small clearings, in the forest, as though a space had opened in the canopy because a couple of trees fell.
+
+--- 3D FBM Random Walk Caves & Cavern ---
+
+I wrote a 3D FBM function to generate a cave "worm" that eats into the terrain in the (generally speaking) downward direction. The worm moves in one block intervals. It uses the 3D FBM function to generate a random angle between 0 and 360 degrees at each step. These angles are mapped to block steps to be carried out when the worm steps next. There are 8 blocks in the xz plane the worm can step to next, so the range [0, 360] is subdivided evenly between these options. I found that this map gives reasonable stretches of linear movement while still having a sufficient amount of path deviation to make the player's descent interesting. The same idea is applied to movement in the y-direction, however, more bias is given to movement in the downward direction, because we want our caves to tunnel in that general direction while still allowing for some upward deviations.
+
+The cave is excavated by hollowing out a sphere from the earth centered at the worm's position. The worm is directed to begin at the terrain surface, so the player can "discover" this cave while traversing the terrain. Additionally, gold ore blocks are randomly distributed along the walls of the cave.
+
+The cavern is excavated using 2D FBM noise. By choosing the right noise function sampling interval, the cavern can be excavated identically upwards and downwards in such a way that it looks as though stalactites are hanging from the ceiling and stalagmites are growing from the ground. Some of these meet to form "columns", a typical feature found in caves. The bottom of the cavern is flooded with lava, and a circular stone dais is placed in the center of the cavern as a point of interest for the player. To visit this dais, the player must risk the pit of lava.
+
+--- Biomes ---
+
+There are two major biomes in the world we've created - riverlands, and snowy mountains. The riverland chunks have small grassy hillocks, rivers, and forests. The snowy mountains have tall, sharp, snowy peaks and stone basins in lower-lying areas.
+
+--- Biome Interpolation ---
+
+There is a third, intermediary biome in this scene, that is meant to act as a transition biome between the two identifiable ones noted above. We call this biome the "foothills." It is meant to provide a visual transition between riverlands and snowy mountins. It resembles the riverlands but has sharper, taller hills, and in basins formed between multiple hills, it has snow blocks. These are meant to mimic the fact that basins receive less sunlight than hilltops, so snow will generally persist here the longest.
+
+Additionally, there is a function that can interpolate between two chunks of different biomes. It interpolates the height map of the two chunks over the span of a single chunk, and is passed the BlockType that should be placed at the top of this interpolated height.
+
+Using an intermediatry biome and biome interpolation, we were able to craft the scene in our commit. It is a forested river valley situated between two mountain ranges. At the bottom is the river, which originates as a "linear" river to the south and ends in a delta river to the north. Moving either east or west, perpendicular to the river's direction of travel, the player will move up a hill interpolating between riverlands and foothills, cross the foothills (passing over smaller patches of forest and snowy basins), move up another hill interpolating between foothills and snowy mountains, and then be in the cold, forbidding snowy mountains themselves.
+
+Previous Milestones:
+
+--- L-System Rivers ---
 
 I worked with two L-System grammars to generate two different river systems. The first is what one would think of as a "normal" river, which includes the possibility of small creek offshoots. The second is a river delta, which includes more frequent branching and varying branch thicknesses according to turtle recursion depth.
 
@@ -40,4 +73,9 @@ The rivers have banks as well. These are carved away from the surrouding landsca
 
 ***Lastly, and importantly I've connected the two rivers, so that it appears that the primary river meanders for awhile then terminates in a river delta. What looks like a single river is in fact two rivers. One is initialized at (0,0) and is directed North, and the other is intialized at (0,0) and is directed South.
 
+--- 2D FBM Terrain Generation ---
+
+Each terrain height field is generated using 2D FBM noise. I had to adjust the random noise function sampling interval to get reasonable-looking terrain. There is also a dampening parameter, which is applied to smooth the terrain even further, and controls hill peak to trough displacement.
+
+--- Block Creation and Destruction ---
 

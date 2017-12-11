@@ -64,6 +64,7 @@ public:
     glm::vec2 rotation;
     bool controllerState;// true if player is recieving input from the controller
     bool mouseState;
+    bool dangerState;
 
     void updateTime(quint64);// updates player's dt
     void keyPressState(QKeyEvent *e);// Listener function for WASD and Space presses. sets key flags
@@ -74,6 +75,7 @@ public:
     void updateAttributes();// updates position and velocity. Invoked by myGL's timerUpdate().
     void updateCameraOrientation(); // adjusts camera orientation
     void playerGeometry();// updates bounding box for player
+    float playerHealthCheck();
     BlockType checkSubmerged();
 
     void mouseMoveState(QMouseEvent*);
@@ -82,6 +84,7 @@ public:
     void gravityCheck();//implements gravity
     bool altCollisions();
     float rayBoxIntersect(glm::ivec3 cubeMin, ray r);
+    float playerHealth;
 
 };
 

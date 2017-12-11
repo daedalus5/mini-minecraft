@@ -173,6 +173,10 @@ void PlayState::update() {
     if(!mp_player->isSandbox)
     {
         mp_player->gravityCheck();
+       if((mp_player->playerHealthCheck()==0)||(mp_player->playerHealthCheck()<0))
+       {
+           mp_player->isSandbox = true;
+       }
     }
 
     if(mp_player->controllerState == true || mp_player->mouseState==true) // reads if the player is recieving input from the controller, then proceeds to pass it dt and cause it to change

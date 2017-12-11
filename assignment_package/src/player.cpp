@@ -3,7 +3,7 @@
 #include<iostream>
 
 
-Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),isWpressed(false),isApressed(false),isSpressed(false),isDpressed(false),isSpacepressed(false),isShift(false),isQpressed(false),isEpressed(false),isLMBpressed(false),isRMBpressed(false),mouseOrientFlag(false),controllerState(false),mouseState(false),isSandbox(false){
+Player::Player(Camera* cam, Terrain* terr):ptr_to_cam(cam),ptr_to_terrain(terr),isWpressed(false),isApressed(false),isSpressed(false),isDpressed(false),isSpacepressed(false),isShift(false),isQpressed(false),isEpressed(false),isLMBpressed(false),isRMBpressed(false),mouseOrientFlag(false),controllerState(false),mouseState(false),dangerState(false),isSandbox(false),playerHealth(100.f){
 
 
     pos= ptr_to_cam->eye;
@@ -669,6 +669,26 @@ bool Player::altCollisions()
             }
         }
         return t_near;
+    }
+
+    float Player::playerHealthCheck()
+    {
+        for(int i = 0;i < vertexpositions.size(); i++)
+        {
+             if(ptr_to_terrain->getBlockAt(floor(vertexpositions[i].x),floor(vertexpositions[i].y),floor(vertexpositions[i].z)) == LAVA)
+             {
+                 dangerState = true;
+                }
+            }
+        if(dangerState == true)
+        {
+            playerHealth = playerHealth - 0.1;
+        }
+
+        dangerState = false;
+        return playerHealth;
+
+
     }
 
 

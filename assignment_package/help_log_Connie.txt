@@ -1,5 +1,24 @@
 Connie Chang
 
+Milestone 3
+
+How do I implement a shadow map?
+Answer: http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/
+
+Shadow map help (part one)
+Answer: Asked Zichuan
+I was using the perspective projection matrix for my camera. Zichuan suggested I use an orthographic projection matrix to simulate direct light.
+
+Shadow map help (part two)
+Answer: Asked Vasu
+After going over each step to debug my shadow map, Vasu and I realized my depth texture resolution and viewport do not match. Once, I changed the viewport to match the texture, it worked.
+
+Why does OpenGL crash when I bind my frame buffer?
+Answer: Asked Adam on Piazza
+Two possible reasons. 1) I was doing the frame buffer binding in another class other than MyGL. I moved the code back into MyGL. 2) I ended up calling createRenderBuffers before binding the vao array.
+
+
+
 Milestone 2
 
 How do you repeat just a single tile in the texture?

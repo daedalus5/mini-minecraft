@@ -11,3 +11,8 @@ Milestone2
 12.1.2017 6:39PM: Looked up QString documentation
 12.1.2017 7:40PM: Looked up QHash documentation
 12.3.2017 6:32PM: Looked up random number seeding: http://www.cplusplus.com/forum/beginner/5131/
+
+Milestone3
+12.5.2017: Discussed Using Worley Noise to distribute trees in a forest with Adam.
+12.5.2017: Discussed Biome distribution with Adam.
+12.7.2017: Tried finding a pseudorandom noise function that takes in a vec3 and returns a float but to no avail. The pseudorandom noise function used for 3D FBM currently relies on the 2D noise function used for 2D FBM.

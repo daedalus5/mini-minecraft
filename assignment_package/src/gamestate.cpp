@@ -87,9 +87,9 @@ PlayState::PlayState(MyGL* in_context)
     mp_player->keeptime = 5.f;
 
     // music->setPlaylist(playlist);
-     music->setMedia(QUrl("qrc:/music/Minecraft_Loop.mp3"));
-     water->setMedia(QUrl("qrc:/music/Water_scapes.mp3"));
-     caverns->setMedia(QUrl("qrc:/music/Caverns.mp3"));
+     music->setMedia(QUrl("qrc:/music/Minecraft_Loop.mp3"));// world theme music
+     water->setMedia(QUrl("qrc:/music/Water_scapes.mp3")); // theme music for underwater
+     caverns->setMedia(QUrl("qrc:/music/Caverns.mp3")); // theme music for caves
      music->setVolume(50);
      water->setVolume(40);
      caverns->setVolume(40);
@@ -173,7 +173,7 @@ void PlayState::update() {
     if(!mp_player->isSandbox)
     {
         mp_player->gravityCheck();
-       if((mp_player->playerHealthCheck()==0)||(mp_player->playerHealthCheck()<0))
+       if((mp_player->playerHealthCheck()==0)||(mp_player->playerHealthCheck()<0)) // puts player in sandbox mode if health goes to zero
        {
            mp_player->isSandbox = true;
        }
@@ -471,7 +471,7 @@ void PlayState::createBlock(){
     }
 }
 
-void PlayState::musicCheck()
+void PlayState::musicCheck() // checks player state at plays music theme based on it
 {
     if(musicflag==false)
     {

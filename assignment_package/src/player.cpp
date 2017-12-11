@@ -300,7 +300,7 @@ void Player::gravityCheck() // implements gravity
 void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player updates its position and velocity based on dt passed to updateTime().
 {
 
-    if(isWpressed == true)
+    if(isWpressed == true) // velocity along look vector
     {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
@@ -328,7 +328,7 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
     }
 
-    if(isApressed)
+    if(isApressed)// strafe left
     {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
@@ -353,7 +353,7 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
 
     }
-    if(isSpressed)
+    if(isSpressed) // move backwards
     {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
@@ -379,7 +379,7 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
      }
-    if(isDpressed)
+    if(isDpressed) // strafe right
     {
         pos = ptr_to_cam->eye;
         glm::vec3 prevpos = pos;
@@ -405,11 +405,11 @@ void Player::updateAttributes()// invoked by myGL's timerUpdate(). Player update
         ptr_to_cam->eye = ptr_to_cam->eye+translation1;
         ptr_to_cam->ref = ptr_to_cam->ref + translation1;
     }
-    if(isSpacepressed)
+    if(isSpacepressed)// jump
     {
         if((checkSubmerged()!= LAVA)&&(checkSubmerged()!=WATER))
         {
-            keeptime = keeptime - dt;
+            keeptime = keeptime - dt; // limits jump height
         }
         if(keeptime > 0.f)
         {
@@ -583,7 +583,7 @@ void Player::playerGeometry() // constructs bounding box for player
     playerMax = box2max;
 }
 
-BlockType Player::checkSubmerged()
+BlockType Player::checkSubmerged() // checks if player is submerged in WATER or LAVA
 {
     if(ptr_to_terrain->getBlockAt(floor(pos.x), floor(pos.y), floor(pos.z)) == LAVA)
     {
@@ -671,7 +671,7 @@ bool Player::altCollisions()
         return t_near;
     }
 
-    float Player::playerHealthCheck()
+    float Player::playerHealthCheck() // checks if player is in contact with Lava. Depreciates health if so
     {
         for(int i = 0;i < vertexpositions.size(); i++)
         {

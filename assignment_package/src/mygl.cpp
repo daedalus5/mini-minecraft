@@ -38,7 +38,7 @@ MyGL::~MyGL()
 
 void MyGL::MoveMouseToCenter()
 {
-    QCursor::setPos(this->mapToGlobal(QPoint(width() / 2, height() / 2)));
+    QCursor::setPos(this->mapToGlobal(QPoint(width()/ 2, height()/ 2)));
 }
 
 void MyGL::initializeGL()
@@ -80,7 +80,7 @@ void MyGL::initializeGL()
 //    vao.bind();
     glBindVertexArray(vao);
 
-    mp_gamestate = new MenuState(this);
+    mp_gamestate = new PlayState(this);
     // Tell the timer to redraw 60 times per second
     timer.start(16);
 }
@@ -144,9 +144,9 @@ void MyGL::mouseMoveEvent(QMouseEvent *m) // triggered at mouse movement
         x -=  m->x();
         reset = true;
     }
-    else if(m->x() >=s.width())
+    else if(m->x() >=s.width()*this->devicePixelRatio())
     {
-        x += s.width() - m->x() - 1;
+        x += s.width()*this->devicePixelRatio() - m->x() - 1;
         reset = true;
     }
 
@@ -156,15 +156,15 @@ void MyGL::mouseMoveEvent(QMouseEvent *m) // triggered at mouse movement
         reset = true;
     }
 
-    if(m->y() >=s.height())
+    if(m->y() >=s.height()*this->devicePixelRatio())
     {
-        y += s.height() - m->y() - 1;
+        y += s.height()*this->devicePixelRatio() - m->y() - 1;
         reset = true;
     }
 
     if (reset)
     {
-        QCursor::setPos(x,y);
+        QCursor::setPos(x*this->devicePixelRatio(),y*this->devicePixelRatio());
     }
 
     mp_gamestate->mouseMove(m);
@@ -223,7 +223,7 @@ void MyGL::bindDefaultFrameBufferAfterShadow() {
     // Tell OpenGL to render to the viewport's frame buffer
     glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
     // Render on the whole framebuffer, complete from the lower left corner to the upper right
-    glViewport(0,0,this->width(),this->height());
+    glViewport(0,0,this->width()*this->devicePixelRatio(),this->height()*this->devicePixelRatio());
     // Clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // Bind our texture in Texture Unit 0

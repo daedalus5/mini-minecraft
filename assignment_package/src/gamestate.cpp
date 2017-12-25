@@ -176,6 +176,7 @@ void PlayState::update() {
        if((mp_player->playerHealthCheck()==0)||(mp_player->playerHealthCheck()<0)) // puts player in sandbox mode if health goes to zero
        {
            mp_player->isSandbox = true;
+           mp_player->playerHealth = 100;
        }
     }
 
@@ -477,6 +478,7 @@ void PlayState::musicCheck() // checks player state at plays music theme based o
     {
         music->stop();
         water->stop();
+        caverns->stop();
     }
     else if(musicflag==true)
     {
@@ -494,12 +496,12 @@ void PlayState::musicCheck() // checks player state at plays music theme based o
         {
             music->play();
         }
-        if(underground)
+        else if(underground)
         {
             music->stop();
             caverns->play();
         }
-        else if(!underground)
+        else if((!underground)&&(!underwater)&&(caverns->state()==1))
         {
             caverns->stop();
             music->play();

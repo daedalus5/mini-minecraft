@@ -492,7 +492,7 @@ void PlayState::musicCheck() // checks player state at plays music theme based o
             water->stop();
             music->play();
         }
-        else if((!underwater)&&(water->state()==0))
+        else if((!underwater)&&(!underground)&&(water->state()==0))
         {
             music->play();
         }

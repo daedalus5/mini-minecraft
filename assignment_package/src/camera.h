@@ -1,5 +1,6 @@
 #pragma once
 
+#include "drawable.h"
 #include <la.h>
 
 //A perspective projection camera
@@ -13,9 +14,12 @@ public:
     Camera(const Camera &c);
 
     float fovy;
+    float phi;
+
     unsigned int width, height;  // Screen dimensions
     float near_clip;  // Near clip plane distance
     float far_clip;  // Far clip plane distance
+
 
     //Computed attributes
     float aspect;
@@ -30,6 +34,8 @@ public:
               H;        //Represents the horizontal component of the plane of the viewing frustum that passes through the camera's reference point. Used in Camera::Raycast.
 
     glm::mat4 getViewProj();
+    glm::mat4 getViewProjOrtho();
+    glm::vec3 straight;
 
     void RecomputeAttributes();
 
@@ -40,3 +46,13 @@ public:
     void TranslateAlongRight(float amt);
     void TranslateAlongUp(float amt);
 };
+
+class CrossHairs : public Drawable{
+public:
+    float aspect;
+    CrossHairs(OpenGLContext* context) : Drawable(context), aspect(0.0f) {}
+    virtual ~CrossHairs(){}
+    void create() override;
+    GLenum drawMode() override;
+};
+

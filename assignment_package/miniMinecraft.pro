@@ -1,4 +1,7 @@
-QT += core widgets
+QT += core widgets \
+      multimedia
+
+
 
 TARGET = 277
 TEMPLATE = app
@@ -14,7 +17,9 @@ include(src/src.pri)
 FORMS += forms/mainwindow.ui \
     forms/cameracontrolshelp.ui
 
-RESOURCES += glsl.qrc
+RESOURCES += glsl.qrc \
+    textures.qrc \
+    sounds.qrc
 
 *-clang*|*-g++* {
     message("Enabling additional warnings")
@@ -45,3 +50,5 @@ address_sanitizer {
 HEADERS +=
 
 SOURCES +=
+
+DISTFILES +=

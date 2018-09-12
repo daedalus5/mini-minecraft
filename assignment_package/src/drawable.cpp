@@ -2,8 +2,9 @@
 #include <la.h>
 
 Drawable::Drawable(OpenGLContext* context)
-    : bufIdx(), bufPos(), bufNor(), bufCol(),
+    : bufIdx(), bufPos(), bufNor(), bufCol(), bufEve(),
       idxBound(false), posBound(false), norBound(false), colBound(false),
+      eveBound(false), uvBound(false), bufUV(),
       context(context)
 {}
 
@@ -17,6 +18,7 @@ void Drawable::destroy()
     context->glDeleteBuffers(1, &bufPos);
     context->glDeleteBuffers(1, &bufNor);
     context->glDeleteBuffers(1, &bufCol);
+    context->glDeleteBuffers(1, &bufUV);
 }
 
 GLenum Drawable::drawMode()
@@ -37,30 +39,54 @@ int Drawable::elemCount()
 
 void Drawable::generateIdx()
 {
-    idxBound = true;
-    // Create a VBO on our GPU and store its handle in bufIdx
-    context->glGenBuffers(1, &bufIdx);
+    if (!idxBound) {
+        idxBound = true;
+        // Create a VBO on our GPU and store its handle in bufIdx
+        context->glGenBuffers(1, &bufIdx);
+    }
 }
 
 void Drawable::generatePos()
 {
-    posBound = true;
-    // Create a VBO on our GPU and store its handle in bufPos
-    context->glGenBuffers(1, &bufPos);
+    if (!posBound) {
+        posBound = true;
+        // Create a VBO on our GPU and store its handle in bufPos
+        context->glGenBuffers(1, &bufPos);
+    }
 }
 
 void Drawable::generateNor()
 {
-    norBound = true;
-    // Create a VBO on our GPU and store its handle in bufNor
-    context->glGenBuffers(1, &bufNor);
+    if (!norBound) {
+        norBound = true;
+        // Create a VBO on our GPU and store its handle in bufNor
+        context->glGenBuffers(1, &bufNor);
+    }
 }
 
 void Drawable::generateCol()
 {
-    colBound = true;
-    // Create a VBO on our GPU and store its handle in bufCol
-    context->glGenBuffers(1, &bufCol);
+    if (!colBound) {
+        colBound = true;
+        // Create a VBO on our GPU and store its handle in bufCol
+        context->glGenBuffers(1, &bufCol);
+    }
+}
+
+void Drawable::generateUV()
+{
+    if (!uvBound) {
+        uvBound = true;
+        // Create a VBO on our GPU and store its handle in bufCol
+        context->glGenBuffers(1, &bufUV);
+    }
+}
+
+void Drawable::generateEve() {
+    if (!eveBound) {
+        eveBound = true;
+        context->glGenBuffers(1, &bufEve);
+    }
 }
 
 bool Drawable::bindIdx()
@@ -93,4 +119,19 @@ bool Drawable::bindCol()
         context->glBindBuffer(GL_ARRAY_BUFFER, bufCol);
     }
     return colBound;
+}
+
+bool Drawable::bindEve() {
+    if (eveBound) {
+        context->glBindBuffer(GL_ARRAY_BUFFER, bufEve);
+    }
+    return eveBound;
+}
+
+bool Drawable::bindUV()
+{
+    if(uvBound){
+        context->glBindBuffer(GL_ARRAY_BUFFER, bufUV);
+    }
+    return uvBound;
 }

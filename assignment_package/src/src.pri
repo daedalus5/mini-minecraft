@@ -14,7 +14,15 @@ SOURCES += \
     $$PWD/scene/transform.cpp \
     $$PWD/openglcontext.cpp \
     $$PWD/scene/terrain.cpp \
-    $$PWD/scene/worldaxes.cpp
+    $$PWD/scene/worldaxes.cpp \
+    $$PWD/player.cpp \
+    $$PWD/scene/lsystem.cpp \
+    $$PWD/scene/quad.cpp \
+    $$PWD/texture.cpp \
+    $$PWD/scene/scheduler.cpp \
+    $$PWD/enemy.cpp \
+    $$PWD/gamestate.cpp
+
 
 HEADERS += \
     $$PWD/la.h \
@@ -29,4 +37,13 @@ HEADERS += \
     $$PWD/scene/transform.h \
     $$PWD/openglcontext.h \
     $$PWD/scene/terrain.h \
-    $$PWD/scene/worldaxes.h
+    $$PWD/scene/worldaxes.h \
+    $$PWD/player.h \
+    $$PWD/texture.h \
+    $$PWD/gamestate.h \
+    $$PWD/scene/lsystem.h \
+    $$PWD/scene/scheduler.h \
+    $$PWD/scene/quad.h \
+    $$PWD/enemy.h \
+
+DISTFILES +=

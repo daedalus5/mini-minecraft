@@ -7,9 +7,11 @@
 
 ShaderProgram::ShaderProgram(OpenGLContext *context)
     : vertShader(), fragShader(), prog(),
-      attrPos(-1), attrNor(-1), attrCol(-1),
-      unifModel(-1), unifModelInvTr(-1), unifViewProj(-1), unifColor(-1),
-      context(context)
+      attrPos(-1), attrNor(-1), attrCol(-1), attrUV(-1),
+      unifModel(-1), unifModelInvTr(-1), unifViewProj(-1), unifColor(-1), unifEyePos(-1),
+      unifSampler2D(-1), unifTime(-1), underlava(-1), underwater(-1), unifUnderground(-1),
+      unifShadowViewProj(-1), unifShadowSampler2D(-1),
+      texture_list(std::vector<Texture*>()), context(context), texture_index(-1)
 {}
 
 void ShaderProgram::create(const char *vertfile, const char *fragfile)
@@ -63,11 +65,23 @@ void ShaderProgram::create(const char *vertfile, const char *fragfile)
     attrPos = context->glGetAttribLocation(prog, "vs_Pos");
     attrNor = context->glGetAttribLocation(prog, "vs_Nor");
     attrCol = context->glGetAttribLocation(prog, "vs_Col");
+    attrUV = context->glGetAttribLocation(prog, "vs_UV");
 
+    underwater = context->glGetUniformLocation(prog, "underwater");
+    underlava = context->glGetUniformLocation(prog, "underlava");
+
+    unifUnderground = context->glGetUniformLocation(prog, "u_Underground");
     unifModel      = context->glGetUniformLocation(prog, "u_Model");
     unifModelInvTr = context->glGetUniformLocation(prog, "u_ModelInvTr");
     unifViewProj   = context->glGetUniformLocation(prog, "u_ViewProj");
     unifColor      = context->glGetUniformLocation(prog, "u_Color");
+    unifEyePos = context->glGetUniformLocation(prog, "u_Eye");
+    unifShadowViewProj = context->glGetUniformLocation(prog, "u_ShadowViewProj");
+    unifShadowSampler2D = context->glGetUniformLocation(prog, "u_ShadowTexture");
+
+    unifSampler2D  = context->glGetUniformLocation(prog, "u_Texture");
+    unifTime = context->glGetUniformLocation(prog, "u_Time");
+
 }
 
 void ShaderProgram::useMe()
@@ -123,6 +137,25 @@ void ShaderProgram::setViewProjMatrix(const glm::mat4 &vp)
     }
 }
 
+void ShaderProgram::setShadowViewProjMatrix(const glm::mat4 &vp)
+{
+    // Tell OpenGL to use this shader program for subsequent function calls
+    useMe();
+
+    if(unifShadowViewProj != -1) {
+    // Pass a 4x4 matrix into a uniform variable in our shader
+                    // Handle to the matrix variable on the GPU
+    context->glUniformMatrix4fv(unifShadowViewProj,
+                    // How many matrices to pass
+                       1,
+                    // Transpose the matrix? OpenGL uses column-major, so no.
+                       GL_FALSE,
+                    // Pointer to the first element of the matrix
+                       &vp[0][0]);
+    }
+}
+
+
 void ShaderProgram::setGeometryColor(glm::vec4 color)
 {
     useMe();
@@ -143,23 +176,51 @@ void ShaderProgram::draw(Drawable &d)
     //   * This Drawable has a vertex buffer for this attribute.
     // If so, it binds the appropriate buffers to each attribute.
 
-        // Remember, by calling bindPos(), we call
-        // glBindBuffer on the Drawable's VBO for vertex position,
-        // meaning that glVertexAttribPointer associates vs_Pos
-        // (referred to by attrPos) with that VBO
-    if (attrPos != -1 && d.bindPos()) {
-        context->glEnableVertexAttribArray(attrPos);
-        context->glVertexAttribPointer(attrPos, 4, GL_FLOAT, false, 0, NULL);
+    // Remember, by calling bindPos(), we call
+    // glBindBuffer on the Drawable's VBO for vertex position,
+    // meaning that glVertexAttribPointer associates vs_Pos
+    // (referred to by attrPos) with that VBO
+
+    // Must be called every frame
+    if(texture_list.size() > 0 && texture_list[texture_index] != nullptr) {
+        texture_list[texture_index]->bind(0);
     }
 
-    if (attrNor != -1 && d.bindNor()) {
-        context->glEnableVertexAttribArray(attrNor);
-        context->glVertexAttribPointer(attrNor, 4, GL_FLOAT, false, 0, NULL);
-    }
+    if (d.bindEve()) {
+        if (attrPos != -1) {
+            context->glEnableVertexAttribArray(attrPos);
+            context->glVertexAttribPointer(attrPos, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), NULL);
+        }
+        if (attrNor != -1) {
+            context->glEnableVertexAttribArray(attrNor);
+            context->glVertexAttribPointer(attrNor, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), BUFFER_OFFSET(sizeof(glm::vec4)));
+        }
+        if (attrUV != -1) {
+            context->glEnableVertexAttribArray(attrUV);
+            context->glVertexAttribPointer(attrUV, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), BUFFER_OFFSET(2 * sizeof(glm::vec4)));
+        }
 
-    if (attrCol != -1 && d.bindCol()) {
-        context->glEnableVertexAttribArray(attrCol);
-        context->glVertexAttribPointer(attrCol, 4, GL_FLOAT, false, 0, NULL);
+    } else {
+
+        if (attrPos != -1 && d.bindPos()) {
+            context->glEnableVertexAttribArray(attrPos);
+            context->glVertexAttribPointer(attrPos, 4, GL_FLOAT, false, 0, NULL);
+        }
+
+        if (attrNor != -1 && d.bindNor()) {
+            context->glEnableVertexAttribArray(attrNor);
+            context->glVertexAttribPointer(attrNor, 4, GL_FLOAT, false, 0, NULL);
+        }
+
+        if (attrCol != -1 && d.bindCol()) {
+            context->glEnableVertexAttribArray(attrCol);
+            context->glVertexAttribPointer(attrCol, 4, GL_FLOAT, false, 0, NULL);
+        }
+
+        if (attrUV != -1 && d.bindUV()) {
+            context->glEnableVertexAttribArray(attrUV);
+            context->glVertexAttribPointer(attrUV, 2, GL_FLOAT, false, 0, NULL);
+        }
     }
 
     // Bind the index buffer and then draw shapes from it.
@@ -170,6 +231,7 @@ void ShaderProgram::draw(Drawable &d)
     if (attrPos != -1) context->glDisableVertexAttribArray(attrPos);
     if (attrNor != -1) context->glDisableVertexAttribArray(attrNor);
     if (attrCol != -1) context->glDisableVertexAttribArray(attrCol);
+    if (attrUV != -1) context->glDisableVertexAttribArray(attrUV);
 
     context->printGLErrorLog();
 }
@@ -247,5 +309,80 @@ void ShaderProgram::printLinkInfoLog(int prog)
         context->glGetProgramInfoLog(prog, infoLogLen, &charsWritten, infoLog);
         qDebug() << "LinkInfoLog:" << endl << infoLog << endl;
         delete [] infoLog;
+    }
+}
+
+void ShaderProgram::setTime(float t)
+{
+    useMe();
+
+    if(unifTime != -1)
+    {
+        context->glUniform1f(unifTime, t);
+    }
+}
+
+void ShaderProgram::setEyePos(glm::vec4 p) {
+    useMe();
+    if (unifEyePos != -1) {
+        context->glUniform4fv(unifEyePos, 1, &p[0]);
+    }
+}
+
+void ShaderProgram::setTexture(const char * filepath) {
+    if (unifSampler2D != -1) {
+        // Code that sets up texture data on the GPU
+        mp_texture = new Texture(context);
+        mp_texture->create(filepath);
+        mp_texture->load(0);
+        mp_texture->bind(0);
+        useMe();
+        context->glUniform1i(unifSampler2D, /*GL_TEXTURE*/0);
+    }
+}
+
+void ShaderProgram::addTexture(const char * filepath) {
+    if (unifSampler2D != -1) {
+        // Code that sets up texture data on the GPU
+        Texture* temp = new Texture(context);
+        temp->create(filepath);
+        //int slot = texture_list.size();
+        texture_list.push_back(temp);
+        temp->load(0);
+//        mp_texture->bind(0);
+//        useMe();
+//        context->glUniform1i(unifSampler2D, /*GL_TEXTURE*/0);
+    }
+}
+
+void ShaderProgram::bindTexture(int index) {
+    if (unifSampler2D != -1) {
+        if (texture_index == index) {
+            return;
+        }
+        texture_list[index]->bind(index);
+        useMe();
+        context->glUniform1i(unifSampler2D, 0);
+        texture_index = index;
+    }
+}
+
+void ShaderProgram::bindShadowTexture(int index) {
+    if (unifShadowSampler2D != -1) {
+        useMe();
+        context->glUniform1i(unifShadowSampler2D, index);
+    }
+}
+
+void ShaderProgram::setUnderground(int i)
+{
+    useMe();
+    if(i == 0)
+    {
+        context->glUniform1i(unifUnderground, 0);
+    }
+    else if(i == 1)
+    {
+        context->glUniform1i(unifUnderground, 1);
     }
 }

@@ -4,42 +4,41 @@
 #include <iostream>
 #include <QApplication>
 #include <QKeyEvent>
+#include<QDateTime>
+#include <time.h>
+
+
+#include <set>
 
 
 MyGL::MyGL(QWidget *parent)
-    : OpenGLContext(parent),
-      mp_geomCube(new Cube(this)), mp_worldAxes(new WorldAxes(this)),
-      mp_progLambert(new ShaderProgram(this)), mp_progFlat(new ShaderProgram(this)),
-      mp_camera(new Camera()), mp_terrain(new Terrain())
+    : OpenGLContext(parent), mp_gamestate(nullptr),
+      m_frameBuffer(-1),
+      m_renderedTexture(-1),
+      m_depthRenderBuffer(-1)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
-    // Tell the timer to redraw 60 times per second
-    timer.start(16);
+
     setFocusPolicy(Qt::ClickFocus);
 
     setMouseTracking(true); // MyGL will track the mouse's movements even if a mouse button is not pressed
     setCursor(Qt::BlankCursor); // Make the cursor invisible
+
+
 }
 
 MyGL::~MyGL()
 {
     makeCurrent();
     glDeleteVertexArrays(1, &vao);
-    mp_geomCube->destroy();
-
-    delete mp_geomCube;
-    delete mp_worldAxes;
-    delete mp_progLambert;
-    delete mp_progFlat;
-    delete mp_camera;
-    delete mp_terrain;
+    delete mp_gamestate;
 }
 
 
 void MyGL::MoveMouseToCenter()
 {
-    QCursor::setPos(this->mapToGlobal(QPoint(width() / 2, height() / 2)));
+    QCursor::setPos(this->mapToGlobal(QPoint(width()/ 2, height()/ 2)));
 }
 
 void MyGL::initializeGL()
@@ -56,60 +55,54 @@ void MyGL::initializeGL()
     glEnable(GL_POLYGON_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     // Set the size with which points should be rendered
     glPointSize(5);
     // Set the color with which the screen is filled at the start of each render call.
     glClearColor(0.37f, 0.74f, 1.0f, 1);
 
+
+
     printGLErrorLog();
 
     // Create a Vertex Attribute Object
     glGenVertexArrays(1, &vao);
-
-    //Create the instance of Cube
-    mp_geomCube->create();
-    mp_worldAxes->create();
-
-    // Create and set up the diffuse shader
-    mp_progLambert->create(":/glsl/lambert.vert.glsl", ":/glsl/lambert.frag.glsl");
-    // Create and set up the flat lighting shader
-    mp_progFlat->create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
+    createRenderBuffers();
 
     // Set a color with which to draw geometry since you won't have one
     // defined until you implement the Node classes.
     // This makes your geometry render green.
-    mp_progLambert->setGeometryColor(glm::vec4(0,1,0,1));
+    //mp_progLambert->setGeometryColor(glm::vec4(0,1,0,1));
 
     // We have to have a VAO bound in OpenGL 3.2 Core. But if we're not
     // using multiple VAOs, we can just bind one once.
 //    vao.bind();
     glBindVertexArray(vao);
 
-    mp_terrain->CreateTestScene();
+    mp_gamestate = new PlayState(this);
+    // Tell the timer to redraw 60 times per second
+    timer.start(16);
 }
 
 void MyGL::resizeGL(int w, int h)
 {
-    //This code sets the concatenated view and perspective projection matrices used for
-    //our scene's camera view.
-    *mp_camera = Camera(w, h, glm::vec3(mp_terrain->dimensions.x, mp_terrain->dimensions.y * 0.75, mp_terrain->dimensions.z),
-                       glm::vec3(mp_terrain->dimensions.x / 2, mp_terrain->dimensions.y / 2, mp_terrain->dimensions.z / 2), glm::vec3(0,1,0));
-    glm::mat4 viewproj = mp_camera->getViewProj();
-
-    // Upload the view-projection matrix to our shaders (i.e. onto the graphics card)
-
-    mp_progLambert->setViewProjMatrix(viewproj);
-    mp_progFlat->setViewProjMatrix(viewproj);
 
     printGLErrorLog();
+    mp_gamestate->resizeWindow(w, h);
 }
-
 
 // MyGL's constructor links timerUpdate() to a timer that fires 60 times per second.
 // We're treating MyGL as our game engine class, so we're going to use timerUpdate
 void MyGL::timerUpdate()
 {
+
+    mp_gamestate->update();
+
     update();
+
+    MoveMouseToCenter();
+
 }
 
 // This function is called whenever update() is called.
@@ -120,89 +113,131 @@ void MyGL::paintGL()
     // Clear the screen so that we only see newly drawn images
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    mp_progFlat->setViewProjMatrix(mp_camera->getViewProj());
-    mp_progLambert->setViewProjMatrix(mp_camera->getViewProj());
-
-    GLDrawScene();
-
-    glDisable(GL_DEPTH_TEST);
-    mp_progFlat->setModelMatrix(glm::mat4());
-    mp_progFlat->draw(*mp_worldAxes);
-    glEnable(GL_DEPTH_TEST);
+    mp_gamestate->paint();
 }
 
-void MyGL::GLDrawScene()
+void MyGL::keyPressEvent(QKeyEvent *e) // triggered when key is pressed
 {
-    for(int x = 0; x < mp_terrain->dimensions.x; ++x)
+    if(e->key()==Qt::Key_Escape)
     {
-        for(int y = 0; y < mp_terrain->dimensions.y; ++y)
-        {
-            for(int z = 0; z < mp_terrain->dimensions.z; ++z)
-            {
-                BlockType t;
-                if((t = mp_terrain->m_blocks[x][y][z]) != EMPTY)
-                {
-                    switch(t)
-                    {
-                    case DIRT:
-                        mp_progLambert->setGeometryColor(glm::vec4(121.f, 85.f, 58.f, 255.f) / 255.f);
-                        break;
-                    case GRASS:
-                        mp_progLambert->setGeometryColor(glm::vec4(95.f, 159.f, 53.f, 255.f) / 255.f);
-                        break;
-                    case STONE:
-                        mp_progLambert->setGeometryColor(glm::vec4(0.5f));
-                        break;
-                    }
-                    mp_progLambert->setModelMatrix(glm::translate(glm::mat4(), glm::vec3(x, y, z)));
-                    mp_progLambert->draw(*mp_geomCube);
-                }
-            }
-        }
+        QApplication::quit();
+    }
+    mp_gamestate->keyPress(e);
+}
+
+void MyGL::keyReleaseEvent(QKeyEvent *r) // triggered when key is released
+{
+    mp_gamestate->keyRelease(r);
+
+}
+
+void MyGL::mouseMoveEvent(QMouseEvent *m) // triggered at mouse movement
+{
+    QRect s = geometry();
+    int x = m->globalX();
+    int y = m->globalY();
+
+    bool reset = false;
+
+    if(m->x()<0)
+    {
+        x -=  m->x();
+        reset = true;
+    }
+    else if(m->x() >=s.width()*this->devicePixelRatio())
+    {
+        x += s.width()*this->devicePixelRatio() - m->x() - 1;
+        reset = true;
+    }
+
+    if(m->y()<0)
+    {
+        y -= m->y();
+        reset = true;
+    }
+
+    if(m->y() >=s.height()*this->devicePixelRatio())
+    {
+        y += s.height()*this->devicePixelRatio() - m->y() - 1;
+        reset = true;
+    }
+
+    if (reset)
+    {
+        QCursor::setPos(x*this->devicePixelRatio(),y*this->devicePixelRatio());
+    }
+
+    mp_gamestate->mouseMove(m);
+
+}
+
+void MyGL::mouseReleaseEvent(QMouseEvent *mr)// triggered when mousebutton is released
+{
+    mp_gamestate->mouseRelease(mr);
+}
+
+void MyGL::mousePressEvent(QMouseEvent *e)
+{
+    mp_gamestate->mousePress(e);
+}
+
+void MyGL::set2PlayState() {
+    //timer.stop();
+    GameState* temp_new = new PlayState(this);
+    GameState* temp_old = mp_gamestate;
+    //delete mp_gamestate;
+    mp_gamestate = temp_new;
+    delete temp_old;
+    //timer.start(16);
+}
+
+void MyGL::createRenderBuffers()
+{
+
+    // Copied from http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/
+
+     glGenFramebuffers(1, &m_frameBuffer);
+     glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
+
+     // Depth texture. Slower than a depth buffer, but you can sample it later in your shader
+     glGenTextures(1, &m_renderedTexture);
+     glBindTexture(GL_TEXTURE_2D, m_renderedTexture);
+     glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT16, 1024, 1024, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, m_renderedTexture, 0);
+
+     glDrawBuffer(GL_NONE); // No color buffer is drawn to.
+
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        std::cout << "Frame buffer did not initialize correctly..." << std::endl;
+        printGLErrorLog();
     }
 }
 
+void MyGL::bindDefaultFrameBufferAfterShadow() {
+    // Tell OpenGL to render to the viewport's frame buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
+    // Render on the whole framebuffer, complete from the lower left corner to the upper right
+    glViewport(0,0,this->width()*this->devicePixelRatio(),this->height()*this->devicePixelRatio());
+    // Clear the screen
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // Bind our texture in Texture Unit 0
+    glActiveTexture(GL_TEXTURE0 + 1);
+    glBindTexture(GL_TEXTURE_2D, m_renderedTexture);
+}
 
-void MyGL::keyPressEvent(QKeyEvent *e)
-{
+void MyGL::bindFrameBufferBeforeShadow() {
+    // Render the 3D scene to our frame buffer
 
-    float amount = 2.0f;
-    if(e->modifiers() & Qt::ShiftModifier){
-        amount = 10.0f;
-    }
-    // http://doc.qt.io/qt-5/qt.html#Key-enum
-    // This could all be much more efficient if a switch
-    // statement were used, but I really dislike their
-    // syntax so I chose to be lazy and use a long
-    // chain of if statements instead
-    if (e->key() == Qt::Key_Escape) {
-        QApplication::quit();
-    } else if (e->key() == Qt::Key_Right) {
-        mp_camera->RotateAboutUp(-amount);
-    } else if (e->key() == Qt::Key_Left) {
-        mp_camera->RotateAboutUp(amount);
-    } else if (e->key() == Qt::Key_Up) {
-        mp_camera->RotateAboutRight(-amount);
-    } else if (e->key() == Qt::Key_Down) {
-        mp_camera->RotateAboutRight(amount);
-    } else if (e->key() == Qt::Key_1) {
-        mp_camera->fovy += amount;
-    } else if (e->key() == Qt::Key_2) {
-        mp_camera->fovy -= amount;
-    } else if (e->key() == Qt::Key_W) {
-        mp_camera->TranslateAlongLook(amount);
-    } else if (e->key() == Qt::Key_S) {
-        mp_camera->TranslateAlongLook(-amount);
-    } else if (e->key() == Qt::Key_D) {
-        mp_camera->TranslateAlongRight(amount);
-    } else if (e->key() == Qt::Key_A) {
-        mp_camera->TranslateAlongRight(-amount);
-    } else if (e->key() == Qt::Key_Q) {
-        mp_camera->TranslateAlongUp(-amount);
-    } else if (e->key() == Qt::Key_E) {
-        mp_camera->TranslateAlongUp(amount);
-    } else if (e->key() == Qt::Key_R) {
-        *mp_camera = Camera(this->width(), this->height());
-    }
-    mp_camera->RecomputeAttributes();
+    // Render to our framebuffer rather than the viewport
+    glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
+    // Render on the whole framebuffer, complete from the lower left corner to the upper right
+    glViewport(0, 0, 1024, 1024);
+    // Clear the screen so that we only see newly drawn images
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }

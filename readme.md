@@ -2,38 +2,7 @@
 ## Milestone 3
 ### Team: Merge Conflict
 
-##### Sagar- Sandbox Mode, Lava and Water Collisions, Multithreading
-
-Sandbox mode was straightforward given what we implemented in Milestone 1. I disabled collisions with lava and water blocks, and slowed the player's velocity down when moving through Lava or Water. I also modified the vertical deceleration when the player is above a water or lava block to create a sinking effect. 
-
-To create the overlay, I modified the existing lambert shader to mix in a higher contribution of red or blue depending on whether the player was submerged in water or lava. I also modified the sky color seperately in these states by creating a new vec4 variable called skyColor and passing it to glClearColor when the player is submerged.
-
-To improve the efficiency of rendering and terrain generation, I have a thread (apart from the main thread)which invokes the terrain height field generation, and the adding of new chunks in a new class which subclasses from QRunnable. I start this thread in the InitializeGL function. 
-
-#Sounds
-
-To improve the aesthetic of the game, I used the QMediaPlayer class to play themes for different areas and states of the game. Currently, there is a theme for the title screen, a theme for when the player is under water, in a cavern, and when the player is traversing the world. These themes were composed on Garageband and imported into the resources folder of the project.
-
-#PlayerDeath
-
-The player has health which deprecates when the player comes in contact with LAVA. If the player stays in contact with a LAVA block for a long period of time, he dies and the game enters sandbox mode.
-
-# Procedural Sky - 
-
-I tried implementing the Procedural Sky based on Adam's demo in class. This crashes and so I did not merge it with the main milestone code. As of now, it pretty much follows the demo code almost exactly as i'm trying to get the base implementation working', though I have tried to comment as scrupulously as I can. 
-The code for this is on my branch which I will include in my commit link textfile.
-
-
-
-
-
-##### Connie Chang - Shadow Map, Title Screen, Distance Fog
-I implemented distance fog in milestone 2. The weight of the fog depends on the distance of the object, so the weight is larger as the object gets farther. I shifted the function out by about 100, so there would be a radius around the player without no fog at all.
-
-I also made the title screen. It's just a texture on a quad overlay. I did a lot of refactoring for this, creating GameState classes. I moved all of the game logic to PlayState. The title screen is drawn in MenuState. MyGL has a pointer to GameState, which can be switched between PlayState and MenuState, and calls its update and paint functions.
-
-Last, I implemented shadow mapping. I have a light camera with a orthographic projection matrix that is above the player. I render a first pass using the light camera, writing to a depth texture. On the second pass, I render the final scene, and use the depth texture to determine if there is a shadow. If the current fragment is farther away than the depth in the depth texture, then a shadow is drawn. I had to add a little bias to get rid of shadow acne, but now there is Peter Panning. The depth texture resolution is also not too high, so the shadows come out jagged and blocky.
-
+[img](https://wzcorse.com/mini-minecraft)
 
 ##### Zach Corse - MS3: L-System Trees, Worley Noise Forests, 3D FBM Random Walk Caves & Cavern, Biomes, and Biome Interpolation
 Previous milestones: L-System Rivers, 2D FBM Terrain Generation, Block Creation and Destruction, Crosshairs
@@ -103,3 +72,32 @@ Each terrain height field is generated using 2D FBM noise. I had to adjust the r
 Block Destruction: A ray is cast down the player's look vector. The Kay & Kayjia ray-box intersection algorithm is used to determine whether the player's look ray intersects with one or more of the cubes surrounding the player. We currently test against 3 x 4 x 3 - 1 = 35 cubes (we test two cubes beneath the player's eye because the player is two cubes tall). This test produces the shortest ray intersection distance, and uses that value to destroy the cube associated with the intersection point at that distance along the look ray.
 
 Block Creation: A ray is cast down the player's look vector. It looks for a box intersection two look vectors away. If there is a box intersection, it detects the closest face of the box. If that face is adjacent to an EMPTY cube, a new box is constructed in that cube of space.
+
+
+##### Sagar- Sandbox Mode, Lava and Water Collisions, Multithreading
+
+Sandbox mode was straightforward given what we implemented in Milestone 1. I disabled collisions with lava and water blocks, and slowed the player's velocity down when moving through Lava or Water. I also modified the vertical deceleration when the player is above a water or lava block to create a sinking effect. 
+
+To create the overlay, I modified the existing lambert shader to mix in a higher contribution of red or blue depending on whether the player was submerged in water or lava. I also modified the sky color seperately in these states by creating a new vec4 variable called skyColor and passing it to glClearColor when the player is submerged.
+
+To improve the efficiency of rendering and terrain generation, I have a thread (apart from the main thread)which invokes the terrain height field generation, and the adding of new chunks in a new class which subclasses from QRunnable. I start this thread in the InitializeGL function. 
+
+#Sounds
+
+To improve the aesthetic of the game, I used the QMediaPlayer class to play themes for different areas and states of the game. Currently, there is a theme for the title screen, a theme for when the player is under water, in a cavern, and when the player is traversing the world. These themes were composed on Garageband and imported into the resources folder of the project.
+
+#PlayerDeath
+
+The player has health which deprecates when the player comes in contact with LAVA. If the player stays in contact with a LAVA block for a long period of time, he dies and the game enters sandbox mode.
+
+# Procedural Sky - 
+
+I tried implementing the Procedural Sky based on Adam's demo in class. This crashes and so I did not merge it with the main milestone code. As of now, it pretty much follows the demo code almost exactly as i'm trying to get the base implementation working', though I have tried to comment as scrupulously as I can. 
+The code for this is on my branch which I will include in my commit link textfile.
+
+##### Connie Chang - Shadow Map, Title Screen, Distance Fog
+I implemented distance fog in milestone 2. The weight of the fog depends on the distance of the object, so the weight is larger as the object gets farther. I shifted the function out by about 100, so there would be a radius around the player without no fog at all.
+
+I also made the title screen. It's just a texture on a quad overlay. I did a lot of refactoring for this, creating GameState classes. I moved all of the game logic to PlayState. The title screen is drawn in MenuState. MyGL has a pointer to GameState, which can be switched between PlayState and MenuState, and calls its update and paint functions.
+
+Last, I implemented shadow mapping. I have a light camera with a orthographic projection matrix that is above the player. I render a first pass using the light camera, writing to a depth texture. On the second pass, I render the final scene, and use the depth texture to determine if there is a shadow. If the current fragment is farther away than the depth in the depth texture, then a shadow is drawn. I had to add a little bias to get rid of shadow acne, but now there is Peter Panning. The depth texture resolution is also not too high, so the shadows come out jagged and blocky.

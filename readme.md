@@ -2,7 +2,7 @@
 ## Milestone 3
 ### Team: Merge Conflict
 
-[![ss]](screenshot.png)(https://wzcorse.com/mini-minecraft)
+[![ss](screenshot.png)](https://wzcorse.com/mini-minecraft)
 
 ##### Zach Corse - MS3: L-System Trees, Worley Noise Forests, 3D FBM Random Walk Caves & Cavern, Biomes, and Biome Interpolation
 Previous milestones: L-System Rivers, 2D FBM Terrain Generation, Block Creation and Destruction, Crosshairs
